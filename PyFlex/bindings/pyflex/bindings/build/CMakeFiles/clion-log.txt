@@ -1,0 +1,4 @@
+/home/xingyu/software/clion-2019.2.3/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles" /home/xingyu/Projects/softgym/PyFlex/bindings
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/xingyu/Projects/softgym/PyFlex/bindings/pyflex/bindings/build
