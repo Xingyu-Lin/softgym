@@ -19,7 +19,7 @@ This codebase is tested with Ubuntu 16.04 LTS and CUDA 9.1. Other versions might
 <!-- 1. Create a conda environment and activate it: `conda env create -f environment.yml && . activate softgym`-->
 
 
-### PyFlex APIs
+### PyFleX APIs
 
 Please see the example test scripts and the bottom of `bindings/pyflex.cpp` for available APIs.
 

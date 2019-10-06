@@ -1,3 +1,4 @@
+__pycache__/
 .idea
 PyFlex/demo/compiler/makelinux64/.deps
 PyFlex/demo/compiler/makelinux64/build
