@@ -59,6 +59,7 @@ public:
 	const char* mName;
 };
 
+#include "scenes/softgym_flatten.h"
 #include "scenes/softgym_cloth.h"
 
 #include "scenes/yz_bunnybath.h"
