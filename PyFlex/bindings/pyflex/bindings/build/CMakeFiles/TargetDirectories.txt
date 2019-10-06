@@ -1,3 +1,0 @@
-/home/xingyu/Projects/softgym/PyFlex/bindings/pyflex/bindings/build/CMakeFiles/rebuild_cache.dir
-/home/xingyu/Projects/softgym/PyFlex/bindings/pyflex/bindings/build/CMakeFiles/pyflex.dir
-/home/xingyu/Projects/softgym/PyFlex/bindings/pyflex/bindings/build/CMakeFiles/edit_cache.dir
