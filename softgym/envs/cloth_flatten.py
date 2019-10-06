@@ -10,7 +10,7 @@ class ClothFlattenPointControlEnv(FlexEnv):
     def __init__(self, observation_mode, action_mode):
         super().__init__()
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['key_point']
+        assert action_mode in ['key_point_pos', 'key_point_vel']
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
@@ -20,7 +20,7 @@ class ClothFlattenPointControlEnv(FlexEnv):
         else:
             raise NotImplementedError
 
-        if action_mode == 'key_point':
+        if action_mode.startswith('key_point'):
             self.action_space = Box(np.array([-1.] * 6), np.array([1.] * 6), dtype=np.float32)
         else:
             raise NotImplementedError
@@ -75,8 +75,14 @@ class ClothFlattenPointControlEnv(FlexEnv):
         idxs = np.hstack(action[:, 0])
         updates = action[:, 1:]
         action = np.hstack([action, np.zeros([action.shape[0], 1])])
-        cur_pos[idxs.astype(int), :3] = last_pos[idxs.astype(int)][:, :3] + updates
+        vels = pyflex.get_velocities()
+        if self.action_mode == 'key_point_pos':
+            cur_pos[idxs.astype(int), :3] = last_pos[idxs.astype(int)][:, :3] + updates
+        else:
+            vels = np.array(vels).reshape([-1, 3])
+            vels[idxs.astype(int), :] = updates
         pyflex.set_positions(cur_pos.flatten())
+        pyflex.set_velocities(vels.flatten())
         obs = self.get_current_observation()
         reward = self.compute_reward(cur_pos)
         return obs, reward, False, {}
@@ -90,9 +96,10 @@ class ClothFlattenPointControlEnv(FlexEnv):
 
 if __name__ == "__main__":
     pyflex.init()
-    env = ClothFlattenPointControlEnv('key_point', 'key_point')
+    env = ClothFlattenPointControlEnv('key_point', 'key_point_vel')
     env.reset()
     print("reset, entering loop")
     for i in range(0, 500):
-        env.step(np.array([150, 0, 0.01, 0,]))
+        print("going up: {}",format(i))
+        env.step(np.array([0, 0, 0, -300]))
 
