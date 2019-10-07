@@ -1,8 +1,8 @@
-class FlattenCloth: public Scene
+class softgym_FlattenCloth: public Scene
 {
 public:
 
-	FlattenCloth(const char* name) : Scene(name) {}
+	softgym_FlattenCloth(const char* name) : Scene(name) {}
 
 	void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
 	{
