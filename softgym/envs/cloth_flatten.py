@@ -32,7 +32,7 @@ class ClothFlattenPointControlEnv(FlexEnv):
         pickpoint = random.randint(0, 64 * 32)
         if dropPoint is not None:
             pickpoint = dropPoint
-        pyflex.set_scene(11, np.array([pickpoint]), 0)
+        pyflex.set_scene(10, np.array([pickpoint]), 0)
 
         pos = pyflex.get_shape_states()
         pyflex.set_shape_states(pos)
@@ -45,6 +45,7 @@ class ClothFlattenPointControlEnv(FlexEnv):
             vels = pyflex.get_velocities()
             if stopParticle:
                 newPos[pickpoint * 4: pickpoint * 4 + 3] = particle_pos
+                newPos[pickpoint * 4 + 3] = 0.0
                 vels[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
             stopped = True
             for j in range(pyflex.get_n_particles()):
@@ -53,6 +54,7 @@ class ClothFlattenPointControlEnv(FlexEnv):
                     stopped = False
                     break
             if stopped:
+                newPos[pickpoint * 4 + 3] = 1
                 stopParticle = False
 
             pyflex.set_velocities(vels)
@@ -78,17 +80,47 @@ class ClothFlattenPointControlEnv(FlexEnv):
         vels = pyflex.get_velocities()
         if self.action_mode == 'key_point_pos':
             cur_pos[idxs.astype(int), :3] = last_pos[idxs.astype(int)][:, :3] + updates
+            cur_pos[idxs.astype(int), 3] = 0
+
         else:
             vels = np.array(vels).reshape([-1, 3])
             vels[idxs.astype(int), :] = updates
         pyflex.set_positions(cur_pos.flatten())
         pyflex.set_velocities(vels.flatten())
         obs = self.get_current_observation()
-        reward = self.compute_reward(cur_pos)
+        reward = self.compute_reward()
         return obs, reward, False, {}
 
-    def compute_reward(self, pos):
-        return 0.
+    def compute_reward(self):
+        """
+        calculate by taking max x,y cood and min x,y coord, create a discritized grid between
+        the points
+        :param pos:
+        :return:
+        """
+        pos = pyflex.get_positions()
+        pos = np.reshape(pos, [-1, 4])
+        minX = np.min(pos[:, 0])
+        minY = np.min(pos[:, 2])
+        maxX = np.max(pos[:, 0])
+        maxY = np.max(pos[:, 2])
+        grid = np.zeros([101, 101])
+        init = np.array([minX, minY])
+        span = np.array([maxX - minX, maxY-minY])/100.
+        pos2d = pos[:, [0, 2]]
+        offset = pos2d - init
+        slottedX = (offset[:, 0]//span[0])
+        slottedy = (offset[:, 1]//span[1])
+        grid[slottedy.astype(int),slottedX.astype(int)] = 1
+        """
+        for i in range(len(pos2d)):
+            offset = pos2d[i] - init
+            print("offset: {} span: {}".format(offset, span))
+            slottedX = int(offset[0]/span[0])
+            slottedY = int(offset[1]/span[1])
+            grid[slottedY,slottedX] = 1
+        """
+        return np.sum(np.sum(grid))*span[0]*span[1]
 
     def set_scene(self):
         scene_params = np.array([0])
@@ -96,10 +128,11 @@ class ClothFlattenPointControlEnv(FlexEnv):
 
 if __name__ == "__main__":
     pyflex.init()
-    env = ClothFlattenPointControlEnv('key_point', 'key_point_vel')
-    env.reset()
+    env = ClothFlattenPointControlEnv('key_point', 'key_point_pos')
+    env.reset(dropPoint=100)
     print("reset, entering loop")
     for i in range(0, 500):
         print("going up: {}",format(i))
-        env.step(np.array([0, 0, 0, -300]))
+        obs, reward, _, _ = env.step(np.array([[0, -0.003, 0, -0.003], [32*64-1, 0.003, 0, 0.003]]))
+        print("reward: {}".format(reward))
 

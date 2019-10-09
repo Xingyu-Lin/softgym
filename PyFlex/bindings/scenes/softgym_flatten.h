@@ -26,6 +26,7 @@ public:
         auto ptr = (float *) scene_params.request().ptr;
         float pickp = ptr[0];
         int pickpoint = (int) pickp;
+        g_buffers->positions[pickpoint].w = 0;
         for (int i=0; i < int(g_buffers->positions.size()); ++i)
 		{
 			// hack to rotate cloth
@@ -42,7 +43,7 @@ public:
 				//float sqrDist = LengthSq(Vec3(g_buffers->positions[c1])-Vec3(g_buffers->positions[c2]));
 
 
-                CreateSpring(pickpoint, i, stiffness, give);
+                //CreateSpring(pickpoint, i, stiffness, give);
                 //CreateSpring(c2, i, stiffness, give);
 
 
