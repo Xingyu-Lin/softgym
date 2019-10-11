@@ -48,32 +48,33 @@ class PourWaterPosControlEnv(FlexEnv):
         else:
             raise NotImplementedError
 
-        self.init_flex_state = self.get_flex_state()
+        self.init_flex_state = self.get_state()
+        
 
     def reset(self):
         '''
         reset to environment to the initial state.
         return the initial observation.
         '''
-        self.set_flex_state(self.init_flex_state)
+        self.set_state(self.init_flex_state)
         return self.get_current_observation()
     
-    def get_flex_state(self):
+    def get_state(self):
         '''
         get the postion, velocity of flex particles, and postions of flex shapes.
         '''
         particle_pos = pyflex.get_positions().reshape(-1, self.dim_position)
         particle_vel = pyflex.get_velocities().reshape(-1, self.dim_velocity)
         shape_position = pyflex.get_shape_states().reshape(-1, self.dim_shape_state)
-        return {'particle_pos': particle_pos, 'particle_vel': particle_vel, "shape_pos": shape_position}
+        return {'particle_pos': particle_pos, 'particle_vel': particle_vel, 'shape_pos': shape_position}
 
-    def set_flex_state(self, state_dic):
-        '''
-        set the postion, velocity of flex particles, and postions of flex shapes.
-        '''
-        pyflex.set_positions(state_dic["particle_pos"])
-        pyflex.set_velocities(state_dic["particle_vel"])
-        pyflex.set_shape_states(state_dic["shape_pos"])
+    # def set_flex_state(self, state_dic):
+    #     '''
+    #     set the postion, velocity of flex particles, and postions of flex shapes.
+    #     '''
+    #     pyflex.set_positions(state_dic["particle_pos"])
+    #     pyflex.set_velocities(state_dic["particle_vel"])
+    #     pyflex.set_shape_states(state_dic["shape_pos"])
 
     def set_scene(self):
         '''
@@ -97,20 +98,20 @@ class PourWaterPosControlEnv(FlexEnv):
             center = glass[i][1]
             quat = glass[i][2]
             pyflex.add_box(halfEdge, center, quat)
+      
         
         # move glass to be at ground
         self.glass_floor_centerx = x_center
         self.glass_floor_centery = 0.
         self.glass_states = self.init_glass_state(self.glass_floor_centerx, self.glass_floor_centery)
         pyflex.set_shape_states(self.glass_states)
-        pyflex.step()
+        # pyflex.step()
 
         # give some time for water to stablize 
         # for i in range(20):
         #     pyflex.step()
 
         print("pour water inital scene constructed over...")
-        # time.sleep(5)
 
     def get_current_observation(self):
         '''
@@ -118,7 +119,6 @@ class PourWaterPosControlEnv(FlexEnv):
         TODO: figure out the state of the agent.
         '''
         return np.zeros(self.wall_num)
-        # raise NotImplementedError
 
     def compute_reward(self):
         '''
@@ -126,7 +126,6 @@ class PourWaterPosControlEnv(FlexEnv):
         TODO: figure out the reward of the agent.
         '''
         return 0
-        # raise NotImplementedError
 
     def step(self, action):
         '''
@@ -143,6 +142,7 @@ class PourWaterPosControlEnv(FlexEnv):
         # self.glass_states = after_rotate_states
 
         if theta == 0:
+            # print("just move")
             self.glass_states = self.move_glass(self.glass_states, x, y)
         else:
             self.glass_states = self.rotate_glass(self.glass_states, theta)
