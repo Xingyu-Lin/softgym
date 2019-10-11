@@ -31,12 +31,12 @@ class ClothFlattenPointControlEnv(FlexEnv):
         self.storage_name = "test_flatten"
         self.i = 0
 
-    def reset(self, dropPoint = None):
+    def reset(self, dropPoint = None, xdim=64, ydim=32):
 
-        pickpoint = random.randint(0, 64 * 32)
+        pickpoint = random.randint(0, xdim * ydim)
         if dropPoint is not None:
             pickpoint = dropPoint
-        pyflex.set_scene(10, np.array([pickpoint]), 0)
+        pyflex.set_scene(10, np.array([pickpoint, xdim, ydim]), 0)
 
         pos = pyflex.get_shape_states()
         pyflex.set_shape_states(pos)
@@ -53,7 +53,7 @@ class ClothFlattenPointControlEnv(FlexEnv):
                 vels[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
             stopped = True
             for j in range(pyflex.get_n_particles()):
-                if vels[j] > 0.2:
+                if vels[j] > 0.01:
                     print("stopped check at {} with vel {}".format(j, vels[j]))
                     stopped = False
                     break
@@ -130,14 +130,14 @@ class ClothFlattenPointControlEnv(FlexEnv):
         return np.sum(np.sum(grid))*span[0]*span[1]
 
     def set_scene(self):
-        scene_params = np.array([0])
+        scene_params = np.array([0, 64, 32])
         pyflex.set_scene(10, scene_params, 0)
 
 class ClothFlattenSphereControlEnv(FlexEnv):
     def __init__(self, observation_mode, action_mode):
         super().__init__()
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['pos', 'vel']
+        assert action_mode in ['key_point_pos', 'key_point_vel']
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
@@ -147,20 +147,21 @@ class ClothFlattenSphereControlEnv(FlexEnv):
         else:
             raise NotImplementedError
 
-        if action_mode.startswith('pos'):
+        if action_mode.startswith('key_point'):
 
             self.action_space = Box(np.array([-0.1]*6), np.array([0.1]*6), dtype=np.float32)
         else:
             raise NotImplementedError
+        self.storage_name = "test_flatten_spheres"
         self.time_step = 500
         self.init_state = self.get_state()
 
-    def reset(self, dropPoint = None):
+    def reset(self, dropPoint = None, xdmin = 64, ydim = 32):
 
-        pickpoint = random.randint(0, 64 * 32)
+        pickpoint = random.randint(0, xdmin * ydim)
         if dropPoint is not None:
             pickpoint = dropPoint
-        pyflex.set_scene(10, np.array([pickpoint]), 0)
+        pyflex.set_scene(10, np.array([pickpoint, xdmin, ydim]), 0)
 
         pos = pyflex.get_shape_states()
         pyflex.set_shape_states(pos)
@@ -200,16 +201,17 @@ class ClothFlattenSphereControlEnv(FlexEnv):
 
     def step(self, action):
         last_pos = np.array(pyflex.get_shape_states())
-        last_pos = np.reshape(last_pos, [-1, 15])
+        print("shape: {}".format(last_pos.shape))
+        last_pos = np.reshape(last_pos, [-1, 14])
         pyflex.step()
         cur_pos = np.array(pyflex.get_shape_states())
-        cur_pos = np.reshape(cur_pos, [-1, 15])
+        cur_pos = np.reshape(cur_pos, [-1, 14])
         print("action: {}".format(action))
-        action = action.reshape([-1, 3])
+        #action = action.reshape([-1, 3])
         #action = np.hstack([action, np.zeros([action.shape[0], 1])])
         vels = pyflex.get_velocities()
         #cur_pos[:, 3] = 1
-        if self.action_mode == 'pos':
+        if self.action_mode == 'key_point_pos':
             cur_pos[0][0:3] = last_pos[0][0:3]+action[0]
             cur_pos[0][3:6] = last_pos[0][0:3]
             cur_pos[1][0:3] = last_pos[1][0:3] + action[1]
@@ -254,19 +256,19 @@ class ClothFlattenSphereControlEnv(FlexEnv):
         return np.sum(np.sum(grid))*span[0]*span[1]
 
     def set_scene(self):
-        scene_params = np.array([0])
+        scene_params = np.array([0, 64, 32])
         pyflex.set_scene(10, scene_params, 0)
 
 if __name__ == "__main__":
     pyflex.init()
 
-    env = ClothFlattenPointControlEnv('key_point', 'key_point_pos')
+    env = ClothFlattenSphereControlEnv('key_point', 'key_point_pos')
     des_dir = env.storage_name
     os.system('mkdir -p ' + des_dir)
     env.reset(dropPoint=100)
     print("reset, entering loop")
     for i in range(0, 500):
         print("going up: {}",format(i))
-        obs, reward, _, _ = env.step(np.array([[0, -0.003, 0, -0.003], [64*32-1, 0.003, 0, 0.003]]))
+        obs, reward, _, _ = env.step(np.array([[-0.003, 0, -0.003], [0.003, 0, 0.003]]))
         print("reward: {}".format(reward))
 
