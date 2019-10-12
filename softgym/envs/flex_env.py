@@ -5,6 +5,7 @@ from gym.utils import seeding
 import numpy as np
 from os import path
 import gym
+from PIL import Image
 
 try:
     import pyflex
@@ -16,6 +17,7 @@ class FlexEnv(gym.Env):
     def __init__(self, device_id=-1):
         pyflex.init()  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.set_scene()
+        self.get_pyflex_camera_params()
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
             'video.frames_per_second': int(np.round(1.0 / self.dt))
@@ -24,6 +26,16 @@ class FlexEnv(gym.Env):
             device_id = int(os.environ['gpu_id'])
         self.device_id = device_id
 
+    def get_pyflex_camera_params(self):
+        self.camera_params = {}
+        pyflex_camera_param = pyflex.get_camera_params()
+        camera_param = {'width': pyflex_camera_param[0],
+                        'height': pyflex_camera_param[1]}
+        self.camera_params['default_camera'] = camera_param
+
+    def get_camera_size(self, camera_name='default_camera'):
+        return self.camera_params[camera_name]['width'], self.camera_params[camera_name]['height']
+
     def set_scene(self):
         ''' Set up the flex scene'''
         raise NotImplementedError
@@ -31,11 +43,18 @@ class FlexEnv(gym.Env):
     @property
     def dt(self):
         # TODO get actual dt from the environment
-        return 1/50.
+        return 1 / 50.
 
     def render(self, mode='human'):
         if mode == 'rgb_array':
-            raise NotImplementedError
+            img = pyflex.render()
+            width, height = self.get_camera_size(camera_name='default_camera')
+            img = img.reshape(height, width, 4)[::-1, :, :3] # Need to reverse the height dimension
+            # import matplotlib.pyplot as plt
+            # plt.figure()
+            # plt.imshow(img[::-1, :, :4])
+            # plt.show()
+            return img
         elif mode == 'human':
             raise NotImplementedError
 

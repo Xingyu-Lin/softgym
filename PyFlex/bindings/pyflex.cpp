@@ -10,6 +10,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+
 namespace py = pybind11;
 
 #include "include/NvFlex.h"
@@ -34,8 +35,9 @@ namespace py = pybind11;
 #include "imgui.h"
 #include "shadersDemoContext.h"
 
+#include "bindings/utils/utils.h"
 
-SDL_Window* g_window;           // window handle
+SDL_Window *g_window;           // window handle
 unsigned int g_windowId;        // window id
 
 #define SDL_CONTROLLER_BUTTON_LEFT_TRIGGER (SDL_CONTROLLER_BUTTON_MAX + 1)
@@ -43,20 +45,48 @@ unsigned int g_windowId;        // window id
 
 int GetKeyFromGameControllerButton(SDL_GameControllerButton button) {
     switch (button) {
-        case SDL_CONTROLLER_BUTTON_DPAD_UP:         {    return SDLK_q;        }    // -- camera translate up
-        case SDL_CONTROLLER_BUTTON_DPAD_DOWN:       {    return SDLK_z;        }    // -- camera translate down
-        case SDL_CONTROLLER_BUTTON_DPAD_LEFT:       {    return SDLK_h;        }    // -- hide GUI
-        case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:      {    return -1;            }    // -- unassigned
-        case SDL_CONTROLLER_BUTTON_START:           {    return SDLK_RETURN;    }   // -- start selected scene
-        case SDL_CONTROLLER_BUTTON_BACK:            {    return SDLK_ESCAPE;    }   // -- quit
-        case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:    {    return SDLK_UP;        }   // -- select prev scene
-        case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:   {    return SDLK_DOWN;    }     // -- select next scene
-        case SDL_CONTROLLER_BUTTON_A:               {    return SDLK_g;        }    // -- toggle gravity
-        case SDL_CONTROLLER_BUTTON_B:               {    return SDLK_p;        }    // -- pause
-        case SDL_CONTROLLER_BUTTON_X:               {    return SDLK_r;        }    // -- reset
-        case SDL_CONTROLLER_BUTTON_Y:               {    return SDLK_o;        }    // -- step sim
-        case SDL_CONTROLLER_BUTTON_RIGHT_TRIGGER:   {    return SDLK_SPACE;    }    // -- emit particles
-        default:                                    {    return -1;            }    // -- nop
+        case SDL_CONTROLLER_BUTTON_DPAD_UP: {
+            return SDLK_q;
+        }    // -- camera translate up
+        case SDL_CONTROLLER_BUTTON_DPAD_DOWN: {
+            return SDLK_z;
+        }    // -- camera translate down
+        case SDL_CONTROLLER_BUTTON_DPAD_LEFT: {
+            return SDLK_h;
+        }    // -- hide GUI
+        case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: {
+            return -1;
+        }    // -- unassigned
+        case SDL_CONTROLLER_BUTTON_START: {
+            return SDLK_RETURN;
+        }   // -- start selected scene
+        case SDL_CONTROLLER_BUTTON_BACK: {
+            return SDLK_ESCAPE;
+        }   // -- quit
+        case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: {
+            return SDLK_UP;
+        }   // -- select prev scene
+        case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: {
+            return SDLK_DOWN;
+        }     // -- select next scene
+        case SDL_CONTROLLER_BUTTON_A: {
+            return SDLK_g;
+        }    // -- toggle gravity
+        case SDL_CONTROLLER_BUTTON_B: {
+            return SDLK_p;
+        }    // -- pause
+        case SDL_CONTROLLER_BUTTON_X: {
+            return SDLK_r;
+        }    // -- reset
+        case SDL_CONTROLLER_BUTTON_Y: {
+            return SDLK_o;
+        }    // -- step sim
+        case SDL_CONTROLLER_BUTTON_RIGHT_TRIGGER: {
+            return SDLK_SPACE;
+        }    // -- emit particles
+        default: {
+            return -1;
+        }    // -- nop
     };
 };
 
@@ -68,9 +98,9 @@ int GetKeyFromGameControllerButton(SDL_GameControllerButton button) {
 #define XINPUT_GAMEPAD_TRIGGER_THRESHOLD    30
 
 int deadzones[3] = {
-   XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE,
-   XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE,
-   XINPUT_GAMEPAD_TRIGGER_THRESHOLD };
+        XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE,
+        XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE,
+        XINPUT_GAMEPAD_TRIGGER_THRESHOLD};
 
 inline float joyAxisFilter(int value, int stick) {
     //clamp values in deadzone to zero, and remap rest of range so that it linearly rises in value from edge of deadzone toward max value.
@@ -82,7 +112,7 @@ inline float joyAxisFilter(int value, int stick) {
         return 0.0f;
 }
 
-SDL_GameController* g_gamecontroller = nullptr;
+SDL_GameController *g_gamecontroller = nullptr;
 
 using namespace std;
 
@@ -106,17 +136,17 @@ bool g_useAsyncCompute = true;
 bool g_increaseGfxLoadForAsyncComputeTesting = false;
 int g_graphics = 0; // 0=ogl, 1=DX11, 2=DX12
 
-FluidRenderer* g_fluidRenderer;
-FluidRenderBuffers* g_fluidRenderBuffers;
-DiffuseRenderBuffers* g_diffuseRenderBuffers;
+FluidRenderer *g_fluidRenderer;
+FluidRenderBuffers *g_fluidRenderBuffers;
+DiffuseRenderBuffers *g_diffuseRenderBuffers;
 
-NvFlexSolver* g_solver;
+NvFlexSolver *g_solver;
 NvFlexSolverDesc g_solverDesc;
-NvFlexLibrary* g_flexLib;
+NvFlexLibrary *g_flexLib;
 NvFlexParams g_params;
 NvFlexTimers g_timers;
 int g_numDetailTimers;
-NvFlexDetailTimer* g_detailTimers;
+NvFlexDetailTimer *g_detailTimers;
 
 int g_maxDiffuseParticles;
 int g_maxNeighborsPerParticle;
@@ -125,30 +155,30 @@ int g_numExtraMultiplier = 1;
 int g_maxContactsPerParticle;
 
 // mesh used for deformable object rendering
-Mesh* g_mesh;
+Mesh *g_mesh;
 vector<int> g_meshSkinIndices;
 vector<float> g_meshSkinWeights;
 vector<Point3> g_meshRestPositions;
 const int g_numSkinWeights = 4;
 
 // mapping of collision mesh to render mesh
-std::map<NvFlexConvexMeshId, GpuMesh*> g_convexes;
-std::map<NvFlexTriangleMeshId, GpuMesh*> g_meshes;
-std::map<NvFlexDistanceFieldId, GpuMesh*> g_fields;
+std::map<NvFlexConvexMeshId, GpuMesh *> g_convexes;
+std::map<NvFlexTriangleMeshId, GpuMesh *> g_meshes;
+std::map<NvFlexDistanceFieldId, GpuMesh *> g_fields;
 
 // flag to request collision shapes be updated
 bool g_shapesChanged = false;
 
 /* Note that this array of colors is altered by demo code, and is also read from global by graphics API impls */
 Colour g_colors[] = {
-    Colour(0.000f, 0.349f, 0.173f),
-    Colour(0.875f, 0.782f, 0.051f),
-    Colour(0.000f, 0.170f, 0.453f),
-    Colour(0.673f, 0.111f, 0.000f),
-    Colour(0.612f, 0.194f, 0.394f),
-    Colour(0.0f, 0.5f, 1.0f),
-    Colour(0.797f, 0.354f, 0.000f),
-    Colour(0.092f, 0.465f, 0.820f)
+        Colour(0.000f, 0.349f, 0.173f),
+        Colour(0.875f, 0.782f, 0.051f),
+        Colour(0.000f, 0.170f, 0.453f),
+        Colour(0.673f, 0.111f, 0.000f),
+        Colour(0.612f, 0.194f, 0.394f),
+        Colour(0.0f, 0.5f, 1.0f),
+        Colour(0.797f, 0.354f, 0.000f),
+        Colour(0.092f, 0.465f, 0.820f)
 };
 
 struct SimBuffers {
@@ -204,23 +234,23 @@ struct SimBuffers {
     NvFlexVector<Vec3> triangleNormals;
     NvFlexVector<Vec3> uvs;
 
-    SimBuffers(NvFlexLibrary* l) :
-        positions(l), restPositions(l), velocities(l), phases(l), densities(l),
-        anisotropy1(l), anisotropy2(l), anisotropy3(l), normals(l), smoothPositions(l),
-        diffusePositions(l), diffuseVelocities(l), diffuseCount(l), activeIndices(l),
-        shapeGeometry(l), shapePositions(l), shapeRotations(l), shapePrevPositions(l),
-        shapePrevRotations(l),    shapeFlags(l), rigidOffsets(l), rigidIndices(l), rigidMeshSize(l),
-        rigidCoefficients(l), rigidPlasticThresholds(l), rigidPlasticCreeps(l), rigidRotations(l), rigidTranslations(l),
-        rigidLocalPositions(l), rigidLocalNormals(l), inflatableTriOffsets(l),
-        inflatableTriCounts(l), inflatableVolumes(l), inflatableCoefficients(l),
-        inflatablePressures(l), springIndices(l), springLengths(l),
-        springStiffness(l), triangles(l), triangleNormals(l), uvs(l)
-    {}
+    SimBuffers(NvFlexLibrary *l) :
+            positions(l), restPositions(l), velocities(l), phases(l), densities(l),
+            anisotropy1(l), anisotropy2(l), anisotropy3(l), normals(l), smoothPositions(l),
+            diffusePositions(l), diffuseVelocities(l), diffuseCount(l), activeIndices(l),
+            shapeGeometry(l), shapePositions(l), shapeRotations(l), shapePrevPositions(l),
+            shapePrevRotations(l), shapeFlags(l), rigidOffsets(l), rigidIndices(l), rigidMeshSize(l),
+            rigidCoefficients(l), rigidPlasticThresholds(l), rigidPlasticCreeps(l), rigidRotations(l),
+            rigidTranslations(l),
+            rigidLocalPositions(l), rigidLocalNormals(l), inflatableTriOffsets(l),
+            inflatableTriCounts(l), inflatableVolumes(l), inflatableCoefficients(l),
+            inflatablePressures(l), springIndices(l), springLengths(l),
+            springStiffness(l), triangles(l), triangleNormals(l), uvs(l) {}
 };
 
-SimBuffers* g_buffers;
+SimBuffers *g_buffers;
 
-void MapBuffers(SimBuffers* buffers) {
+void MapBuffers(SimBuffers *buffers) {
     buffers->positions.map();
     buffers->restPositions.map();
     buffers->velocities.map();
@@ -271,7 +301,7 @@ void MapBuffers(SimBuffers* buffers) {
     buffers->uvs.map();
 }
 
-void UnmapBuffers(SimBuffers* buffers) {
+void UnmapBuffers(SimBuffers *buffers) {
     // particles
     buffers->positions.unmap();
     buffers->restPositions.unmap();
@@ -327,11 +357,11 @@ void UnmapBuffers(SimBuffers* buffers) {
 
 }
 
-SimBuffers* AllocBuffers(NvFlexLibrary* lib) {
+SimBuffers *AllocBuffers(NvFlexLibrary *lib) {
     return new SimBuffers(lib);
 }
 
-void DestroyBuffers(SimBuffers* buffers) {
+void DestroyBuffers(SimBuffers *buffers) {
     // particles
     buffers->positions.destroy();
     buffers->restPositions.destroy();
@@ -460,7 +490,7 @@ float g_realdt;               // the real world time delta between updates
 float g_waitTime;       // the CPU time spent waiting for the GPU
 float g_updateTime;     // the CPU time spent on Flex
 float g_renderTime;     // the CPU time spent calling OpenGL to render the scene
-                        // the above times don't include waiting for vsync
+// the above times don't include waiting for vsync
 float g_simLatency;     // the time the GPU spent between the first and last NvFlexUpdateSolver() operation. Because some GPUs context switch, this can include graphics time.
 
 int g_scene = 0;
@@ -486,24 +516,25 @@ bool g_profile = false;
 bool g_outputAllFrameTimes = false;
 bool g_asyncComputeBenchmark = false;
 
-ShadowMap* g_shadowMap;
+ShadowMap *g_shadowMap;
 
 Vec4 g_fluidColor;
 Vec4 g_diffuseColor;
 Vec3 g_meshColor;
-Vec3  g_clearColor;
+Vec3 g_clearColor;
 float g_lightDistance;
 float g_fogDistance;
 
-FILE* g_ffmpeg;
+FILE *g_ffmpeg;
 
 void DrawShapes();
 
 class Scene;
-vector<Scene*> g_scenes;
+
+vector<Scene *> g_scenes;
 
 struct Emitter {
-    Emitter() : mSpeed(0.0f), mEnabled(false), mLeftOver(0.0f), mWidth(8)   {}
+    Emitter() : mSpeed(0.0f), mEnabled(false), mLeftOver(0.0f), mWidth(8) {}
 
     Vec3 mPos;
     Vec3 mDir;
@@ -522,7 +553,7 @@ struct Rope {
 
 vector<Rope> g_ropes;
 
-inline float sqr(float x) { return x*x; }
+inline float sqr(float x) { return x * x; }
 
 #include "helpers.h"
 #include "scenes.h"
@@ -539,17 +570,17 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
         DestroyFluidRenderBuffers(g_fluidRenderBuffers);
         DestroyDiffuseRenderBuffers(g_diffuseRenderBuffers);
 
-        for (auto& iter : g_meshes) {
+        for (auto &iter : g_meshes) {
             NvFlexDestroyTriangleMesh(g_flexLib, iter.first);
             DestroyGpuMesh(iter.second);
         }
 
-        for (auto& iter : g_fields) {
+        for (auto &iter : g_fields) {
             NvFlexDestroyDistanceField(g_flexLib, iter.first);
             DestroyGpuMesh(iter.second);
         }
 
-        for (auto& iter : g_convexes) {
+        for (auto &iter : g_convexes) {
             NvFlexDestroyConvexMesh(g_flexLib, iter.first);
             DestroyGpuMesh(iter.second);
         }
@@ -609,7 +640,8 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     g_ropes.resize(0);
 
     // remove collision shapes
-    delete g_mesh; g_mesh = NULL;
+    delete g_mesh;
+    g_mesh = NULL;
 
     g_frame = 0;
     g_pause = false;
@@ -739,7 +771,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     EndGpuWork();
 
     uint32_t numParticles = g_buffers->positions.size();
-    uint32_t maxParticles = numParticles + g_numExtraParticles*g_numExtraMultiplier;
+    uint32_t maxParticles = numParticles + g_numExtraParticles * g_numExtraMultiplier;
 
     if (g_params.solidRestDistance == 0.0f)
         g_params.solidRestDistance = g_params.radius;
@@ -750,15 +782,15 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
 
     // set collision distance automatically based on rest distance if not already set
     if (g_params.collisionDistance == 0.0f)
-        g_params.collisionDistance = Max(g_params.solidRestDistance, g_params.fluidRestDistance)*0.5f;
+        g_params.collisionDistance = Max(g_params.solidRestDistance, g_params.fluidRestDistance) * 0.5f;
 
     // default particle friction to 10% of shape friction
     if (g_params.particleFriction == 0.0f)
-        g_params.particleFriction = g_params.dynamicFriction*0.1f;
+        g_params.particleFriction = g_params.dynamicFriction * 0.1f;
 
     // add a margin for detecting contacts between particles and shapes
     if (g_params.shapeCollisionMargin == 0.0f)
-        g_params.shapeCollisionMargin = g_params.collisionDistance*0.5f;
+        g_params.shapeCollisionMargin = g_params.collisionDistance * 0.5f;
 
     // calculate particle bounds
     Vec3 particleLower, particleUpper;
@@ -778,12 +810,12 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     // update collision planes to match flexs
     Vec3 up = Normalize(Vec3(-g_waveFloorTilt, 1.0f, 0.0f));
 
-    (Vec4&)g_params.planes[0] = Vec4(up.x, up.y, up.z, 0.0f);
-    (Vec4&)g_params.planes[1] = Vec4(0.0f, 0.0f, 1.0f, -g_sceneLower.z);
-    (Vec4&)g_params.planes[2] = Vec4(1.0f, 0.0f, 0.0f, -g_sceneLower.x);
-    (Vec4&)g_params.planes[3] = Vec4(-1.0f, 0.0f, 0.0f, g_sceneUpper.x);
-    (Vec4&)g_params.planes[4] = Vec4(0.0f, 0.0f, -1.0f, g_sceneUpper.z);
-    (Vec4&)g_params.planes[5] = Vec4(0.0f, -1.0f, 0.0f, g_sceneUpper.y);
+    (Vec4 &) g_params.planes[0] = Vec4(up.x, up.y, up.z, 0.0f);
+    (Vec4 &) g_params.planes[1] = Vec4(0.0f, 0.0f, 1.0f, -g_sceneLower.z);
+    (Vec4 &) g_params.planes[2] = Vec4(1.0f, 0.0f, 0.0f, -g_sceneLower.x);
+    (Vec4 &) g_params.planes[3] = Vec4(-1.0f, 0.0f, 0.0f, g_sceneUpper.x);
+    (Vec4 &) g_params.planes[4] = Vec4(0.0f, 0.0f, -1.0f, g_sceneUpper.z);
+    (Vec4 &) g_params.planes[5] = Vec4(0.0f, -1.0f, 0.0f, g_sceneUpper.y);
 
     g_wavePlane = g_params.planes[2][3];
 
@@ -818,8 +850,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     // save mesh positions for skinning
     if (g_mesh) {
         g_meshRestPositions = g_mesh->m_positions;
-    }
-    else {
+    } else {
         g_meshRestPositions.resize(0);
     }
 
@@ -836,7 +867,8 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
 
     // center camera on particles
     if (centerCamera) {
-        g_camPos = Vec3((g_sceneLower.x + g_sceneUpper.x)*0.5f, min(g_sceneUpper.y*1.25f, 6.0f), g_sceneUpper.z + min(g_sceneUpper.y, 6.0f)*2.0f);
+        g_camPos = Vec3((g_sceneLower.x + g_sceneUpper.x) * 0.5f, min(g_sceneUpper.y * 1.25f, 6.0f),
+                        g_sceneUpper.z + min(g_sceneUpper.y, 6.0f) * 2.0f);
         g_camAngle = Vec3(0.0f, -DegToRad(15.0f), 0.0f);
 
         // give scene a chance to modify camera position
@@ -885,12 +917,16 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
         // (If the CreateParticleShape method is used instead of the NvFlexExt methods, the centers of mass will be calculated here)
         if (g_buffers->rigidTranslations.size() == 0) {
             g_buffers->rigidTranslations.resize(g_buffers->rigidOffsets.size() - 1, Vec3());
-            CalculateRigidCentersOfMass(&g_buffers->positions[0], g_buffers->positions.size(), &g_buffers->rigidOffsets[0], &g_buffers->rigidTranslations[0], &g_buffers->rigidIndices[0], numRigids);
+            CalculateRigidCentersOfMass(&g_buffers->positions[0], g_buffers->positions.size(),
+                                        &g_buffers->rigidOffsets[0], &g_buffers->rigidTranslations[0],
+                                        &g_buffers->rigidIndices[0], numRigids);
         }
 
         // calculate local rest space positions
         g_buffers->rigidLocalPositions.resize(g_buffers->rigidOffsets.back());
-        CalculateRigidLocalPositions(&g_buffers->positions[0], &g_buffers->rigidOffsets[0], &g_buffers->rigidTranslations[0], &g_buffers->rigidIndices[0], numRigids, &g_buffers->rigidLocalPositions[0]);
+        CalculateRigidLocalPositions(&g_buffers->positions[0], &g_buffers->rigidOffsets[0],
+                                     &g_buffers->rigidTranslations[0], &g_buffers->rigidIndices[0], numRigids,
+                                     &g_buffers->rigidLocalPositions[0]);
 
         // set rigidRotations to correct length, probably NULL up until here
         g_buffers->rigidRotations.resize(g_buffers->rigidOffsets.size() - 1, Quat());
@@ -922,35 +958,44 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
         assert((g_buffers->springIndices.size() & 1) == 0);
         assert((g_buffers->springIndices.size() / 2) == g_buffers->springLengths.size());
 
-        NvFlexSetSprings(g_solver, g_buffers->springIndices.buffer, g_buffers->springLengths.buffer, g_buffers->springStiffness.buffer, g_buffers->springLengths.size());
+        NvFlexSetSprings(g_solver, g_buffers->springIndices.buffer, g_buffers->springLengths.buffer,
+                         g_buffers->springStiffness.buffer, g_buffers->springLengths.size());
     }
 
     // rigids
     if (g_buffers->rigidOffsets.size()) {
-        NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer, g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer, g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer, g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer, g_buffers->rigidTranslations.buffer, g_buffers->rigidOffsets.size() - 1, g_buffers->rigidIndices.size());
+        NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer,
+                        g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer,
+                        g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer,
+                        g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer,
+                        g_buffers->rigidTranslations.buffer, g_buffers->rigidOffsets.size() - 1,
+                        g_buffers->rigidIndices.size());
     }
 
     // inflatables
     if (g_buffers->inflatableTriOffsets.size()) {
-        NvFlexSetInflatables(g_solver, g_buffers->inflatableTriOffsets.buffer, g_buffers->inflatableTriCounts.buffer, g_buffers->inflatableVolumes.buffer, g_buffers->inflatablePressures.buffer, g_buffers->inflatableCoefficients.buffer, g_buffers->inflatableTriOffsets.size());
+        NvFlexSetInflatables(g_solver, g_buffers->inflatableTriOffsets.buffer, g_buffers->inflatableTriCounts.buffer,
+                             g_buffers->inflatableVolumes.buffer, g_buffers->inflatablePressures.buffer,
+                             g_buffers->inflatableCoefficients.buffer, g_buffers->inflatableTriOffsets.size());
     }
 
     // dynamic triangles
     if (g_buffers->triangles.size()) {
-        NvFlexSetDynamicTriangles(g_solver, g_buffers->triangles.buffer, g_buffers->triangleNormals.buffer, g_buffers->triangles.size() / 3);
+        NvFlexSetDynamicTriangles(g_solver, g_buffers->triangles.buffer, g_buffers->triangleNormals.buffer,
+                                  g_buffers->triangles.size() / 3);
     }
 
     // collision shapes
     if (g_buffers->shapeFlags.size()) {
         NvFlexSetShapes(
-            g_solver,
-            g_buffers->shapeGeometry.buffer,
-            g_buffers->shapePositions.buffer,
-            g_buffers->shapeRotations.buffer,
-            g_buffers->shapePrevPositions.buffer,
-            g_buffers->shapePrevRotations.buffer,
-            g_buffers->shapeFlags.buffer,
-            int(g_buffers->shapeFlags.size()));
+                g_solver,
+                g_buffers->shapeGeometry.buffer,
+                g_buffers->shapePositions.buffer,
+                g_buffers->shapeRotations.buffer,
+                g_buffers->shapePrevPositions.buffer,
+                g_buffers->shapePrevRotations.buffer,
+                g_buffers->shapeFlags.buffer,
+                int(g_buffers->shapeFlags.size()));
     }
 
     // create render buffers
@@ -977,7 +1022,8 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
         // udpate host copy
         NvFlexGetParticles(g_solver, g_buffers->positions.buffer, NULL);
         NvFlexGetSmoothParticles(g_solver, g_buffers->smoothPositions.buffer, NULL);
-        NvFlexGetAnisotropy(g_solver, g_buffers->anisotropy1.buffer, g_buffers->anisotropy2.buffer, g_buffers->anisotropy3.buffer, NULL);
+        NvFlexGetAnisotropy(g_solver, g_buffers->anisotropy1.buffer, g_buffers->anisotropy2.buffer,
+                            g_buffers->anisotropy3.buffer, NULL);
 
         printf("Finished warm up.\n");
     }
@@ -993,17 +1039,17 @@ void Shutdown() {
     // free buffers
     DestroyBuffers(g_buffers);
 
-    for (auto& iter : g_meshes) {
+    for (auto &iter : g_meshes) {
         NvFlexDestroyTriangleMesh(g_flexLib, iter.first);
         DestroyGpuMesh(iter.second);
     }
 
-    for (auto& iter : g_fields) {
+    for (auto &iter : g_fields) {
         NvFlexDestroyDistanceField(g_flexLib, iter.first);
         DestroyGpuMesh(iter.second);
     }
 
-    for (auto& iter : g_convexes) {
+    for (auto &iter : g_convexes) {
         NvFlexDestroyConvexMesh(g_flexLib, iter.first);
         DestroyGpuMesh(iter.second);
     }
@@ -1018,12 +1064,13 @@ void Shutdown() {
 void UpdateEmitters() {
     float spin = DegToRad(15.0f);
 
-    const Vec3 forward(-sinf(g_camAngle.x + spin)*cosf(g_camAngle.y), sinf(g_camAngle.y), -cosf(g_camAngle.x + spin)*cosf(g_camAngle.y));
+    const Vec3 forward(-sinf(g_camAngle.x + spin) * cosf(g_camAngle.y), sinf(g_camAngle.y),
+                       -cosf(g_camAngle.x + spin) * cosf(g_camAngle.y));
     const Vec3 right(Normalize(Cross(forward, Vec3(0.0f, 1.0f, 0.0f))));
 
     g_emitters[0].mDir = Normalize(forward + Vec3(0.0, 0.4f, 0.0f));
     g_emitters[0].mRight = right;
-    g_emitters[0].mPos = g_camPos + forward*1.f + Vec3(0.0f, 0.2f, 0.0f) + right*0.65f;
+    g_emitters[0].mPos = g_camPos + forward * 1.f + Vec3(0.0f, 0.2f, 0.0f) + right * 0.65f;
 
     // process emitters
     if (g_emit) {
@@ -1046,7 +1093,7 @@ void UpdateEmitters() {
             float r = g_params.fluidRestDistance;
             int phase = NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid);
 
-            float numParticles = (g_emitters[e].mSpeed / r)*g_dt;
+            float numParticles = (g_emitters[e].mSpeed / r) * g_dt;
 
             // whole number to emit
             auto n = int(numParticles + g_emitters[e].mLeftOver);
@@ -1059,18 +1106,18 @@ void UpdateEmitters() {
             // create a grid of particles (n particles thick)
             for (int k = 0; k < n; ++k) {
                 int emitterWidth = g_emitters[e].mWidth;
-                int numParticles = emitterWidth*emitterWidth;
+                int numParticles = emitterWidth * emitterWidth;
                 for (int i = 0; i < numParticles; ++i) {
-                    float x = float(i%emitterWidth) - float(emitterWidth/2);
-                    float y = float((i / emitterWidth) % emitterWidth) - float(emitterWidth/2);
+                    float x = float(i % emitterWidth) - float(emitterWidth / 2);
+                    float y = float((i / emitterWidth) % emitterWidth) - float(emitterWidth / 2);
 
-                    if ((sqr(x) + sqr(y)) <= (emitterWidth / 2)*(emitterWidth / 2)) {
+                    if ((sqr(x) + sqr(y)) <= (emitterWidth / 2) * (emitterWidth / 2)) {
                         Vec3 up = Normalize(Cross(emitterDir, emitterRight));
-                        Vec3 offset = r*(emitterRight*x + up*y) + float(k)*emitterDir*r;
+                        Vec3 offset = r * (emitterRight * x + up * y) + float(k) * emitterDir * r;
 
                         if (activeCount < g_buffers->positions.size()) {
                             g_buffers->positions[activeCount] = Vec4(emitterPos + offset, 1.0f);
-                            g_buffers->velocities[activeCount] = emitterDir*g_emitters[e].mSpeed;
+                            g_buffers->velocities[activeCount] = emitterDir * g_emitters[e].mSpeed;
                             g_buffers->phases[activeCount] = phase;
 
                             g_buffers->activeIndices.push_back(activeCount);
@@ -1085,11 +1132,12 @@ void UpdateEmitters() {
 }
 
 void UpdateCamera() {
-    Vec3 forward(-sinf(g_camAngle.x)*cosf(g_camAngle.y), sinf(g_camAngle.y), -cosf(g_camAngle.x)*cosf(g_camAngle.y));
+    Vec3 forward(-sinf(g_camAngle.x) * cosf(g_camAngle.y), sinf(g_camAngle.y),
+                 -cosf(g_camAngle.x) * cosf(g_camAngle.y));
     Vec3 right(Normalize(Cross(forward, Vec3(0.0f, 1.0f, 0.0f))));
 
     g_camSmoothVel = Lerp(g_camSmoothVel, g_camVel, 0.1f);
-    g_camPos += (forward*g_camSmoothVel.z + right*g_camSmoothVel.x + Cross(right, forward)*g_camSmoothVel.y);
+    g_camPos += (forward * g_camSmoothVel.z + right * g_camSmoothVel.x + Cross(right, forward) * g_camSmoothVel.y);
 }
 
 void UpdateMouse() {
@@ -1113,12 +1161,15 @@ void UpdateMouse() {
 
         const int numActive = NvFlexGetActiveCount(g_solver);
 
-        g_mouseParticle = PickParticle(origin, dir, &g_buffers->positions[0], &g_buffers->phases[0], numActive, g_params.radius*0.8f, g_mouseT);
+        g_mouseParticle = PickParticle(origin, dir, &g_buffers->positions[0], &g_buffers->phases[0], numActive,
+                                       g_params.radius * 0.8f, g_mouseT);
 
         if (g_mouseParticle != -1) {
-            printf("picked: %d, mass: %f v: %f %f %f\n", g_mouseParticle, g_buffers->positions[g_mouseParticle].w, g_buffers->velocities[g_mouseParticle].x, g_buffers->velocities[g_mouseParticle].y, g_buffers->velocities[g_mouseParticle].z);
+            printf("picked: %d, mass: %f v: %f %f %f\n", g_mouseParticle, g_buffers->positions[g_mouseParticle].w,
+                   g_buffers->velocities[g_mouseParticle].x, g_buffers->velocities[g_mouseParticle].y,
+                   g_buffers->velocities[g_mouseParticle].z);
 
-            g_mousePos = origin + dir*g_mouseT;
+            g_mousePos = origin + dir * g_mouseT;
             g_mouseMass = g_buffers->positions[g_mouseParticle].w;
             g_buffers->positions[g_mouseParticle].w = 0.0f;        // increase picked particle's mass to force it towards the point
         }
@@ -1145,8 +1196,8 @@ void UpdateWind() {
     g_windTime += g_dt;
 
     const Vec3 kWindDir = Vec3(3.0f, 15.0f, 0.0f);
-    const float kNoise = Perlin1D(g_windTime*g_windFrequency, 10, 0.25f);
-    Vec3 wind = g_windStrength*kWindDir*Vec3(kNoise, fabsf(kNoise), 0.0f);
+    const float kNoise = Perlin1D(g_windTime * g_windFrequency, 10, 0.25f);
+    Vec3 wind = g_windStrength * kWindDir * Vec3(kNoise, fabsf(kNoise), 0.0f);
 
     g_params.wind[0] = wind.x;
     g_params.wind[1] = wind.y;
@@ -1154,7 +1205,8 @@ void UpdateWind() {
 
     if (g_wavePool) {
         g_waveTime += g_dt;
-        g_params.planes[2][3] = g_wavePlane + (sinf(float(g_waveTime)*g_waveFrequency - kPi*0.5f)*0.5f + 0.5f)*g_waveAmplitude;
+        g_params.planes[2][3] =
+                g_wavePlane + (sinf(float(g_waveTime) * g_waveFrequency - kPi * 0.5f) * 0.5f + 0.5f) * g_waveAmplitude;
     }
 }
 
@@ -1180,31 +1232,29 @@ void RenderScene() {
         if (g_interop) {
             // copy data directly from solver to the renderer buffers
             UpdateFluidRenderBuffers(g_fluidRenderBuffers, g_solver, g_drawEllipsoids, g_drawDensity);
-        }
-        else {
+        } else {
             // copy particle data to GPU render device
 
             if (g_drawEllipsoids) {
                 // if fluid surface rendering then update with smooth positions and anisotropy
                 UpdateFluidRenderBuffers(g_fluidRenderBuffers,
-                    &g_buffers->smoothPositions[0],
-                    (g_drawDensity) ? &g_buffers->densities[0] : (float*)&g_buffers->phases[0],
-                    &g_buffers->anisotropy1[0],
-                    &g_buffers->anisotropy2[0],
-                    &g_buffers->anisotropy3[0],
-                    g_buffers->positions.size(),
-                    &g_buffers->activeIndices[0],
-                    numParticles);
-            }
-            else {
+                                         &g_buffers->smoothPositions[0],
+                                         (g_drawDensity) ? &g_buffers->densities[0] : (float *) &g_buffers->phases[0],
+                                         &g_buffers->anisotropy1[0],
+                                         &g_buffers->anisotropy2[0],
+                                         &g_buffers->anisotropy3[0],
+                                         g_buffers->positions.size(),
+                                         &g_buffers->activeIndices[0],
+                                         numParticles);
+            } else {
                 // otherwise just send regular positions and no anisotropy
                 UpdateFluidRenderBuffers(g_fluidRenderBuffers,
-                    &g_buffers->positions[0],
-                    (float*)&g_buffers->phases[0],
-                    nullptr, nullptr, nullptr,
-                    g_buffers->positions.size(),
-                    &g_buffers->activeIndices[0],
-                    numParticles);
+                                         &g_buffers->positions[0],
+                                         (float *) &g_buffers->phases[0],
+                                         nullptr, nullptr, nullptr,
+                                         g_buffers->positions.size(),
+                                         &g_buffers->activeIndices[0],
+                                         numParticles);
             }
         }
     }
@@ -1216,13 +1266,12 @@ void RenderScene() {
         if (g_interop) {
             // copy data directly from solver to the renderer buffers
             UpdateDiffuseRenderBuffers(g_diffuseRenderBuffers, g_solver);
-        }
-        else {
+        } else {
             // copy diffuse particle data from host to GPU render device
             UpdateDiffuseRenderBuffers(g_diffuseRenderBuffers,
-                &g_buffers->diffusePositions[0],
-                &g_buffers->diffuseVelocities[0],
-                numDiffuse);
+                                       &g_buffers->diffusePositions[0],
+                                       &g_buffers->diffuseVelocities[0],
+                                       numDiffuse);
         }
     }
 
@@ -1233,7 +1282,9 @@ void RenderScene() {
     float aspect = float(g_screenWidth) / g_screenHeight;
 
     Matrix44 proj = ProjectionMatrix(RadToDeg(fov), aspect, g_camNear, g_camFar);
-    Matrix44 view = RotationMatrix(-g_camAngle.x, Vec3(0.0f, 1.0f, 0.0f))*RotationMatrix(-g_camAngle.y, Vec3(cosf(-g_camAngle.x), 0.0f, sinf(-g_camAngle.x)))*TranslationMatrix(-Point3(g_camPos));
+    Matrix44 view = RotationMatrix(-g_camAngle.x, Vec3(0.0f, 1.0f, 0.0f)) *
+                    RotationMatrix(-g_camAngle.y, Vec3(cosf(-g_camAngle.x), 0.0f, sinf(-g_camAngle.x))) *
+                    TranslationMatrix(-Point3(g_camPos));
 
     //------------------------------------
     // lighting pass
@@ -1243,24 +1294,24 @@ void RenderScene() {
     g_sceneUpper = Max(g_sceneUpper, Vec3(2.0f, 2.0f, 2.0f));
 
     Vec3 sceneExtents = g_sceneUpper - g_sceneLower;
-    Vec3 sceneCenter = 0.5f*(g_sceneUpper + g_sceneLower);
+    Vec3 sceneCenter = 0.5f * (g_sceneUpper + g_sceneLower);
 
     g_lightDir = Normalize(Vec3(5.0f, 15.0f, 7.5f));
-    g_lightPos = sceneCenter + g_lightDir*Length(sceneExtents)*g_lightDistance;
+    g_lightPos = sceneCenter + g_lightDir * Length(sceneExtents) * g_lightDistance;
     g_lightTarget = sceneCenter;
 
     // calculate tight bounds for shadow frustum
-    float lightFov = 2.0f*atanf(Length(g_sceneUpper - sceneCenter) / Length(g_lightPos - sceneCenter));
+    float lightFov = 2.0f * atanf(Length(g_sceneUpper - sceneCenter) / Length(g_lightPos - sceneCenter));
 
     // scale and clamp fov for aesthetics
     lightFov = Clamp(lightFov, DegToRad(25.0f), DegToRad(65.0f));
 
     Matrix44 lightPerspective = ProjectionMatrix(RadToDeg(lightFov), 1.0f, 1.0f, 1000.0f);
     Matrix44 lightView = LookAtMatrix(Point3(g_lightPos), Point3(g_lightTarget));
-    Matrix44 lightTransform = lightPerspective*lightView;
+    Matrix44 lightTransform = lightPerspective * lightView;
 
     // radius used for drawing
-    float radius = Max(g_params.solidRestDistance, g_params.fluidRestDistance)*0.5f*g_pointScale;
+    float radius = Max(g_params.solidRestDistance, g_params.fluidRestDistance) * 0.5f * g_pointScale;
 
     //-------------------------------------
     // shadowing pass
@@ -1283,12 +1334,15 @@ void RenderScene() {
     DrawShapes();
 
     if (g_drawCloth && g_buffers->triangles.size()) {
-        DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0], g_buffers->uvs.size() ? &g_buffers->uvs[0].x : NULL, &g_buffers->triangles[0], g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
+        DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0], g_buffers->uvs.size() ? &g_buffers->uvs[0].x : NULL,
+                  &g_buffers->triangles[0], g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3,
+                  g_expandCloth);
     }
 
     if (g_drawRopes) {
         for (size_t i = 0; i < g_ropes.size(); ++i)
-            DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(), radius*g_ropeScale, i);
+            DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
+                     radius * g_ropeScale, i);
     }
 
     int shadowParticles = numParticles;
@@ -1301,8 +1355,7 @@ void RenderScene() {
             shadowParticles = numParticles - g_numSolidParticles;
             shadowParticlesOffset = g_numSolidParticles;
         }
-    }
-    else {
+    } else {
         int offset = g_drawMesh ? g_numSolidParticles : 0;
 
         shadowParticles = numParticles - offset;
@@ -1310,7 +1363,8 @@ void RenderScene() {
     }
 
     if (g_buffers->activeIndices.size())
-        DrawPoints(g_fluidRenderBuffers, shadowParticles, shadowParticlesOffset, radius, 2048, 1.0f, lightFov, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
+        DrawPoints(g_fluidRenderBuffers, shadowParticles, shadowParticlesOffset, radius, 2048, 1.0f, lightFov,
+                   g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
 
     ShadowEnd();
 
@@ -1327,7 +1381,7 @@ void RenderScene() {
     int passes = g_increaseGfxLoadForAsyncComputeTesting ? 50 : 1;
 
     for (int i = 0; i != passes; i++) {
-        DrawPlanes((Vec4*)g_params.planes, g_params.numPlanes, g_drawPlaneBias);
+        DrawPlanes((Vec4 *) g_params.planes, g_params.numPlanes, g_drawPlaneBias);
 
         if (g_drawMesh)
             DrawMesh(g_mesh, g_meshColor);
@@ -1336,11 +1390,14 @@ void RenderScene() {
         DrawShapes();
 
         if (g_drawCloth && g_buffers->triangles.size())
-            DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0], g_buffers->uvs.size() ? &g_buffers->uvs[0].x : nullptr, &g_buffers->triangles[0], g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
+            DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0],
+                      g_buffers->uvs.size() ? &g_buffers->uvs[0].x : nullptr, &g_buffers->triangles[0],
+                      g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
 
         if (g_drawRopes) {
             for (size_t i = 0; i < g_ropes.size(); ++i)
-                DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(), g_params.radius*0.5f*g_ropeScale, i);
+                DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
+                         g_params.radius * 0.5f * g_ropeScale, i);
         }
 
         // give scene a chance to do custom drawing
@@ -1350,27 +1407,36 @@ void RenderScene() {
 
     // first pass of diffuse particles (behind fluid surface)
     if (g_drawDiffuse)
-        RenderDiffuse(g_fluidRenderer, g_diffuseRenderBuffers, numDiffuse, radius*g_diffuseScale, float(g_screenWidth), aspect, fov, g_diffuseColor, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow, false);
+        RenderDiffuse(g_fluidRenderer, g_diffuseRenderBuffers, numDiffuse, radius * g_diffuseScale,
+                      float(g_screenWidth), aspect, fov, g_diffuseColor, g_lightPos, g_lightTarget, lightTransform,
+                      g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow,
+                      false);
 
     if (g_drawEllipsoids) {
         // draw solid particles separately
         if (g_numSolidParticles && g_drawPoints)
-            DrawPoints(g_fluidRenderBuffers, g_numSolidParticles, 0, radius, float(g_screenWidth), aspect, fov, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
+            DrawPoints(g_fluidRenderBuffers, g_numSolidParticles, 0, radius, float(g_screenWidth), aspect, fov,
+                       g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
 
         // render fluid surface
-        RenderEllipsoids(g_fluidRenderer, g_fluidRenderBuffers, numParticles - g_numSolidParticles, g_numSolidParticles, radius, float(g_screenWidth), aspect, fov, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_fluidColor, g_blur, g_ior, g_drawOpaque);
+        RenderEllipsoids(g_fluidRenderer, g_fluidRenderBuffers, numParticles - g_numSolidParticles, g_numSolidParticles,
+                         radius, float(g_screenWidth), aspect, fov, g_lightPos, g_lightTarget, lightTransform,
+                         g_shadowMap, g_fluidColor, g_blur, g_ior, g_drawOpaque);
 
         // second pass of diffuse particles for particles in front of fluid surface
         if (g_drawDiffuse)
-            RenderDiffuse(g_fluidRenderer, g_diffuseRenderBuffers, numDiffuse, radius*g_diffuseScale, float(g_screenWidth), aspect, fov, g_diffuseColor, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow, true);
-    }
-    else {
+            RenderDiffuse(g_fluidRenderer, g_diffuseRenderBuffers, numDiffuse, radius * g_diffuseScale,
+                          float(g_screenWidth), aspect, fov, g_diffuseColor, g_lightPos, g_lightTarget, lightTransform,
+                          g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow,
+                          true);
+    } else {
         // draw all particles as spheres
         if (g_drawPoints) {
             int offset = g_drawMesh ? g_numSolidParticles : 0;
 
             if (g_buffers->activeIndices.size())
-                DrawPoints(g_fluidRenderBuffers, numParticles - offset, offset, radius, float(g_screenWidth), aspect, fov, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
+                DrawPoints(g_fluidRenderBuffers, numParticles - offset, offset, radius, float(g_screenWidth), aspect,
+                           fov, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
         }
     }
 
@@ -1421,12 +1487,13 @@ void RenderDebug() {
     if (g_drawContacts) {
         const int maxContactsPerParticle = 6;
 
-        NvFlexVector<Vec4> contactPlanes(g_flexLib, g_buffers->positions.size()*maxContactsPerParticle);
-        NvFlexVector<Vec4> contactVelocities(g_flexLib, g_buffers->positions.size()*maxContactsPerParticle);
+        NvFlexVector<Vec4> contactPlanes(g_flexLib, g_buffers->positions.size() * maxContactsPerParticle);
+        NvFlexVector<Vec4> contactVelocities(g_flexLib, g_buffers->positions.size() * maxContactsPerParticle);
         NvFlexVector<int> contactIndices(g_flexLib, g_buffers->positions.size());
         NvFlexVector<unsigned int> contactCounts(g_flexLib, g_buffers->positions.size());
 
-        NvFlexGetContacts(g_solver, contactPlanes.buffer, contactVelocities.buffer, contactIndices.buffer, contactCounts.buffer);
+        NvFlexGetContacts(g_solver, contactPlanes.buffer, contactVelocities.buffer, contactIndices.buffer,
+                          contactCounts.buffer);
 
         // ensure transfers have finished
         contactPlanes.map();
@@ -1443,10 +1510,10 @@ void RenderDebug() {
             const float scale = 0.1f;
 
             for (unsigned int c = 0; c < count; ++c) {
-                Vec4 plane = contactPlanes[contactIndex*maxContactsPerParticle + c];
+                Vec4 plane = contactPlanes[contactIndex * maxContactsPerParticle + c];
 
                 DrawLine(Vec3(g_buffers->positions[g_buffers->activeIndices[i]]),
-                         Vec3(g_buffers->positions[g_buffers->activeIndices[i]]) + Vec3(plane)*scale,
+                         Vec3(g_buffers->positions[g_buffers->activeIndices[i]]) + Vec3(plane) * scale,
                          Vec4(0.0f, 1.0f, 0.0f, 0.0f));
             }
         }
@@ -1520,61 +1587,62 @@ void DrawShapes() {
         NvFlexCollisionGeometry geo = g_buffers->shapeGeometry[i];
 
         if (type == eNvFlexShapeSphere) {
-            Mesh* sphere = CreateSphere(20, 20, geo.sphere.radius);
+            Mesh *sphere = CreateSphere(20, 20, geo.sphere.radius);
 
-            Matrix44 xform = TranslationMatrix(Point3(position))*RotationMatrix(Quat(rotation));
+            Matrix44 xform = TranslationMatrix(Point3(position)) * RotationMatrix(Quat(rotation));
             sphere->Transform(xform);
 
             DrawMesh(sphere, Vec3(color));
 
             delete sphere;
-        }
-        else if (type == eNvFlexShapeCapsule) {
-            Mesh* capsule = CreateCapsule(10, 20, geo.capsule.radius, geo.capsule.halfHeight);
+        } else if (type == eNvFlexShapeCapsule) {
+            Mesh *capsule = CreateCapsule(10, 20, geo.capsule.radius, geo.capsule.halfHeight);
 
             // transform to world space
-            Matrix44 xform = TranslationMatrix(Point3(position))*RotationMatrix(Quat(rotation))*RotationMatrix(DegToRad(-90.0f), Vec3(0.0f, 0.0f, 1.0f));
+            Matrix44 xform = TranslationMatrix(Point3(position)) * RotationMatrix(Quat(rotation)) *
+                             RotationMatrix(DegToRad(-90.0f), Vec3(0.0f, 0.0f, 1.0f));
             capsule->Transform(xform);
 
             DrawMesh(capsule, Vec3(color));
 
             delete capsule;
-        }
-        else if (type == eNvFlexShapeBox) {
-            Mesh* box = CreateCubeMesh();
+        } else if (type == eNvFlexShapeBox) {
+            Mesh *box = CreateCubeMesh();
 
-            Matrix44 xform = TranslationMatrix(Point3(position))*RotationMatrix(Quat(rotation))*ScaleMatrix(Vec3(geo.box.halfExtents)*2.0f);
+            Matrix44 xform = TranslationMatrix(Point3(position)) * RotationMatrix(Quat(rotation)) *
+                             ScaleMatrix(Vec3(geo.box.halfExtents) * 2.0f);
             box->Transform(xform);
 
             DrawMesh(box, Vec3(color));
             delete box;
-        }
-        else if (type == eNvFlexShapeConvexMesh) {
+        } else if (type == eNvFlexShapeConvexMesh) {
             if (g_convexes.find(geo.convexMesh.mesh) != g_convexes.end()) {
-                GpuMesh* m = g_convexes[geo.convexMesh.mesh];
+                GpuMesh *m = g_convexes[geo.convexMesh.mesh];
 
                 if (m) {
-                    Matrix44 xform = TranslationMatrix(Point3(g_buffers->shapePositions[i]))*RotationMatrix(Quat(g_buffers->shapeRotations[i]))*ScaleMatrix(geo.convexMesh.scale);
+                    Matrix44 xform = TranslationMatrix(Point3(g_buffers->shapePositions[i])) *
+                                     RotationMatrix(Quat(g_buffers->shapeRotations[i])) *
+                                     ScaleMatrix(geo.convexMesh.scale);
                     DrawGpuMesh(m, xform, Vec3(color));
                 }
             }
-        }
-        else if (type == eNvFlexShapeTriangleMesh) {
+        } else if (type == eNvFlexShapeTriangleMesh) {
             if (g_meshes.find(geo.triMesh.mesh) != g_meshes.end()) {
-                GpuMesh* m = g_meshes[geo.triMesh.mesh];
+                GpuMesh *m = g_meshes[geo.triMesh.mesh];
 
                 if (m) {
-                    Matrix44 xform = TranslationMatrix(Point3(position))*RotationMatrix(Quat(rotation))*ScaleMatrix(geo.triMesh.scale);
+                    Matrix44 xform = TranslationMatrix(Point3(position)) * RotationMatrix(Quat(rotation)) *
+                                     ScaleMatrix(geo.triMesh.scale);
                     DrawGpuMesh(m, xform, Vec3(color));
                 }
             }
-        }
-        else if (type == eNvFlexShapeSDF) {
+        } else if (type == eNvFlexShapeSDF) {
             if (g_fields.find(geo.sdf.field) != g_fields.end()) {
-                GpuMesh* m = g_fields[geo.sdf.field];
+                GpuMesh *m = g_fields[geo.sdf.field];
 
                 if (m) {
-                    Matrix44 xform = TranslationMatrix(Point3(position))*RotationMatrix(Quat(rotation))*ScaleMatrix(geo.sdf.scale);
+                    Matrix44 xform = TranslationMatrix(Point3(position)) * RotationMatrix(Quat(rotation)) *
+                                     ScaleMatrix(geo.sdf.scale);
                     DrawGpuMesh(m, xform, Vec3(color));
                 }
             }
@@ -1611,60 +1679,104 @@ int DoUI() {
         int fontHeight = 13;
 
         if (g_profile) {
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Frame: %d", g_frame); y -= fontHeight * 2;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Frame: %d", g_frame);
+            y -= fontHeight * 2;
 
             if (!g_ffmpeg) {
-                DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Frame Time: %.2fms", g_realdt*1000.0f); y -= fontHeight * 2;
+                DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Frame Time: %.2fms", g_realdt * 1000.0f);
+                y -= fontHeight * 2;
 
                 // If detailed profiling is enabled, then these timers will contain the overhead of the detail timers, so we won't display them.
                 if (!g_profile) {
-                    DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Sim Time (CPU): %.2fms", g_updateTime*1000.0f); y -= fontHeight;
-                    DrawImguiString(x, y, Vec3(0.97f, 0.59f, 0.27f), IMGUI_ALIGN_RIGHT, "Sim Latency (GPU): %.2fms", g_simLatency); y -= fontHeight * 2;
+                    DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Sim Time (CPU): %.2fms",
+                                    g_updateTime * 1000.0f);
+                    y -= fontHeight;
+                    DrawImguiString(x, y, Vec3(0.97f, 0.59f, 0.27f), IMGUI_ALIGN_RIGHT, "Sim Latency (GPU): %.2fms",
+                                    g_simLatency);
+                    y -= fontHeight * 2;
 
                     BenchmarkUpdateGraph();
-                }
-                else {
+                } else {
                     y -= fontHeight * 3;
                 }
             }
 
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Particle Count: %d", numParticles); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Diffuse Count: %d", numDiffuse); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Rigid Count: %d", g_buffers->rigidOffsets.size() > 0 ? g_buffers->rigidOffsets.size() - 1 : 0); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Spring Count: %d", g_buffers->springLengths.size()); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Num Substeps: %d", g_numSubsteps); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Num Iterations: %d", g_params.numIterations); y -= fontHeight * 2;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Particle Count: %d", numParticles);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Diffuse Count: %d", numDiffuse);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Rigid Count: %d",
+                            g_buffers->rigidOffsets.size() > 0 ? g_buffers->rigidOffsets.size() - 1 : 0);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Spring Count: %d", g_buffers->springLengths.size());
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Num Substeps: %d", g_numSubsteps);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Num Iterations: %d", g_params.numIterations);
+            y -= fontHeight * 2;
 
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Device: %s", g_deviceName); y -= fontHeight * 2;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Device: %s", g_deviceName);
+            y -= fontHeight * 2;
         }
 
         if (g_profile) {
-            DrawImguiString(x, y, Vec3(0.97f, 0.59f, 0.27f), IMGUI_ALIGN_RIGHT, "Total GPU Sim Latency: %.2fms", g_timers.total); y -= fontHeight * 2;
+            DrawImguiString(x, y, Vec3(0.97f, 0.59f, 0.27f), IMGUI_ALIGN_RIGHT, "Total GPU Sim Latency: %.2fms",
+                            g_timers.total);
+            y -= fontHeight * 2;
 
-            DrawImguiString(x, y, Vec3(0.0f, 1.0f, 0.0f), IMGUI_ALIGN_RIGHT, "GPU Latencies"); y -= fontHeight;
+            DrawImguiString(x, y, Vec3(0.0f, 1.0f, 0.0f), IMGUI_ALIGN_RIGHT, "GPU Latencies");
+            y -= fontHeight;
 
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Predict: %.2fms", g_timers.predict); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Create Cell Indices: %.2fms", g_timers.createCellIndices); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Sort Cell Indices: %.2fms", g_timers.sortCellIndices); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Reorder: %.2fms", g_timers.reorder); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "CreateGrid: %.2fms", g_timers.createGrid); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Collide Particles: %.2fms", g_timers.collideParticles); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Collide Shapes: %.2fms", g_timers.collideShapes); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Collide Triangles: %.2fms", g_timers.collideTriangles); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Calculate Density: %.2fms", g_timers.calculateDensity); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Densities: %.2fms", g_timers.solveDensities); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Velocities: %.2fms", g_timers.solveVelocities); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Rigids: %.2fms", g_timers.solveShapes); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Springs: %.2fms", g_timers.solveSprings); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Inflatables: %.2fms", g_timers.solveInflatables); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Contacts: %.2fms", g_timers.solveContacts); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Apply Deltas: %.2fms", g_timers.applyDeltas); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Finalize: %.2fms", g_timers.finalize); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Update Triangles: %.2fms", g_timers.updateTriangles); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Update Normals: %.2fms", g_timers.updateNormals); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Update Bounds: %.2fms", g_timers.updateBounds); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Calculate Anisotropy: %.2fms", g_timers.calculateAnisotropy); y -= fontHeight;
-            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Update Diffuse: %.2fms", g_timers.updateDiffuse); y -= fontHeight * 2;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Predict: %.2fms", g_timers.predict);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Create Cell Indices: %.2fms",
+                            g_timers.createCellIndices);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Sort Cell Indices: %.2fms", g_timers.sortCellIndices);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Reorder: %.2fms", g_timers.reorder);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "CreateGrid: %.2fms", g_timers.createGrid);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Collide Particles: %.2fms",
+                            g_timers.collideParticles);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Collide Shapes: %.2fms", g_timers.collideShapes);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Collide Triangles: %.2fms",
+                            g_timers.collideTriangles);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Calculate Density: %.2fms",
+                            g_timers.calculateDensity);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Densities: %.2fms", g_timers.solveDensities);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Velocities: %.2fms", g_timers.solveVelocities);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Rigids: %.2fms", g_timers.solveShapes);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Springs: %.2fms", g_timers.solveSprings);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Inflatables: %.2fms",
+                            g_timers.solveInflatables);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Solve Contacts: %.2fms", g_timers.solveContacts);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Apply Deltas: %.2fms", g_timers.applyDeltas);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Finalize: %.2fms", g_timers.finalize);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Update Triangles: %.2fms", g_timers.updateTriangles);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Update Normals: %.2fms", g_timers.updateNormals);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Update Bounds: %.2fms", g_timers.updateBounds);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Calculate Anisotropy: %.2fms",
+                            g_timers.calculateAnisotropy);
+            y -= fontHeight;
+            DrawImguiString(x, y, Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Update Diffuse: %.2fms", g_timers.updateDiffuse);
+            y -= fontHeight * 2;
         }
 
         x -= 180;
@@ -1676,9 +1788,11 @@ int DoUI() {
         int uiLeft = uiBorder;
 
         if (g_tweakPanel)
-            imguiBeginScrollArea("Scene", uiLeft, g_screenHeight - uiBorder - uiOffset, uiWidth, uiOffset, &g_levelScroll);
+            imguiBeginScrollArea("Scene", uiLeft, g_screenHeight - uiBorder - uiOffset, uiWidth, uiOffset,
+                                 &g_levelScroll);
         else
-            imguiBeginScrollArea("Scene", uiLeft, uiBorder, uiWidth, g_screenHeight - uiBorder - uiBorder, &g_levelScroll);
+            imguiBeginScrollArea("Scene", uiLeft, uiBorder, uiWidth, g_screenHeight - uiBorder - uiBorder,
+                                 &g_levelScroll);
 
         for (int i = 0; i < int(g_scenes.size()); ++i) {
             unsigned int color = g_scene == i ? imguiRGBA(255, 151, 61, 255) : imguiRGBA(255, 255, 255, 200);
@@ -1692,7 +1806,8 @@ int DoUI() {
         if (g_tweakPanel) {
             static int scroll = 0;
 
-            imguiBeginScrollArea("Options", uiLeft, g_screenHeight - uiBorder - uiHeight - uiOffset - uiBorder, uiWidth, uiHeight, &scroll);
+            imguiBeginScrollArea("Options", uiLeft, g_screenHeight - uiBorder - uiHeight - uiOffset - uiBorder, uiWidth,
+                                 uiHeight, &scroll);
             imguiSeparatorLine();
 
             // global options
@@ -1862,8 +1977,7 @@ void UpdateFrame(py::array_t<float> update_params) {
 
         if ((leftStick.x != 0.0f || leftStick.y != 0.0f) && !bLeftStick) {
             bLeftStick = true;
-        }
-        else if ((leftStick.x == 0.0f && leftStick.y == 0.0f) && bLeftStick) {
+        } else if ((leftStick.x == 0.0f && leftStick.y == 0.0f) && bLeftStick) {
             bLeftStick = false;
             g_camVel.z = -4 * g_camSpeed * leftStick.y;
             g_camVel.x = 4 * g_camSpeed * leftStick.x;
@@ -1881,8 +1995,7 @@ void UpdateFrame(py::array_t<float> update_params) {
             e.button = SDL_CONTROLLER_BUTTON_LEFT_TRIGGER;
             ControllerButtonEvent(e);
             bLeftTrigger = true;
-        }
-        else if (bLeftTrigger && trigger.x == 0.0f) {
+        } else if (bLeftTrigger && trigger.x == 0.0f) {
             e.type = SDL_CONTROLLERBUTTONUP;
             e.button = SDL_CONTROLLER_BUTTON_LEFT_TRIGGER;
             ControllerButtonEvent(e);
@@ -1894,8 +2007,7 @@ void UpdateFrame(py::array_t<float> update_params) {
             e.button = SDL_CONTROLLER_BUTTON_RIGHT_TRIGGER;
             ControllerButtonEvent(e);
             bRightTrigger = true;
-        }
-        else if (bRightTrigger && trigger.y == 0.0f) {
+        } else if (bRightTrigger && trigger.y == 0.0f) {
             e.type = SDL_CONTROLLERBUTTONDOWN;
             e.button = SDL_CONTROLLER_BUTTON_RIGHT_TRIGGER;
             ControllerButtonEvent(e);
@@ -1913,9 +2025,11 @@ void UpdateFrame(py::array_t<float> update_params) {
     double waitEndTime = GetSeconds();
 
     // Getting timers causes CPU/GPU sync, so we do it after a map
-    float newSimLatency = NvFlexGetDeviceLatency(g_solver, &g_GpuTimers.computeBegin, &g_GpuTimers.computeEnd, &g_GpuTimers.computeFreq);
-    float newGfxLatency = RendererGetDeviceTimestamps(&g_GpuTimers.renderBegin, &g_GpuTimers.renderEnd, &g_GpuTimers.renderFreq);
-    (void)newGfxLatency;
+    float newSimLatency = NvFlexGetDeviceLatency(g_solver, &g_GpuTimers.computeBegin, &g_GpuTimers.computeEnd,
+                                                 &g_GpuTimers.computeFreq);
+    float newGfxLatency = RendererGetDeviceTimestamps(&g_GpuTimers.renderBegin, &g_GpuTimers.renderEnd,
+                                                      &g_GpuTimers.renderFreq);
+    (void) newGfxLatency;
 
     UpdateCamera();
 
@@ -1934,8 +2048,7 @@ void UpdateFrame(py::array_t<float> update_params) {
     if (g_profile && (!g_pause || g_step)) {
         if (g_benchmark) {
             g_numDetailTimers = NvFlexGetDetailTimers(g_solver, &g_detailTimers);
-        }
-        else {
+        } else {
             memset(&g_timers, 0, sizeof(g_timers));
             NvFlexGetTimers(g_solver, &g_timers);
         }
@@ -1963,16 +2076,16 @@ void UpdateFrame(py::array_t<float> update_params) {
         Vec3 origin, dir;
         GetViewRay(g_lastx, g_screenHeight - g_lasty, origin, dir);
 
-        g_mousePos = origin + dir*g_mouseT;
+        g_mousePos = origin + dir * g_mouseT;
     }
 
     if (g_capture) {
         TgaImage img;
         img.m_width = g_screenWidth;
         img.m_height = g_screenHeight;
-        img.m_data = new uint32_t[g_screenWidth*g_screenHeight];
+        img.m_data = new uint32_t[g_screenWidth * g_screenHeight];
 
-        ReadFrame((int*)img.m_data, g_screenWidth, g_screenHeight);
+        ReadFrame((int *) img.m_data, g_screenWidth, g_screenHeight);
         TgaSave(g_ffmpeg, img, false);
 
         // fwrite(img.m_data, sizeof(uint32_t)*g_screenWidth*g_screenHeight, 1, g_ffmpeg);
@@ -2006,14 +2119,14 @@ void UpdateFrame(py::array_t<float> update_params) {
 
     if (g_shapesChanged) {
         NvFlexSetShapes(
-            g_solver,
-            g_buffers->shapeGeometry.buffer,
-            g_buffers->shapePositions.buffer,
-            g_buffers->shapeRotations.buffer,
-            g_buffers->shapePrevPositions.buffer,
-            g_buffers->shapePrevRotations.buffer,
-            g_buffers->shapeFlags.buffer,
-            int(g_buffers->shapeFlags.size()));
+                g_solver,
+                g_buffers->shapeGeometry.buffer,
+                g_buffers->shapePositions.buffer,
+                g_buffers->shapeRotations.buffer,
+                g_buffers->shapePrevPositions.buffer,
+                g_buffers->shapePrevRotations.buffer,
+                g_buffers->shapeFlags.buffer,
+                int(g_buffers->shapeFlags.size()));
 
         g_shapesChanged = false;
     }
@@ -2038,17 +2151,21 @@ void UpdateFrame(py::array_t<float> update_params) {
 
     // readback triangle normals
     if (g_buffers->triangles.size())
-        NvFlexGetDynamicTriangles(g_solver, g_buffers->triangles.buffer, g_buffers->triangleNormals.buffer, g_buffers->triangles.size() / 3);
+        NvFlexGetDynamicTriangles(g_solver, g_buffers->triangles.buffer, g_buffers->triangleNormals.buffer,
+                                  g_buffers->triangles.size() / 3);
 
     // readback rigid transforms
     if (g_buffers->rigidOffsets.size())
-        NvFlexGetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer, g_buffers->rigidLocalPositions.buffer, nullptr, nullptr, nullptr, nullptr, g_buffers->rigidRotations.buffer, g_buffers->rigidTranslations.buffer);
+        NvFlexGetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer,
+                        g_buffers->rigidLocalPositions.buffer, nullptr, nullptr, nullptr, nullptr,
+                        g_buffers->rigidRotations.buffer, g_buffers->rigidTranslations.buffer);
 
     if (!g_interop) {
         // if not using interop then we read back fluid data to host
         if (g_drawEllipsoids) {
             NvFlexGetSmoothParticles(g_solver, g_buffers->smoothPositions.buffer, nullptr);
-            NvFlexGetAnisotropy(g_solver, g_buffers->anisotropy1.buffer, g_buffers->anisotropy2.buffer, g_buffers->anisotropy3.buffer, NULL);
+            NvFlexGetAnisotropy(g_solver, g_buffers->anisotropy1.buffer, g_buffers->anisotropy2.buffer,
+                                g_buffers->anisotropy3.buffer, NULL);
         }
 
         // read back diffuse data to host
@@ -2056,10 +2173,10 @@ void UpdateFrame(py::array_t<float> update_params) {
             NvFlexGetDensities(g_solver, g_buffers->densities.buffer, nullptr);
 
         if (GetNumDiffuseRenderParticles(g_diffuseRenderBuffers)) {
-            NvFlexGetDiffuseParticles(g_solver, g_buffers->diffusePositions.buffer, g_buffers->diffuseVelocities.buffer, g_buffers->diffuseCount.buffer);
+            NvFlexGetDiffuseParticles(g_solver, g_buffers->diffusePositions.buffer, g_buffers->diffuseVelocities.buffer,
+                                      g_buffers->diffuseCount.buffer);
         }
-    }
-    else {
+    } else {
         // read back just the new diffuse particle count, render buffers will be updated during rendering
         NvFlexGetDiffuseParticles(g_solver, nullptr, nullptr, g_buffers->diffuseCount.buffer);
     }
@@ -2304,7 +2421,7 @@ void InputKeyboardUp(unsigned char key, int x, int y) {
 }
 
 void MouseFunc(int b, int state, int x, int y) {
-	switch (state) {
+    switch (state) {
         case SDL_RELEASED: {
             g_lastx = x;
             g_lasty = y;
@@ -2341,14 +2458,14 @@ void MouseMotionFunc(unsigned state, int x, int y) {
         const float kSensitivity = DegToRad(0.1f);
         const float kMaxDelta = FLT_MAX;
 
-        g_camAngle.x -= Clamp(dx*kSensitivity, -kMaxDelta, kMaxDelta);
-        g_camAngle.y -= Clamp(dy*kSensitivity, -kMaxDelta, kMaxDelta);
+        g_camAngle.x -= Clamp(dx * kSensitivity, -kMaxDelta, kMaxDelta);
+        g_camAngle.y -= Clamp(dy * kSensitivity, -kMaxDelta, kMaxDelta);
     }
 }
 
 bool g_Error = false;
 
-void ErrorCallback(NvFlexErrorSeverity severity, const char* msg, const char* file, int line) {
+void ErrorCallback(NvFlexErrorSeverity severity, const char *msg, const char *file, int line) {
     printf("Flex: %s - %s:%d\n", msg, file, line);
     g_Error = (severity == eNvFlexLogError);
     //assert(0); asserts are bad for TeamCity
@@ -2369,8 +2486,7 @@ void ControllerButtonEvent(SDL_ControllerButtonEvent event) {
             // record that we need to update the picked particle
             g_mousePicked = true;
         }
-    }
-    else {
+    } else {
         InputKeyboardUp(GetKeyFromGameControllerButton(SDL_GameControllerButton(event.button)), 0, 0);
         InputArrowKeysUp(GetKeyFromGameControllerButton(SDL_GameControllerButton(event.button)), 0, 0);
 
@@ -2384,29 +2500,30 @@ void ControllerButtonEvent(SDL_ControllerButtonEvent event) {
 }
 
 void ControllerDeviceUpdate() {
-	if (SDL_NumJoysticks() > 0) {
-		SDL_JoystickEventState(SDL_ENABLE);
-		if (SDL_IsGameController(0)) {
-			g_gamecontroller = SDL_GameControllerOpen(0);
-		}
-	}
+    if (SDL_NumJoysticks() > 0) {
+        SDL_JoystickEventState(SDL_ENABLE);
+        if (SDL_IsGameController(0)) {
+            g_gamecontroller = SDL_GameControllerOpen(0);
+        }
+    }
 }
 
-void SDLInit(const char* title) {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0)	// Initialize SDL's Video subsystem and game controllers
-		printf("Unable to initialize SDL");
+void SDLInit(const char *title) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) <
+        0)    // Initialize SDL's Video subsystem and game controllers
+        printf("Unable to initialize SDL");
 
-	unsigned int flags = SDL_WINDOW_RESIZABLE;
+    unsigned int flags = SDL_WINDOW_RESIZABLE;
 
-	if (g_graphics == 0) {
-		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-		flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
-	}
+    if (g_graphics == 0) {
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+    }
 
-	g_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		g_screenWidth, g_screenHeight, flags);
+    g_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                g_screenWidth, g_screenHeight, flags);
 
-	g_windowId = SDL_GetWindowID(g_window);
+    g_windowId = SDL_GetWindowID(g_window);
 }
 
 char octopus_path[100];
@@ -2420,7 +2537,7 @@ char bunny_path[100];
 char box_high_path[100];
 char sphere_path[100];
 
-char* make_path(char* full_path, std::string path) {
+char *make_path(char *full_path, std::string path) {
     strcpy(full_path, getenv("PYFLEXROOT"));
     strcat(full_path, path.c_str());
     return full_path;
@@ -2852,7 +2969,7 @@ void pyflex_step(py::array_t<float> update_params, int capture, char *path) {
 }
 
 float rand_float(float LO, float HI) {
-    return LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/(HI-LO)));
+    return LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
 }
 
 void pyflex_set_scene(int scene_idx, py::array_t<float> scene_params, int thread_idx = 0) {
@@ -2861,7 +2978,7 @@ void pyflex_set_scene(int scene_idx, py::array_t<float> scene_params, int thread
     Init(g_selectedScene, scene_params, true, thread_idx);
 }
 
-void pyflex_MapShapeBuffers(SimBuffers* buffers) {
+void pyflex_MapShapeBuffers(SimBuffers *buffers) {
     buffers->shapeGeometry.map();
     buffers->shapePositions.map();
     buffers->shapeRotations.map();
@@ -2870,7 +2987,7 @@ void pyflex_MapShapeBuffers(SimBuffers* buffers) {
     buffers->shapeFlags.map();
 }
 
-void pyflex_UnmapShapeBuffers(SimBuffers* buffers) {
+void pyflex_UnmapShapeBuffers(SimBuffers *buffers) {
     buffers->shapeGeometry.unmap();
     buffers->shapePositions.unmap();
     buffers->shapeRotations.unmap();
@@ -2896,8 +3013,7 @@ void pyflex_add_box(py::array_t<float> halfEdge_, py::array_t<float> center_, py
     pyflex_UnmapShapeBuffers(g_buffers);
 }
 
-void pyflex_add_sphere(float radius, py::array_t<float> position_, py::array_t<float> quat_)
-{
+void pyflex_add_sphere(float radius, py::array_t<float> position_, py::array_t<float> quat_) {
     pyflex_MapShapeBuffers(g_buffers);
 
     auto ptr_center = (float *) position_.request().ptr;
@@ -2949,7 +3065,7 @@ void pyflex_set_positions(py::array_t<float> positions) {
     auto buf = positions.request();
     auto ptr = (float *) buf.ptr;
 
-    for (size_t i = 0; i < (size_t)g_buffers->positions.size(); i++) {
+    for (size_t i = 0; i < (size_t) g_buffers->positions.size(); i++) {
         g_buffers->positions[i].x = ptr[i * 4];
         g_buffers->positions[i].y = ptr[i * 4 + 1];
         g_buffers->positions[i].z = ptr[i * 4 + 2];
@@ -3055,14 +3171,14 @@ py::array_t<float> pyflex_get_rigidGlobalPositions() {
 
         for (int j = st; j < ed; j++) {
             const int r = g_buffers->rigidIndices[j];
-            Vec3 p = Rotate(g_buffers->rigidRotations[i], g_buffers->rigidLocalPositions[count++]) + g_buffers->rigidTranslations[i];
+            Vec3 p = Rotate(g_buffers->rigidRotations[i], g_buffers->rigidLocalPositions[count++]) +
+                     g_buffers->rigidTranslations[i];
 
             if (n_clusters[r] == 0) {
                 ptr[r * 3] = p.x;
                 ptr[r * 3 + 1] = p.y;
                 ptr[r * 3 + 2] = p.z;
-            }
-            else {
+            } else {
                 ptr[r * 3] += p.x;
                 ptr[r * 3 + 1] += p.y;
                 ptr[r * 3 + 2] += p.z;
@@ -3153,7 +3269,7 @@ void pyflex_set_velocities(py::array_t<float> velocities) {
     auto buf = velocities.request();
     auto ptr = (float *) buf.ptr;
 
-    for (size_t i = 0; i < (size_t)g_buffers->velocities.size(); i++) {
+    for (size_t i = 0; i < (size_t) g_buffers->velocities.size(); i++) {
         g_buffers->velocities[i].x = ptr[i * 3];
         g_buffers->velocities[i].y = ptr[i * 3 + 1];
         g_buffers->velocities[i].z = ptr[i * 3 + 2];
@@ -3251,8 +3367,7 @@ py::array_t<float> pyflex_get_sceneParams() {
         ptr[2] = ((yz_SoftBody *) g_scenes[g_scene])->mInstances[0].mClusterPlasticCreep;
 
         return params;
-    }
-    else {
+    } else {
         printf("Unsupprted scene_idx %d\n", g_scene);
 
         auto params = py::array_t<float>(1);
@@ -3287,12 +3402,17 @@ py::array_t<float> pyflex_get_sceneLower() {
     return scene_lower;
 }
 
-void pyflex_render(int capture, char *path) {
-    if (capture == 1) {
-        g_capture = true;
-        g_ffmpeg = fopen(path, "wb");
-    }
+py::array_t<int> pyflex_get_camera_params() {
+    // Right now only returns width and height for the default screen camera
+    auto default_camera_param = py::array_t<int>(2);
+    auto default_camera_param_ptr = (int *) default_camera_param.request().ptr;
+    default_camera_param_ptr[0] = g_screenWidth;
+    default_camera_param_ptr[1] = g_screenHeight;
+    return default_camera_param;
+}
 
+py::array_t<int> pyflex_render() {
+    // TODO: Turn off the GUI menu for rendering
     static double lastTime;
 
     // real elapsed frame time
@@ -3311,9 +3431,11 @@ void pyflex_render(int capture, char *path) {
     double waitEndTime = GetSeconds();
 
     // Getting timers causes CPU/GPU sync, so we do it after a map
-    float newSimLatency = NvFlexGetDeviceLatency(g_solver, &g_GpuTimers.computeBegin, &g_GpuTimers.computeEnd, &g_GpuTimers.computeFreq);
-    float newGfxLatency = RendererGetDeviceTimestamps(&g_GpuTimers.renderBegin, &g_GpuTimers.renderEnd, &g_GpuTimers.renderFreq);
-    (void)newGfxLatency;
+    float newSimLatency = NvFlexGetDeviceLatency(g_solver, &g_GpuTimers.computeBegin, &g_GpuTimers.computeEnd,
+                                                 &g_GpuTimers.computeFreq);
+    float newGfxLatency = RendererGetDeviceTimestamps(&g_GpuTimers.renderBegin, &g_GpuTimers.renderEnd,
+                                                      &g_GpuTimers.renderFreq);
+    (void) newGfxLatency;
 
     UpdateCamera();
 
@@ -3332,8 +3454,7 @@ void pyflex_render(int capture, char *path) {
     if (g_profile && (!g_pause || g_step)) {
         if (g_benchmark) {
             g_numDetailTimers = NvFlexGetDetailTimers(g_solver, &g_detailTimers);
-        }
-        else {
+        } else {
             memset(&g_timers, 0, sizeof(g_timers));
             NvFlexGetTimers(g_solver, &g_timers);
         }
@@ -3361,22 +3482,41 @@ void pyflex_render(int capture, char *path) {
         Vec3 origin, dir;
         GetViewRay(g_lastx, g_screenHeight - g_lasty, origin, dir);
 
-        g_mousePos = origin + dir*g_mouseT;
+        g_mousePos = origin + dir * g_mouseT;
     }
 
-    if (g_capture) {
-        TgaImage img;
-        img.m_width = g_screenWidth;
-        img.m_height = g_screenHeight;
-        img.m_data = new uint32_t[g_screenWidth*g_screenHeight];
+    // Original function for rendering and saving to disk
+//    if (g_capture) {
+//        TgaImage img;
+//        img.m_width = g_screenWidth;
+//        img.m_height = g_screenHeight;
+//        img.m_data = new uint32_t[g_screenWidth*g_screenHeight];
+//
+//        ReadFrame((int*)img.m_data, g_screenWidth, g_screenHeight);
+//        TgaSave(g_ffmpeg, img, false);
+//
+//        // fwrite(img.m_data, sizeof(uint32_t)*g_screenWidth*g_screenHeight, 1, g_ffmpeg);
+//
+//        delete[] img.m_data;
+//    }
 
-        ReadFrame((int*)img.m_data, g_screenWidth, g_screenHeight);
-        TgaSave(g_ffmpeg, img, false);
+//    auto rendered_img = py::array_t<uint32_t>((uint32_t) g_screenWidth*g_screenHeight);
+    auto rendered_img = py::array_t<uint8_t>((int) g_screenWidth * g_screenHeight * 4);
+    auto rendered_img_ptr = (uint8_t *) rendered_img.request().ptr;
 
-        // fwrite(img.m_data, sizeof(uint32_t)*g_screenWidth*g_screenHeight, 1, g_ffmpeg);
+    int rendered_img_int32_ptr[g_screenWidth * g_screenHeight];
+    ReadFrame(rendered_img_int32_ptr, g_screenWidth, g_screenHeight);
 
-        delete[] img.m_data;
+    for (int i = 0; i < g_screenWidth * g_screenHeight; ++i) {
+        int32_abgr_to_int8_rgba((uint32_t) rendered_img_int32_ptr[i],
+                                rendered_img_ptr[4 * i],
+                                rendered_img_ptr[4 * i + 1],
+                                rendered_img_ptr[4 * i + 2],
+                                rendered_img_ptr[4 * i + 3]);
     }
+    // Should be able to return the image here, instead of at the end
+
+//    delete[] img.m_data;
 
     double renderEndTime = GetSeconds();
 
@@ -3452,11 +3592,7 @@ void pyflex_render(int capture, char *path) {
 
     SDL_EventFunc();
 
-    if (capture == 1) {
-        g_capture = false;
-        fclose(g_ffmpeg);
-        g_ffmpeg = nullptr;
-    }
+    return rendered_img;
 }
 
 
@@ -3470,9 +3606,8 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("update_params") = nullptr,
           py::arg("capture") = 0,
           py::arg("path") = nullptr);
-    m.def("render", &pyflex_render,
-          py::arg("capture") = 0,
-          py::arg("path") = nullptr);
+    m.def("render", &pyflex_render);
+    m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
 
     m.def("add_box", &pyflex_add_box, "Add box to the scene");
     m.def("add_sphere", &pyflex_add_sphere, "Add sphere to the scene");
