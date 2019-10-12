@@ -2896,6 +2896,21 @@ void pyflex_add_box(py::array_t<float> halfEdge_, py::array_t<float> center_, py
     pyflex_UnmapShapeBuffers(g_buffers);
 }
 
+void pyflex_add_sphere(float radius, py::array_t<float> position_, py::array_t<float> quat_)
+{
+    pyflex_MapShapeBuffers(g_buffers);
+
+    auto ptr_center = (float *) position_.request().ptr;
+    Vec3 center = Vec3(ptr_center[0], ptr_center[1], ptr_center[2]);
+
+    auto ptr_quat = (float *) quat_.request().ptr;
+    Quat quat = Quat(ptr_quat[0], ptr_quat[1], ptr_quat[2], ptr_quat[3]);
+
+    AddSphere(radius, center, quat);
+
+    pyflex_UnmapShapeBuffers(g_buffers);
+}
+
 int pyflex_get_n_particles() {
     g_buffers->positions.map();
     int n_particles = g_buffers->positions.size();
@@ -3460,6 +3475,7 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("path") = nullptr);
 
     m.def("add_box", &pyflex_add_box, "Add box to the scene");
+    m.def("add_sphere", &pyflex_add_sphere, "Add sphere to the scene");
 
     m.def("get_n_particles", &pyflex_get_n_particles, "Get the number of particles");
     m.def("get_n_shapes", &pyflex_get_n_shapes, "Get the number of shapes");

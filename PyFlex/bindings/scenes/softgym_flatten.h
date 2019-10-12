@@ -10,9 +10,12 @@ public:
 	    //for (int i=0; i < 5; i++)
 			//AddRandomConvex(10, Vec3(i*2.0f, 0.0f, Randf(0.0f, 2.0f)), minSize, maxSize, Vec3(0.0f, 1.0f, 0.0f), Randf(0.0f, k2Pi));
 			//AddBox(Vec3(2.0f, 0.5f, Randf(0.0f, 2.0f)),Vec3(i*2.0f, 0.0f, Randf(0.0f, 2.0f)));
+        auto ptr = (float *) scene_params.request().ptr;
+        float pickp = ptr[0];
+        int pickpoint = (int) pickp;
 
-		int dimx = 64;
-		int dimz = 32;
+		int dimx = (int) ptr[1]; //64;
+		int dimz = (int) ptr[2]; //32;
 		float radius = 0.05f;
 
 		float stretchStiffness = 0.9f;
@@ -23,9 +26,8 @@ public:
 
 		CreateSpringGrid(Vec3(0.0f, 2.0f, 2.0f), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness, shearStiffness, 0.0f, 1.0f);
 
-        auto ptr = (float *) scene_params.request().ptr;
-        float pickp = ptr[0];
-        int pickpoint = (int) pickp;
+
+        g_buffers->positions[pickpoint].w = 0;
         for (int i=0; i < int(g_buffers->positions.size()); ++i)
 		{
 			// hack to rotate cloth
@@ -42,7 +44,7 @@ public:
 				//float sqrDist = LengthSq(Vec3(g_buffers->positions[c1])-Vec3(g_buffers->positions[c2]));
 
 
-                CreateSpring(pickpoint, i, stiffness, give);
+                //CreateSpring(pickpoint, i, stiffness, give);
                 //CreateSpring(c2, i, stiffness, give);
 
 

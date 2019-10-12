@@ -45,11 +45,13 @@ class FlexEnv(gym.Env):
     def get_state(self):
         pos = pyflex.get_positions()
         vel = pyflex.get_velocities()
-        return {'particle_pos': pos, 'particle_vel': vel}
+        shape_pos = pyflex.get_shape_states()
+        return {'particle_pos': pos, 'particle_vel': vel, 'shape_pos': shape_pos}
 
     def set_state(self, state_dict):
         pyflex.set_positions(state_dict['particle_pos'])
         pyflex.set_velocities(state_dict['particle_vel'])
+        pyflex.set_shape_states(state_dict['shape_pos'])
 
     def close(self):
         pyflex.clean()
