@@ -3041,6 +3041,72 @@ int pyflex_get_n_shapes() {
     return n_shapes;
 }
 
+py::array_t<int> pyflex_get_groups() {
+    g_buffers->phases.map();
+
+    auto groups = py::array_t<int>((size_t) g_buffers->phases.size());
+    auto ptr = (int *) groups.request().ptr;
+
+    for (size_t i = 0; i < (size_t) g_buffers->phases.size(); i++) {
+        ptr[i] = g_buffers->phases[i] & 0xfffff; // Flex 1.1 manual actually says 24 bits while it is actually 20 bits
+    }
+
+    g_buffers->phases.unmap();
+
+    return groups;
+}
+
+
+void pyflex_set_groups(py::array_t<int> groups) {
+//    if (not set_color)
+//        cout<<"Warning: Overloading GroupMask for colors. Make sure the eFlexPhaseSelfCollide is set!"<<endl;
+    g_buffers->phases.map();
+
+    auto buf = groups.request();
+    auto ptr = (int *) buf.ptr;
+
+    for (size_t i = 0; i < (size_t) g_buffers->phases.size(); i++) {
+        g_buffers->phases[i] = (g_buffers->phases[i] & ~0xfffff) | ptr[i];
+    }
+
+    g_buffers->phases.unmap();
+
+    NvFlexSetParticles(g_solver, g_buffers->phases.buffer, nullptr);
+}
+
+py::array_t<int> pyflex_get_phases() {
+    g_buffers->phases.map();
+
+    auto phases = py::array_t<int>((size_t) g_buffers->phases.size());
+    auto ptr = (int *) phases.request().ptr;
+
+    for (size_t i = 0; i < (size_t) g_buffers->phases.size(); i++) {
+        ptr[i] = g_buffers->phases[i];
+    }
+
+    g_buffers->phases.unmap();
+
+    return phases;
+}
+
+
+void pyflex_set_phases(py::array_t<int> phases) {
+//    if (not set_color)
+//        cout<<"Warning: Overloading GroupMask for colors. Make sure the eFlexPhaseSelfCollide is set!"<<endl;
+    g_buffers->phases.map();
+
+    auto buf = phases.request();
+    auto ptr = (int *) buf.ptr;
+
+    for (size_t i = 0; i < (size_t) g_buffers->phases.size(); i++) {
+        g_buffers->phases[i] = ptr[i];
+    }
+
+    g_buffers->phases.unmap();
+
+    NvFlexSetParticles(g_solver, g_buffers->phases.buffer, nullptr);
+}
+
 py::array_t<float> pyflex_get_positions() {
     g_buffers->positions.map();
     auto positions = py::array_t<float>((size_t) g_buffers->positions.size() * 4);
@@ -3341,21 +3407,6 @@ void pyflex_set_shape_states(py::array_t<float> states) {
     pyflex_UnmapShapeBuffers(g_buffers);
 }
 
-py::array_t<int> pyflex_get_phases() {
-    g_buffers->phases.map();
-
-    auto phases = py::array_t<int>((size_t) g_buffers->phases.size());
-    auto ptr = (int *) phases.request().ptr;
-
-    for (size_t i = 0; i < (size_t) g_buffers->phases.size(); i++) {
-        ptr[i] = g_buffers->phases[i];
-    }
-
-    g_buffers->phases.unmap();
-
-    return phases;
-}
-
 py::array_t<float> pyflex_get_sceneParams() {
     if (g_scene == 5) {
         auto params = py::array_t<float>(3);
@@ -3616,6 +3667,11 @@ PYBIND11_MODULE(pyflex, m) {
     m.def("get_n_rigids", &pyflex_get_n_rigids, "Get the number of rigids");
     m.def("get_n_rigidPositions", &pyflex_get_n_rigidPositions, "Get the number of rigid positions");
 
+    m.def("get_phases", &pyflex_get_phases, "Get particle phases");
+    m.def("set_phases", &pyflex_set_phases, "Set particle phases");
+    m.def("get_groups", &pyflex_get_groups, "Get particle groups");
+    m.def("set_groups", &pyflex_set_groups, "Set particle groups");
+    // TODO: Add keyword set_color for set_phases function and also in python code
     m.def("get_positions", &pyflex_get_positions, "Get particle positions");
     m.def("set_positions", &pyflex_set_positions, "Set particle positions");
     m.def("get_restPositions", &pyflex_get_restPositions, "Get particle restPositions");
@@ -3630,7 +3686,6 @@ PYBIND11_MODULE(pyflex, m) {
 
     m.def("get_velocities", &pyflex_get_velocities, "Get particle velocities");
     m.def("set_velocities", &pyflex_set_velocities, "Set particle velocities");
-    m.def("get_phases", &pyflex_get_phases, "Get particle phases");
 
     m.def("get_shape_states", &pyflex_get_shape_states, "Get shape states");
     m.def("set_shape_states", &pyflex_set_shape_states, "Set shape states");
@@ -3638,4 +3693,4 @@ PYBIND11_MODULE(pyflex, m) {
 
     m.def("get_scene_upper", &pyflex_get_sceneUpper);
     m.def("get_scene_lower", &pyflex_get_sceneLower);
-`}
+}

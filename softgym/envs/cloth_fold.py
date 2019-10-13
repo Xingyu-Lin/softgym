@@ -40,6 +40,11 @@ class ClothFoldPointControlEnv(FlexEnv):
     def set_scene(self):
         scene_params = np.array([])
         pyflex.set_scene(9, scene_params, 0)
+        colors = self.get_colors()
+        print(colors)
+        # exit()
+        colors[-len(colors)//2:] = 1
+        self.set_colors(colors)
 
     def get_current_observation(self):
         pos = np.array(pyflex.get_positions()).reshape([-1, 4])
