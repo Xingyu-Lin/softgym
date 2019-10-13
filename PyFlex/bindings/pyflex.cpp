@@ -171,15 +171,38 @@ bool g_shapesChanged = false;
 
 /* Note that this array of colors is altered by demo code, and is also read from global by graphics API impls */
 Colour g_colors[] = {
-        Colour(0.000f, 0.349f, 0.173f),
+        Colour(0.000f, 0.500f, 1.000f),
         Colour(0.875f, 0.782f, 0.051f),
-        Colour(0.000f, 0.170f, 0.453f),
+        Colour(0.800f, 0.100f, 0.100f),
         Colour(0.673f, 0.111f, 0.000f),
         Colour(0.612f, 0.194f, 0.394f),
-        Colour(0.0f, 0.5f, 1.0f),
+        Colour(0.0f, 1.f, 0.0f),
         Colour(0.797f, 0.354f, 0.000f),
         Colour(0.092f, 0.465f, 0.820f)
 };
+
+//Colour g_colors[] = {
+//        Colour(0.0f, 0.0f, 0.0f),
+//        Colour(0.05f, 0.05f, 0.05f),
+//        Colour(0.1f, 0.1f, 0.1f),
+//        Colour(0.15f, 0.15f, 0.15f),
+//        Colour(0.2f, 0.2f, 0.2f),
+//        Colour(0.25f, 0.25f, 0.25f),
+//        Colour(0.3f, 0.3f, 0.3f),
+//        Colour(0.35f, 0.35f, 0.35f),
+//        Colour(0.4f, 0.4f, 0.4f),
+//        Colour(0.45f, 0.45f, 0.45f),
+//        Colour(0.5f, 0.5f, 0.5f),
+//        Colour(0.55f, 0.55f, 0.55f),
+//        Colour(0.6f, 0.6f, 0.6f),
+//        Colour(0.65f, 0.65f, 0.65f),
+//        Colour(0.7f, 0.7f, 0.7f),
+//        Colour(0.75f, 0.75f, 0.75f),
+//        Colour(0.8f, 0.8f, 0.8f),
+//        Colour(0.85f, 0.85f, 0.85f),
+//        Colour(0.9f, 0.9f, 0.9f),
+//        Colour(0.95f, 0.95f, 0.95f),
+//};
 
 struct SimBuffers {
     NvFlexVector<Vec4> positions;
@@ -742,7 +765,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     g_diffuseOutscatter = 0.53f;
 
     // reset phase 0 particle color to blue
-    g_colors[0] = Colour(0.0f, 0.5f, 1.0f);
+//    g_colors[0] = Colour(0.0f, 0.5f, 1.0f);
 
     g_numSolidParticles = 0;
 
@@ -2544,7 +2567,6 @@ char *make_path(char *full_path, std::string path) {
 }
 
 void pyflex_init() {
-
     // Customized scenes
     g_scenes.push_back(new yz_BunnyBath("Bunny Bath", true));
     g_scenes.push_back(new yz_BoxBath("Box Bath", true));

@@ -10,6 +10,6 @@ if __name__ == '__main__':
         env.reset()
         for i in range(300):
             action = env.action_space.sample() / 10.
-            print("action {}: {}".format(i, action))
-            env.step(action)
+            observation, reward, done, info = env.step(action)
+            print('step: {}, reward: {}'.format(i, reward))
             env.render(mode='rgb_array')
