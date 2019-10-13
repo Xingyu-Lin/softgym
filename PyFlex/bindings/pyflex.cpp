@@ -3043,7 +3043,6 @@ int pyflex_get_n_shapes() {
 
 py::array_t<float> pyflex_get_positions() {
     g_buffers->positions.map();
-
     auto positions = py::array_t<float>((size_t) g_buffers->positions.size() * 4);
     auto ptr = (float *) positions.request().ptr;
 
@@ -3639,4 +3638,4 @@ PYBIND11_MODULE(pyflex, m) {
 
     m.def("get_scene_upper", &pyflex_get_sceneUpper);
     m.def("get_scene_lower", &pyflex_get_sceneLower);
-}
+`}

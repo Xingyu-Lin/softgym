@@ -5,7 +5,6 @@ from gym.utils import seeding
 import numpy as np
 from os import path
 import gym
-from PIL import Image
 
 try:
     import pyflex

@@ -63,7 +63,7 @@ public:
 		g_numSubsteps = 2;
 
 		// draw options
-		g_drawPoints = false;
+		g_drawPoints = true;
 		g_drawSprings = false;
 		g_windFrequency *= 2.0f;
 		g_windStrength = 10.0f;
