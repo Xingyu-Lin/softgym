@@ -34,8 +34,8 @@ class FlexEnv(gym.Env):
         pyflex_camera_param = pyflex.get_camera_params()
         camera_param = {'width': pyflex_camera_param[0],
                         'height': pyflex_camera_param[1],
-                        'cam_position': np.array([pyflex_camera_param[2], pyflex_camera_param[3], pyflex_camera_param[4]]),
-                        'cam_angle': np.array([pyflex_camera_param[5], pyflex_camera_param[6], pyflex_camera_param[7]])}
+                        'pos': np.array([pyflex_camera_param[2], pyflex_camera_param[3], pyflex_camera_param[4]]),
+                        'angle': np.array([pyflex_camera_param[5], pyflex_camera_param[6], pyflex_camera_param[7]])}
         self.camera_params['default_camera'] = camera_param
 
     def get_camera_size(self, camera_name='default_camera'):
@@ -70,7 +70,7 @@ class FlexEnv(gym.Env):
         camera_angle: np.ndarray (3x1). (x,y,z) angle of the camera (in degree).
 
         Note: to set camera, you need 
-        1) implement this function in your environement, set self.camera_pos and self.camera_angle.
+        1) implement this function in your environement, set value of self.camera_pos and self.camera_angle.
         2) add the self.camera_pos and self.camera_angle to your scene parameters, and pass it when initialzing your scene.
         3) implement the CenterCamera function in your scene.h file.
         Pls see a sample usage in pour_water.py and yz_fluidshake.h
