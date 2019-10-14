@@ -1,18 +1,9 @@
 
-class yz_FluidShake : public Scene
+class softgym_PourWater : public Scene
 {
 public:
 
-	float cam_x;
-	float cam_y;
-	float cam_z;
-	float cam_angle_x;
-	float cam_angle_y;
-	float cam_angle_z;
-	int cam_width;
-	int cam_height;
-
-	yz_FluidShake(const char* name) : Scene(name) {}
+	softgym_PourWater(const char* name) : Scene(name) {}
 
 	char* make_path(char* full_path, std::string path) {
 		strcpy(full_path, getenv("PYFLEXROOT"));
@@ -33,23 +24,15 @@ public:
 	void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
 	{
 	    // scene_params:
-	    // x, y, z, dim_x, dim_y, dim_z, box_dis_x, box_dis_y, camera_x, camera_
+	    // x, y, z, dim_x, dim_y, dim_z, box_dis_x, box_dis_y
 
 	    auto ptr = (float *) scene_params.request().ptr;
-	    float x = ptr[0];
-	    float y = ptr[1];
-	    float z = ptr[2];
-	    float dim_x = ptr[3];
-	    float dim_y = ptr[4];
-	    float dim_z = ptr[5];
-		cam_x = ptr[6];
-		cam_y = ptr[7];
-		cam_z = ptr[8];
-		cam_angle_x = ptr[9];
-		cam_angle_y = ptr[10];
-		cam_angle_z = ptr[11];
-		cam_width = int(ptr[12]);
-		cam_height = int(ptr[13]);
+	    float px_f = ptr[0];
+	    float py_f = ptr[1];
+	    float pz_f = ptr[2];
+	    float sx_f = ptr[3];
+	    float sy_f = ptr[4];
+	    float sz_f = ptr[5];
 
 		float radius = 0.1f;
 
@@ -57,11 +40,33 @@ public:
 
 		float restDistance = radius*0.55f;
 
-		// to make gif
-		// g_capture = true;
-
+		// Initialize the fluid block
 		// void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius, Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, float jitter=0.005f)
-		CreateParticleGrid(Vec3(x, y, z), dim_x, dim_y, dim_z, restDistance, Vec3(0.0f), 1.0f, false, 0.0f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid), 0.005f);
+		CreateParticleGrid(
+		        Vec3(px_f, py_f, pz_f), sx_f, sy_f, sz_f, restDistance, Vec3(0.0f),
+                1.0f, false, 0.0f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid), 0.005f);
+
+		// Initialize the rigid block
+		float px_r = ptr[6];    // position x
+		float py_r = ptr[7];	// position y
+		float pz_r = ptr[8];	// position z
+		float sx_r = ptr[9];    // size x
+		float sy_r = ptr[10];   // size y
+		float sz_r = ptr[11];   // size z
+
+		char box_path[100];
+		int group = 1;
+		float m = 0.18f;
+		float s = radius * 0.5f;
+		make_path(box_path, "/data/box.ply");
+
+        // void CreateParticleShape(const Mesh* srcMesh, Vec3 lower, Vec3 scale, float rotation, float spacing, Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, bool skin, float jitter=0.005f, Vec3 skinOffset=0.0f, float skinExpand=0.0f, Vec4 color=Vec4(0.0f), float springStiffness=0.0f)
+        CreateParticleShape(
+                GetFilePathByPlatform(box_path).c_str(), Vec3(px_r, py_r, pz_r),
+                Vec3(sx_r, sy_r, sz_r), 0.0f, s, Vec3(0.0f, 0.0f, 0.0f), m, true, 1.0f,
+                NvFlexMakePhase(group++, 0), false, 0.0f);
+
+
 		g_lightDistance *= 0.5f;
 
 		g_sceneLower = Vec3(-2.0f, 0.0f, -1.0f);
@@ -111,14 +116,6 @@ public:
 		g_drawMesh = false;
 		g_drawEllipsoids = false;
 		g_drawDiffuse = true;
-	}
-
-	virtual void CenterCamera(void)
-	{
-		g_camPos = Vec3(cam_x, cam_y, cam_z);
-		g_camAngle = Vec3(cam_angle_x, cam_angle_y, cam_angle_z);
-		g_screenHeight = cam_height;
-		g_screenWidth = cam_width;
 	}
 
 	bool mDam;

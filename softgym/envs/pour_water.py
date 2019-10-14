@@ -5,6 +5,9 @@ import pyflex
 from softgym.envs.flex_env import FlexEnv
 import time
 import copy
+import os
+from softgym.envs.util import rotate_rigid_object
+from pyquaternion import Quaternion
 
 
 class PourWaterPosControlEnv(FlexEnv):
@@ -14,6 +17,10 @@ class PourWaterPosControlEnv(FlexEnv):
         TODO: add more description of the task.
         TODO: allow parameter configuring of the scence.
         '''
+
+        des_dir = 'test_PourWater'
+        os.system('mkdir -p ' + des_dir)    
+        self.render_save_path = des_dir
        
         self.dim_x = 5 # num of grid points in x-axis for the water fluid.
         self.dim_y = 20 
@@ -29,22 +36,25 @@ class PourWaterPosControlEnv(FlexEnv):
         self.dim_velocity = 3
         self.wall_num = 5 # number of glass walls. floor/left/right/front/back 
 
+        self.glass_distance = 0.7 # distance between the pouring glass and the poured glass
+        self.camera_width = 960
+        self.camera_height = 720
+
+        self.time_step = 0
+
         super().__init__()
-        assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb'] 
+        assert observation_mode in ['cam_img', 'full_state'] 
         assert action_mode in ['direct'] 
 
-        if observation_mode == 'key_point':
-            # obs is the center point of each wall
-            # TODO: figure out what observation is
-            self.observation_space = Box(np.array([-np.inf] * self.wall_num), np.array([np.inf] * self.wall_num), dtype=np.float32)
-            # self.obs_key_point_idx = self.get_obs_key_point_idx()
+        if observation_mode == 'cam_img':
+            self.observation_space = Box(low = -np.inf, high = np.inf, shape = (self.camera_height, self.camera_width, 3), 
+                dtype=np.float32)
         else:
             raise NotImplementedError
 
         if action_mode == 'direct':
             self.action_direct_dim = 3 # control the (x, y) corrdinate of the floor center, and theta its rotation angel.
             self.action_space = Box(np.array([-1.] * self.action_direct_dim), np.array([1.] * self.action_direct_dim), dtype=np.float32)
-            # self.action_key_point_idx = self.get_action_key_point_idx()
         else:
             raise NotImplementedError
 
@@ -68,13 +78,30 @@ class PourWaterPosControlEnv(FlexEnv):
         shape_position = pyflex.get_shape_states().reshape(-1, self.dim_shape_state)
         return {'particle_pos': particle_pos, 'particle_vel': particle_vel, 'shape_pos': shape_position}
 
-    # def set_flex_state(self, state_dic):
-    #     '''
-    #     set the postion, velocity of flex particles, and postions of flex shapes.
-    #     '''
-    #     pyflex.set_positions(state_dic["particle_pos"])
-    #     pyflex.set_velocities(state_dic["particle_vel"])
-    #     pyflex.set_shape_states(state_dic["shape_pos"])
+    def set_state(self, state_dic):
+        '''
+        set the postion, velocity of flex particles, and postions of flex shapes.
+        '''
+        pyflex.set_positions(state_dic["particle_pos"])
+        pyflex.set_velocities(state_dic["particle_vel"])
+        pyflex.set_shape_states(state_dic["shape_pos"])
+
+    def initialize_camera(self):
+        '''
+        set the camera width, height, position and angle.
+        **Note: width and height is actually the screen width and screen height of FLex.
+        I suggest to keep them the same as the ones used in pyflex.cpp.
+        '''
+        x_center = self.rand_float(-0.2, 0.2) # center of the glass floor
+        x = x_center - (self.dim_x-1)/2.*0.055 # lower corner of the water fluid grid along x-axis. 0.055 is the grid step size, which is hard-coded in the cpp file.
+        y = 0.055/2. + self.border + 0.01 # lower corner of the water fluid along y-axis.
+        z = 0. - (self.dim_z-1)/2.*0.055 # lower corner of the water fluid along z-axis.
+        self.camera_params = {
+                        'pos': np.array([x_center + 0.2, self.height + 3, z + 1]),
+                        'angle': np.array([0., -70/180. * np.pi, 0.]),
+                        'width': self.camera_width,
+                        'height': self.camera_height
+                        }
 
     def set_scene(self):
         '''
@@ -86,25 +113,44 @@ class PourWaterPosControlEnv(FlexEnv):
         x = x_center - (self.dim_x-1)/2.*0.055 # lower corner of the water fluid grid along x-axis. 0.055 is the grid step size, which is hard-coded in the cpp file.
         y = 0.055/2. + self.border + 0.01 # lower corner of the water fluid along y-axis.
         z = 0. - (self.dim_z-1)/2.*0.055 # lower corner of the water fluid along z-axis.
-        self.glass_dis_x = self.dim_x * 0.055 + self.rand_float(0., 0.3) # glass floor length
+        self.glass_dis_x = self.dim_x * 0.055 + self.rand_float(0., 0.1) # glass floor length
         self.glass_dis_z = 0.2 # glass width
-        scene_params = np.array([x, y, z, self.dim_x, self.dim_y, self.dim_z, self.glass_dis_x, self.glass_dis_z])
+
+        # set camera parameters. 
+        camera_x, camera_y, camera_z = self.camera_params['pos'][0], self.camera_params['pos'][1], self.camera_params['pos'][2]
+        camera_ax, camera_ay, camera_az = self.camera_params['angle'][0], self.camera_params['angle'][1], self.camera_params['angle'][2]
+        scene_params = np.array([x, y, z, self.dim_x, self.dim_y, self.dim_z, camera_x, camera_y, camera_z, 
+            camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
         pyflex.set_scene(6, scene_params, 0)
 
-        # create glass
+        # create pouring glass
         glass = self.create_glass()
         for i in range(len(glass)):
             halfEdge = glass[i][0]
             center = glass[i][1]
             quat = glass[i][2]
             pyflex.add_box(halfEdge, center, quat)
-      
+
+        # create poured glass
+        poured_glass = self.create_glass()
+        for i in range(len(poured_glass)):
+            halfEdge = poured_glass[i][0]
+            center = poured_glass[i][1]
+            quat = poured_glass[i][2]
+            pyflex.add_box(halfEdge, center, quat)
         
-        # move glass to be at ground
+        # move pouring glass to be at ground
         self.glass_floor_centerx = x_center
-        self.glass_floor_centery = 0.
-        self.glass_states = self.init_glass_state(self.glass_floor_centerx, self.glass_floor_centery)
-        pyflex.set_shape_states(self.glass_states)
+        self.glass_states = self.init_glass_state(x_center, 0)
+        # pyflex.set_shape_states(self.glass_states)
+
+        # move poured glass to be at ground
+        self.poured_glass_states = self.init_glass_state(x_center + self.glass_distance, 0)
+        self.set_shape_states(self.glass_states, self.poured_glass_states)
+        # all_states = np.concatenate((self.glass_states, self.poured_glass_states), axis = 0)
+        # pyflex.set_shape_states(all_states)
+        
+
         # pyflex.step()
 
         # give some time for water to stablize 
@@ -116,16 +162,28 @@ class PourWaterPosControlEnv(FlexEnv):
     def get_current_observation(self):
         '''
         return the observation based on the current flex state.
-        TODO: figure out the state of the agent.
         '''
-        return np.zeros(self.wall_num)
+        if self.observation_mode == 'cam_img':
+            img = pyflex.render()
+            width, height = self.camera_width, self.camera_height
+            img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
+            return img
+        else:
+            raise NotImplementedError
 
     def compute_reward(self):
         '''
-        return the reward for the agent based on his action and the current flex state.
-        TODO: figure out the reward of the agent.
+        the reward is computed as the fraction of water in the poured glass.
+        TODO: do we want to consider the increase of the fraction?
         '''
-        return 0
+        state_dic = self.get_state()
+        water_state = state_dic['particle_pos']
+        water_num = len(water_state)
+        in_glass = 0
+        for water in water_state:
+            in_glass += self.in_glass(water)
+        return float(in_glass) / water_num
+
 
     def step(self, action):
         '''
@@ -142,18 +200,20 @@ class PourWaterPosControlEnv(FlexEnv):
         # self.glass_states = after_rotate_states
 
         if theta == 0:
-            # print("just move")
             self.glass_states = self.move_glass(self.glass_states, x, y)
         else:
             self.glass_states = self.rotate_glass(self.glass_states, theta)
 
         # pyflex takes a step to update the glass and the water fluid
-        pyflex.set_shape_states(self.glass_states)
-        pyflex.step()
+        self.set_shape_states(self.glass_states, self.poured_glass_states)
+        # pyflex.step(capture = 1, path = self.render_save_path + '/render_' + str(self.time_step))
+        pyflex.step() 
 
         # get reward and new observation for the agent.
         obs = self.get_current_observation()
         reward = self.compute_reward()
+
+        self.time_step += 1
 
         return obs, reward, False, {}
 
@@ -171,7 +231,7 @@ class PourWaterPosControlEnv(FlexEnv):
         That's why leaf and right walls have exactly the same params, and so do front and back walls.   
         """
         center = np.array([0., 0., 0.])
-        quat = np.array([1., 0., 0., 0.])
+        quat = self.quatFromAxisAngle([0, 0, -1.], 0.) 
         boxes = []
 
         # floor
@@ -224,22 +284,33 @@ class PourWaterPosControlEnv(FlexEnv):
         x_center = prev_states[0][0]  # previous x of floor center
         y = prev_states[0][1] # previous y of floor center
 
+        # rotation center is the floor center
+        rotate_center = np.array([x_center, y, 0.])
+
         # floor: center position does not change
         states[0, :3] = np.array([x_center, y, 0.])
 
         # left wall: center must move right and move down. 
-        states[1, :3] = np.array([x_center-(w+b)*np.cos(theta) + (h+b)*np.sin(theta),
-            y + (w+b)*np.sin(theta) + (h+b)*np.cos(theta), 0.])
+        relative_coord = np.array([-(dis_x+border)/2., (self.height+border)/2., 0.])
+        states[1, :3] = rotate_rigid_object(center=rotate_center, axis=np.array([0, 0, -1]), angle = theta, relative=relative_coord)
+        # states[1, :3] = np.array([x_center-(w+b)*np.cos(theta) + (h+b)*np.sin(theta),
+        #     y + (w+b)*np.sin(theta) + (h+b)*np.cos(theta), 0.])
 
         # right wall
-        states[2, :3] = np.array([x_center+ (w + b)*np.cos(theta) + (h+b)*np.sin(theta) ,
-            y - (w+b)*np.sin(theta) + (h+b)*np.cos(theta), 0.])
-
+        relative_coord = np.array([(dis_x+border)/2., (self.height+border)/2., 0.])
+        states[2, :3] = rotate_rigid_object(center=rotate_center, axis=np.array([0, 0, -1]), angle = theta, relative=relative_coord)
+        # states[2, :3] = np.array([x_center+ (w + b)*np.cos(theta) + (h+b)*np.sin(theta) ,
+        #     y - (w+b)*np.sin(theta) + (h+b)*np.cos(theta), 0.])
+        
         # back wall
-        states[3, :3] = np.array([x_center + (h + b)*np.sin(theta), y + (h+b)*np.cos(theta), -(dis_z+border)/2.])
+        relative_coord = np.array([0, (self.height+border)/2., -(dis_z+border)/2.])
+        states[3, :3] = rotate_rigid_object(center=rotate_center, axis=np.array([0, 0, -1]), angle = theta, relative=relative_coord)
+        # states[3, :3] = np.array([x_center + (h + b)*np.sin(theta), y + (h+b)*np.cos(theta), -(dis_z+border)/2.])
 
         # front wall
-        states[4, :3] = np.array([x_center + (h + b)*np.sin(theta), y + (h+b)*np.cos(theta), (dis_z+border)/2.])
+        relative_coord = np.array([0, (self.height+border)/2., (dis_z+border)/2.])
+        states[4, :3] = rotate_rigid_object(center=rotate_center, axis=np.array([0, 0, -1]), angle = theta, relative=relative_coord)
+        # states[4, :3] = np.array([x_center + (h + b)*np.sin(theta), y + (h+b)*np.cos(theta), (dis_z+border)/2.])
 
         states[:, 6:10] = quat_curr
 
@@ -258,7 +329,6 @@ class PourWaterPosControlEnv(FlexEnv):
         '''
         dis_x, dis_z = self.glass_dis_x, self.glass_dis_z
         border, height = self.border, self.height
-        quat = self.quatFromAxisAngle([0, 0, -1.], 0.) 
 
         # states of 5 walls
         states = np.zeros((5, self.dim_shape_state))
@@ -290,7 +360,7 @@ class PourWaterPosControlEnv(FlexEnv):
         set the initial state of the glass.
         '''
         dis_x, dis_z = self.glass_dis_x, self.glass_dis_z
-        x_center, y_curr, y_last  = x, y, 0.05
+        x_center, y_curr, y_last  = x, y, 0.
         height, border = self.height, self.border
         quat = self.quatFromAxisAngle([0, 0, -1.], 0.) 
 
@@ -346,12 +416,36 @@ class PourWaterPosControlEnv(FlexEnv):
 
         return quat
 
-    # def get_obs_key_point_idx(self):
-    #     idx_p1 = 0
-    #     idx_p2 = 64 * 31
-    #     return np.array([idx_p1, idx_p2])
+    def set_shape_states(self, glass_states, poured_glass_states):
+        '''
+        set the the shape states of both glasses.
+        '''
+        all_states = np.concatenate((glass_states, poured_glass_states), axis = 0)
+        # print("all_states shape: ", all_states.shape)
+        pyflex.set_shape_states(all_states)
 
-    # def get_action_key_point_idx(self):
-    #     idx_p1 = 0
-    #     idx_p2 = 64 * 31
-    #     return np.array([idx_p1, idx_p2])
+    def in_glass(self, water):
+        '''
+        judge whether a water particle is in the poured glass
+        water: [x, y, z, 1/m] water particle state.
+        '''
+
+        # floor, left, right, back, front
+        # state:
+        # 0-3: current (x, y, z) coordinate of the center point
+        # 3-6: previous (x, y, z) coordinate of the center point
+        # 6-10: current quat 
+        # 10-14: previous quat 
+        x_lower = self.poured_glass_states[1][0]
+        x_upper = self.poured_glass_states[2][0]
+        z_lower = self.poured_glass_states[3][2]
+        z_upper = self.poured_glass_states[4][2]
+        y_lower = self.border
+        y_upper = self.height
+        x, y, z = water[0], water[1], water[2]
+        if x >= x_lower and x <= x_upper and y >= y_lower and y <= y_upper and z >= z_lower and z <= z_upper:
+            return 1
+        else:
+            return 0
+
+

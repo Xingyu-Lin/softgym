@@ -3,15 +3,6 @@ class yz_FluidShake : public Scene
 {
 public:
 
-	float cam_x;
-	float cam_y;
-	float cam_z;
-	float cam_angle_x;
-	float cam_angle_y;
-	float cam_angle_z;
-	int cam_width;
-	int cam_height;
-
 	yz_FluidShake(const char* name) : Scene(name) {}
 
 	char* make_path(char* full_path, std::string path) {
@@ -33,7 +24,7 @@ public:
 	void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
 	{
 	    // scene_params:
-	    // x, y, z, dim_x, dim_y, dim_z, box_dis_x, box_dis_y, camera_x, camera_
+	    // x, y, z, dim_x, dim_y, dim_z, box_dis_x, box_dis_y
 
 	    auto ptr = (float *) scene_params.request().ptr;
 	    float x = ptr[0];
@@ -42,23 +33,12 @@ public:
 	    float dim_x = ptr[3];
 	    float dim_y = ptr[4];
 	    float dim_z = ptr[5];
-		cam_x = ptr[6];
-		cam_y = ptr[7];
-		cam_z = ptr[8];
-		cam_angle_x = ptr[9];
-		cam_angle_y = ptr[10];
-		cam_angle_z = ptr[11];
-		cam_width = int(ptr[12]);
-		cam_height = int(ptr[13]);
 
 		float radius = 0.1f;
 
 		g_numSolidParticles = g_buffers->positions.size();
 
 		float restDistance = radius*0.55f;
-
-		// to make gif
-		// g_capture = true;
 
 		// void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius, Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, float jitter=0.005f)
 		CreateParticleGrid(Vec3(x, y, z), dim_x, dim_y, dim_z, restDistance, Vec3(0.0f), 1.0f, false, 0.0f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid), 0.005f);
@@ -111,14 +91,6 @@ public:
 		g_drawMesh = false;
 		g_drawEllipsoids = false;
 		g_drawDiffuse = true;
-	}
-
-	virtual void CenterCamera(void)
-	{
-		g_camPos = Vec3(cam_x, cam_y, cam_z);
-		g_camAngle = Vec3(cam_angle_x, cam_angle_y, cam_angle_z);
-		g_screenHeight = cam_height;
-		g_screenWidth = cam_width;
 	}
 
 	bool mDam;

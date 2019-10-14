@@ -15,6 +15,7 @@ except ImportError as e:
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1):
         pyflex.init()  # TODO check if pyflex needs to be initialized for each instance of the environment
+        self.initialize_camera()
         self.set_scene()
         self.get_pyflex_camera_params()
         self.metadata = {
@@ -26,10 +27,15 @@ class FlexEnv(gym.Env):
         self.device_id = device_id
 
     def get_pyflex_camera_params(self):
+        '''
+        get the screen width, height, camera position and camera angle.
+        '''
         self.camera_params = {}
         pyflex_camera_param = pyflex.get_camera_params()
         camera_param = {'width': pyflex_camera_param[0],
-                        'height': pyflex_camera_param[1]}
+                        'height': pyflex_camera_param[1],
+                        'pos': np.array([pyflex_camera_param[2], pyflex_camera_param[3], pyflex_camera_param[4]]),
+                        'angle': np.array([pyflex_camera_param[5], pyflex_camera_param[6], pyflex_camera_param[7]])}
         self.camera_params['default_camera'] = camera_param
 
     def get_camera_size(self, camera_name='default_camera'):
@@ -58,7 +64,21 @@ class FlexEnv(gym.Env):
             raise NotImplementedError
 
     def initialize_camera(self):
-        raise NotImplementedError
+        '''
+        This func sets the postion and angel of the camera
+        camera_pos: np.ndarray (3x1). (x,y,z) coordinate of the camear.
+        camera_angle: np.ndarray (3x1). (x,y,z) angle of the camera (in degree).
+
+        Note: to set camera, you need 
+        1) implement this function in your environement, set value of self.camera_pos and self.camera_angle.
+        2) add the self.camera_pos and self.camera_angle to your scene parameters, and pass it when initialzing your scene.
+        3) implement the CenterCamera function in your scene.h file.
+        Pls see a sample usage in pour_water.py and yz_fluidshake.h
+
+        if you do not want to set the camera, you can just not implement CenterCamera in your scene.h file, 
+        and pass no camera params to your scene.
+        '''
+        # raise NotImplementedError
 
     def get_state(self):
         pos = pyflex.get_positions()

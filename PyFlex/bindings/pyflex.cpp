@@ -2582,6 +2582,7 @@ void pyflex_init() {
     g_scenes.push_back(new yz_FluidIceShake("Fluid Ice Shake"));
     g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
     g_scenes.push_back(new softgym_FlattenCloth("Softgym Flatten Cloth"));
+    g_scenes.push_back(new softgym_PourWater("Softgym Pour Water"));
 
     /*
     // opening scene
@@ -3476,10 +3477,17 @@ py::array_t<float> pyflex_get_sceneLower() {
 
 py::array_t<int> pyflex_get_camera_params() {
     // Right now only returns width and height for the default screen camera
-    auto default_camera_param = py::array_t<int>(2);
-    auto default_camera_param_ptr = (int *) default_camera_param.request().ptr;
+    // yf: add the camera position and camera angle
+    auto default_camera_param = py::array_t<float>(8);
+    auto default_camera_param_ptr = (float *) default_camera_param.request().ptr;
     default_camera_param_ptr[0] = g_screenWidth;
     default_camera_param_ptr[1] = g_screenHeight;
+    default_camera_param_ptr[2] = g_camPos.x;
+    default_camera_param_ptr[3] = g_camPos.y;
+    default_camera_param_ptr[4] = g_camPos.z;
+    default_camera_param_ptr[5] = g_camAngle.x;
+    default_camera_param_ptr[6] = g_camAngle.y;
+    default_camera_param_ptr[7] = g_camAngle.z;
     return default_camera_param;
 }
 
