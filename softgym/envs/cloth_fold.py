@@ -6,13 +6,14 @@ from softgym.envs.flex_env import FlexEnv
 
 
 class ClothFoldPointControlEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode):
+    def __init__(self, observation_mode, action_mode, horizon=200):
         super().__init__()
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point']
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
+        self.horizon = horizon
 
         if observation_mode == 'key_point':
             self.observation_space = Box(np.array([-np.inf] * 6), np.array([np.inf] * 6), dtype=np.float32)
@@ -26,6 +27,7 @@ class ClothFoldPointControlEnv(FlexEnv):
         else:
             raise NotImplementedError
         self.init_state = self.get_state()
+        self.init_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
 
     # Cloth index looks like the following:
     # 0, 1, ..., cloth_xdim -1
@@ -58,7 +60,7 @@ class ClothFoldPointControlEnv(FlexEnv):
                                                                                              self.cloth_xdim)
         x_split = self.cloth_xdim // 2
         self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
-        self.fold_group_b = particle_grid_idx[:, self.cloth_xdim:x_split-1:-1].flatten()
+        self.fold_group_b = particle_grid_idx[:, self.cloth_xdim:x_split - 1:-1].flatten()
 
         colors = np.zeros([self.cloth_ydim * self.cloth_xdim])
         colors[self.fold_group_b] = 1
@@ -84,6 +86,7 @@ class ClothFoldPointControlEnv(FlexEnv):
 
     def reset(self):
         self.set_state(self.init_state)
+        return self.get_current_observation()
 
     def compute_reward(self, pos):
         '''
@@ -92,10 +95,13 @@ class ClothFoldPointControlEnv(FlexEnv):
         '''
         pos_group_a = pos[self.fold_group_a, :3]
         pos_group_b = pos[self.fold_group_b, :3]
+        pos_group_b_init = self.init_pos[self.fold_group_b, :3]
         distance = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
-        return -distance
+        distance_to_init = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
+        return -distance - distance_to_init
 
     def step(self, action):
+        action /= 20
         last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         pyflex.step()
         cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])

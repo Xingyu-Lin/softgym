@@ -51,7 +51,7 @@ class FlexEnv(gym.Env):
             img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
             # import matplotlib.pyplot as plt
             # plt.figure()
-            # plt.imshow(img[::-1, :, :4])
+            # plt.imshow(img[:, :, :4])
             # plt.show()
             return img
         elif mode == 'human':
