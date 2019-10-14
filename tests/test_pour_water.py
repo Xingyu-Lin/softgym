@@ -11,6 +11,7 @@ os.system('mkdir -p ' + des_dir)
 
 timestep = 500
 move_part = int(0.3 * timestep)
+stable_part = int(0.1 * timestep)
 
 v = 0.05
 y = 0
@@ -31,19 +32,24 @@ shape_states = np.zeros((timestep, n_shapes, dim_shape_state))
 
 env.reset()
 for i in range(timestep):
-    if i < move_part:
+    if i < stable_part:
+        # print("stablize")
+        action = np.array([x, y, 0])
+
+    elif stable_part <= i < move_part + stable_part:
         y = y + v * dt
         action = np.array([x, y, 0.])
-        env.step(action)
 
     else:
-        theta = (i - move_part) / float(timestep - move_part) * total_rotate
+        theta = (i - move_part - stable_part) / float(timestep - move_part - stable_part) * total_rotate
+        # print("rotate theta: ", theta)
         action = np.array([x, y, theta])
-        env.step(action)
 
     positions[i] = pyflex.get_positions().reshape(-1, dim_position)
     velocities[i] = pyflex.get_velocities().reshape(-1, dim_velocity)
-    shape_states[i] = pyflex.get_shape_states().reshape(-1, dim_shape_state)
+    shape_states[i] = pyflex.get_shape_states().reshape(-1, dim_shape_state)   
+    env.step(action)
+
     
 
 env.reset()
