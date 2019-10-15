@@ -194,15 +194,10 @@ class PourWaterPosControlEnv(FlexEnv):
         '''
         x, y, theta = action[0], action[1], action[2]
         
-        # move and rotate the glass. TODO: check on this
-        # after_move_states = self.move_glass(self.glass_states, x, y)
-        # after_rotate_states = self.rotate_glass(after_move_states, theta)
-        # self.glass_states = after_rotate_states
-
-        if theta == 0:
-            self.glass_states = self.move_glass(self.glass_states, x, y)
-        else:
-            self.glass_states = self.rotate_glass(self.glass_states, theta)
+        # if theta == 0:
+        #     self.glass_states = self.move_glass(self.glass_states, x, y)
+        # else:
+        self.glass_states = self.rotate_glass(self.glass_states, x, y, theta)
 
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
@@ -254,7 +249,7 @@ class PourWaterPosControlEnv(FlexEnv):
 
         return boxes
 
-    def rotate_glass(self, prev_states, theta):
+    def rotate_glass(self, prev_states, x, y, theta):
         '''
         given the previous states of the glass, rotate it with angle theta.
         update the states of the 5 boxes that form the box: floor, left/right wall, back/front wall. 
@@ -281,8 +276,9 @@ class PourWaterPosControlEnv(FlexEnv):
             states[i][3:6] = prev_states[i][:3]
             states[i][10:] = prev_states[i][6:10]
 
-        x_center = prev_states[0][0]  # previous x of floor center
-        y = prev_states[0][1] # previous y of floor center
+        # x_center = prev_states[0][0]  # previous x of floor center
+        # y = prev_states[0][1] # previous y of floor center
+        x_center = x
 
         # rotation center is the floor center
         rotate_center = np.array([x_center, y, 0.])
@@ -316,44 +312,44 @@ class PourWaterPosControlEnv(FlexEnv):
 
         return states
 
-    def move_glass(self, prev_states, x_curr, y_curr):
-        '''
-        given the prev_states, and current (x, y) of the floor center
-        update the states of the 5 shapes that form the glass: floor, left/right wall, back/front wall. 
+    # def move_glass(self, prev_states, x_curr, y_curr):
+    #     '''
+    #     given the prev_states, and current (x, y) of the floor center
+    #     update the states of the 5 shapes that form the glass: floor, left/right wall, back/front wall. 
         
-        state:
-        0-3: current (x, y, z) coordinate of the center point
-        3-6: previous (x, y, z) coordinate of the center point
-        6-10: current quat 
-        10-14: previous quat 
-        '''
-        dis_x, dis_z = self.glass_dis_x, self.glass_dis_z
-        border, height = self.border, self.height
+    #     state:
+    #     0-3: current (x, y, z) coordinate of the center point
+    #     3-6: previous (x, y, z) coordinate of the center point
+    #     6-10: current quat 
+    #     10-14: previous quat 
+    #     '''
+    #     dis_x, dis_z = self.glass_dis_x, self.glass_dis_z
+    #     border, height = self.border, self.height
 
-        # states of 5 walls
-        states = np.zeros((5, self.dim_shape_state))
+    #     # states of 5 walls
+    #     states = np.zeros((5, self.dim_shape_state))
 
-        for i in range(5): # TODO: check this
-            states[i][3:6] = prev_states[i][:3]
-            states[i][10:] = prev_states[i][6:10]
-            states[i][6:10] = prev_states[i][6:10]
+    #     for i in range(5): # TODO: check this
+    #         states[i][3:6] = prev_states[i][:3]
+    #         states[i][10:] = prev_states[i][6:10]
+    #         states[i][6:10] = prev_states[i][6:10]
 
-        # floor 
-        states[0, :3] = np.array([x_curr, y_curr, 0.])
+    #     # floor 
+    #     states[0, :3] = np.array([x_curr, y_curr, 0.])
 
-        # left wall
-        states[1, :3] = np.array([x_curr-(dis_x + border)/2., (height + border)/2. + y_curr, 0.])
+    #     # left wall
+    #     states[1, :3] = np.array([x_curr-(dis_x + border)/2., (height + border)/2. + y_curr, 0.])
 
-        # right wall
-        states[2, :3] = np.array([x_curr+(dis_x+border)/2., (height+border)/2. + y_curr, 0.])
+    #     # right wall
+    #     states[2, :3] = np.array([x_curr+(dis_x+border)/2., (height+border)/2. + y_curr, 0.])
 
-        # back wall
-        states[3, :3] = np.array([x_curr, (height+border)/2. + y_curr, -(dis_z+border)/2.])
+    #     # back wall
+    #     states[3, :3] = np.array([x_curr, (height+border)/2. + y_curr, -(dis_z+border)/2.])
 
-        # front wall
-        states[4, :3] = np.array([x_curr, (height+border)/2. + y_curr, (dis_z+border)/2.])
+    #     # front wall
+    #     states[4, :3] = np.array([x_curr, (height+border)/2. + y_curr, (dis_z+border)/2.])
 
-        return states
+    #     return states
 
     def init_glass_state(self, x, y):
         '''
