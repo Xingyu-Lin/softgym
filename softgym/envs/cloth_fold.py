@@ -6,7 +6,7 @@ from softgym.envs.flex_env import FlexEnv
 
 
 class ClothFoldPointControlEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, horizon=200):
+    def __init__(self, observation_mode, action_mode, horizon=100):
         super().__init__()
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point']
@@ -28,7 +28,6 @@ class ClothFoldPointControlEnv(FlexEnv):
             raise NotImplementedError
         self.init_state = self.get_state()
         self.init_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
-
     # Cloth index looks like the following:
     # 0, 1, ..., cloth_xdim -1
     # ...
@@ -58,12 +57,14 @@ class ClothFoldPointControlEnv(FlexEnv):
         # Set folding group
         particle_grid_idx = np.array(list(range(self.cloth_xdim * self.cloth_ydim))).reshape(self.cloth_ydim,
                                                                                              self.cloth_xdim)
+
         x_split = self.cloth_xdim // 2
         self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
         self.fold_group_b = particle_grid_idx[:, self.cloth_xdim:x_split - 1:-1].flatten()
 
         colors = np.zeros([self.cloth_ydim * self.cloth_xdim])
         colors[self.fold_group_b] = 1
+
         self.set_colors(colors)
         # self.set_test_color()
 
@@ -86,6 +87,8 @@ class ClothFoldPointControlEnv(FlexEnv):
 
     def reset(self):
         self.set_state(self.init_state)
+        # for _ in range(100):
+        #     pyflex.step()
         return self.get_current_observation()
 
     def compute_reward(self, pos):
@@ -101,7 +104,7 @@ class ClothFoldPointControlEnv(FlexEnv):
         return -distance - distance_to_init
 
     def step(self, action):
-        action /= 20
+        action = np.array(action) / 10.
         last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         pyflex.step()
         cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])

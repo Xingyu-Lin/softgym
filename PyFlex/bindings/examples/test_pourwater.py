@@ -5,7 +5,7 @@ import time
 import torch
 
 import scipy.spatial as spatial
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt

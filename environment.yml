@@ -3,5 +3,6 @@ channels:
   - defaults
 dependencies:
   - numpy=1.17.2
-  - gym=0.14.0 
+  - gym=0.14.0
+  - pyquaternion=0.9.5 
 

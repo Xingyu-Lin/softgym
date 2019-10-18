@@ -22,7 +22,7 @@ class FCModel(nn.Module):
         return x.size()[1]
 
 
-class CMAES(object):
+class CMAESOptimizer(object):
     def __init__(self,
                  env,
                  sigma=0.2,
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     model_path = './data/cmaes_cloth_fold_{}.pt'
     training = True
     if training:
-        agent = CMAES(env)
+        agent = CMAESOptimizer(env)
         for i in range(1000):
             agent.train_step()
             model_return = agent.evaluate_policy(agent.model, 1)
@@ -117,6 +117,6 @@ if __name__ == '__main__':
                 torch.save(agent.model.state_dict(), model_path.format(i))
     else:
         # TODO: Load model and visualize
-        agent = CMAES(env)
+        agent = CMAESOptimizer(env)
         agent.model.load_state_dict(torch.load(model_path))
         agent.evaluate_policy(agent.model, 100, render=True)

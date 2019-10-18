@@ -1951,7 +1951,7 @@ int DoUI() {
         imguiEndFrame();
 
         // kick render commands
-        DrawImguiGraph();
+//        DrawImguiGraph();
     }
 
     return newScene;
@@ -3079,7 +3079,6 @@ py::array_t<int> pyflex_get_groups() {
     return groups;
 }
 
-
 void pyflex_set_groups(py::array_t<int> groups) {
 //    if (not set_color)
 //        cout<<"Warning: Overloading GroupMask for colors. Make sure the eFlexPhaseSelfCollide is set!"<<endl;
@@ -3089,12 +3088,12 @@ void pyflex_set_groups(py::array_t<int> groups) {
     auto ptr = (int *) buf.ptr;
 
     for (size_t i = 0; i < (size_t) g_buffers->phases.size(); i++) {
-        g_buffers->phases[i] = (g_buffers->phases[i] & ~0xfffff) | ptr[i];
+        g_buffers->phases[i] = (g_buffers->phases[i] & ~0xfffff) | (ptr[i] & 0xfffff);
     }
 
     g_buffers->phases.unmap();
 
-    NvFlexSetParticles(g_solver, g_buffers->phases.buffer, nullptr);
+    NvFlexSetPhases(g_solver, g_buffers->phases.buffer, nullptr);
 }
 
 py::array_t<int> pyflex_get_phases() {
@@ -3127,7 +3126,7 @@ void pyflex_set_phases(py::array_t<int> phases) {
 
     g_buffers->phases.unmap();
 
-    NvFlexSetParticles(g_solver, g_buffers->phases.buffer, nullptr);
+    NvFlexSetPhases(g_solver, g_buffers->phases.buffer, nullptr);
 }
 
 py::array_t<float> pyflex_get_positions() {
