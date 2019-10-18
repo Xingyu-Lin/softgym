@@ -5,6 +5,7 @@ from gym.utils import seeding
 import numpy as np
 from os import path
 import gym
+from softgym.utils.make_gif import make_gif
 
 try:
     import pyflex
@@ -15,9 +16,11 @@ except ImportError as e:
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1):
         pyflex.init()  # TODO check if pyflex needs to be initialized for each instance of the environment
+        self.record_video, self.video_path, self.video_name = False, None, None
 
         self.initialize_camera()
         self.set_scene()
+        self.set_video_recording_params()
         self.get_pyflex_camera_params()
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
@@ -106,3 +109,41 @@ class FlexEnv(gym.Env):
 
     def set_colors(self, colors):
         pyflex.set_groups(colors)
+
+    def start_record(self, video_path, video_name):
+        """
+        Set the flags for recording video. In the step function, set the flag and path when calling pyflex_step.
+        :param video_path: Directory for saving the images and the final video
+        :param video_name: Name of the video, should be *.gif
+        :return:
+        """
+        assert video_name[-4:] == '.gif'
+        self.record_video = True
+        self.video_path = video_path
+        self.video_name = video_name
+        self.video_idx_st = 1
+        self.video_idx_en = self.horizon
+
+    def end_record(self):
+        """
+        Stop recording the video and compile all the rendered images into a gif and clean up the images.
+        Each environment should set the start and end frame of the recorded video (legacy of pyflex) and also the
+            height and width of the rendered video
+        TODO: Directly use the render function once it is made faster
+
+        """
+        self.record_video = False
+        assert hasattr(self, 'video_idx_st')
+        assert hasattr(self, 'video_idx_en')
+        assert hasattr(self, 'video_height')
+        assert hasattr(self, 'video_width')
+        make_gif(self.video_path, self.video_name, self.video_idx_st, self.video_idx_en,
+                 self.video_height, self.video_width)
+
+    def set_video_recording_params(self):
+        """
+        Set the following parameters if video recording is needed:
+            video_height, video_width
+        """
+        self.video_height = None
+        self.video_width = None

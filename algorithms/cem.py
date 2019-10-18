@@ -145,9 +145,10 @@ if __name__ == '__main__':
         with open(traj_path, 'rb') as f:
             traj_dict = pickle.load(f)
         initial_state, action_traj = traj_dict['initial_state'], traj_dict['action_traj']
+        env.start_record(video_path='./data/videos/', video_name='cem_folding.gif')
         env.reset()
         env.set_state(initial_state)
         for action in action_traj:
             env.step(action)
-
+        env.end_record()
     # Save the trajectories and replay

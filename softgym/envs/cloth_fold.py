@@ -1,4 +1,6 @@
 import numpy as np
+import os
+import os.path as osp
 from gym.spaces import Box
 
 import pyflex
@@ -28,6 +30,7 @@ class ClothFoldPointControlEnv(FlexEnv):
             raise NotImplementedError
         self.init_state = self.get_state()
         self.init_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
+
     # Cloth index looks like the following:
     # 0, 1, ..., cloth_xdim -1
     # ...
@@ -86,6 +89,7 @@ class ClothFoldPointControlEnv(FlexEnv):
         return pos[self.obs_key_point_idx, :3].flatten()
 
     def reset(self):
+        self.time_step = 0
         self.set_state(self.init_state)
         # for _ in range(100):
         #     pyflex.step()
@@ -106,7 +110,8 @@ class ClothFoldPointControlEnv(FlexEnv):
     def step(self, action):
         action = np.array(action) / 10.
         last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
-        pyflex.step()
+        self.time_step += 1
+        pyflex.step(capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
         cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         action = action.reshape([-1, 3])
         action = np.hstack([action, np.zeros([action.shape[0], 1])])
@@ -115,3 +120,11 @@ class ClothFoldPointControlEnv(FlexEnv):
         obs = self.get_current_observation()
         reward = self.compute_reward(cur_pos)
         return obs, reward, False, {}
+
+    def set_video_recording_params(self):
+        """
+        Set the following parameters if video recording is needed:
+            video_idx_st, video_idx_en, video_height, video_width
+        """
+        self.video_height = 240
+        self.video_width = 320
