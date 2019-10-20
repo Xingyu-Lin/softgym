@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import pyflex
-from softgym.envs.pour_water import PourWaterPosControlEnv
+from softgym.envs.pour_jam import PourJamPosControlEnv
 import os, argparse, sys
 
 args = argparse.ArgumentParser(sys.argv[0])
@@ -10,13 +10,13 @@ args.add_argument("--cem_traj_path", type = str, default = '../data/traj/pour_wa
 args.add_argument("--replay", type = int, default = 0, help = 'if load pre-stored actions and make gifs')
 args = args.parse_args()
 
-env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct')
+env = PourJamPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct')
 
 timestep = env.horizon
 move_part = int(0.3 * timestep)
 stable_part = int(0.0 * timestep)
 
-v = 0.22
+v = 0.1
 y = 0
 dt = 0.1
 x = env.glass_floor_centerx
@@ -44,7 +44,7 @@ if args.policy == 'heuristic':
             action = np.array([x, y, 0.])
 
         else:
-            theta = min(1, (i - move_part - stable_part) / float(timestep - 50 - move_part - stable_part)) * total_rotate
+            theta = min(1, (i - move_part - stable_part) / float(timestep - 100 - move_part - stable_part)) * total_rotate
             # print(theta / np.pi)
             action = np.array([x, y, theta])
 

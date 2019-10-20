@@ -81,6 +81,7 @@ class CEMPolicy(object):
                                       )
 
     def cost_function(self, cur_state, action_trajs):
+        env = self.env
         env.reset()
         action_trajs = action_trajs.reshape([-1, self.plan_horizon, self.action_dim])
         n = action_trajs.shape[0]
@@ -98,9 +99,11 @@ class CEMPolicy(object):
         if len(self.action_buffer) > 0:
             action, self.action_buffer = self.action_buffer[0], self.action_buffer[1:]
             return action
+        self.env.debug = False
         env_state = self.env.get_state()
         self.action_buffer = self.optimizer.obtain_solution(env_state).reshape([-1, self.action_dim])
         self.env.set_state(env_state)  # Recover the environment
+        print("cem finished planning!")
         return self.get_action(state)
 
 

@@ -11,8 +11,9 @@ def rotate_rigid_object(center, axis, angle, pos = None, relative = None):
     center: rotation center.
     axis: rotation axis.
     angle: rotation angle in radius.
+    TODO: add rotaion of coordinates
     '''
-    
+
     if relative is None:
         relative = pos - center
     

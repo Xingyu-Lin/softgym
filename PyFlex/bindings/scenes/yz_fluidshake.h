@@ -32,36 +32,57 @@ public:
 
 	void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
 	{
-	    // scene_params:
-	    // x, y, z, dim_x, dim_y, dim_z, box_dis_x, box_dis_y, camera_x, camera_
+	    // scene_params
 
 	    auto ptr = (float *) scene_params.request().ptr;
-	    float x = ptr[0];
-	    float y = ptr[1];
-	    float z = ptr[2];
-	    float dim_x = ptr[3];
-	    float dim_y = ptr[4];
-	    float dim_z = ptr[5];
-		cam_x = ptr[6];
-		cam_y = ptr[7];
-		cam_z = ptr[8];
-		cam_angle_x = ptr[9];
-		cam_angle_y = ptr[10];
-		cam_angle_z = ptr[11];
-		cam_width = int(ptr[12]);
-		cam_height = int(ptr[13]);
 
-		float radius = 0.1f;
+		float radius = ptr[0];
+		float rest_dis_coef = ptr[1];
+		float cohesion = ptr[2];
+		float viscosity = ptr[3];
+		float surfaceTension = ptr[4];
+		float adhesion = ptr[5];
+		float vorticityConfinement = ptr[6];
+		float solidpressure = ptr[7];
+
+	    float x = ptr[8];
+	    float y = ptr[9];
+	    float z = ptr[10];
+	    float dim_x = ptr[11];
+	    float dim_y = ptr[12];
+	    float dim_z = ptr[13];
+		cam_x = ptr[14];
+		cam_y = ptr[15];
+		cam_z = ptr[16];
+		cam_angle_x = ptr[17];
+		cam_angle_y = ptr[18];
+		cam_angle_z = ptr[19];
+		cam_width = int(ptr[20]);
+		cam_height = int(ptr[21]);
+
+		
+		/*
+		The main particle radius is set via NvFlexParams::radius, which is the “interaction radius”. 
+		Particles closer than this distance will be able to affect each other. 
+		*/
+		// float radius = 0.1f;
 
 		g_numSolidParticles = g_buffers->positions.size();
 
-		float restDistance = radius*0.55f;
+		// float restDistance = radius*0.55f;
+		float restDistance = radius * rest_dis_coef;
 
 		// to make gif
 		// g_capture = true;
 
-		// void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius, Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, float jitter=0.005f)
-		CreateParticleGrid(Vec3(x, y, z), dim_x, dim_y, dim_z, restDistance, Vec3(0.0f), 1.0f, false, 0.0f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid), 0.005f);
+		// void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius, 
+		// Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, float jitter=0.005f)
+		// jitter controls the randomness in particle positions.
+		// radius controls the particle radius / rest distance of the particle.
+		// if radius / rest_radius is large, then the fluid is more smoothing, as particles interact with more neighbors.
+		CreateParticleGrid(Vec3(x, y, z), dim_x, dim_y, dim_z, restDistance, 
+			Vec3(0.0f), 1.0f, false, 0.0f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid), 0.005f);
+
 		g_lightDistance *= 0.5f;
 
 		g_sceneLower = Vec3(-2.0f, 0.0f, -1.0f);
@@ -71,14 +92,16 @@ public:
 
 		g_params.radius = radius;
 		g_params.dynamicFriction = 0.01f; 
-		g_params.viscosity = 2.0f;
+		g_params.viscosity =  viscosity; //2.0f;
 		g_params.numIterations = 4;
-		g_params.vorticityConfinement = 40.0f;
+		g_params.vorticityConfinement = vorticityConfinement;// 40.0f;
 		g_params.fluidRestDistance = restDistance;
-		g_params.solidPressure = 0.f;
+		g_params.solidPressure = solidpressure; //0.f;
 		g_params.relaxationFactor = 0.0f;
-		g_params.cohesion = 0.02f;
-		g_params.collisionDistance = 0.01f;		
+		g_params.cohesion = cohesion; // 0.02f;
+		g_params.collisionDistance = 0.01f;
+		g_params.adhesion = adhesion;	
+		g_params.surfaceTension = surfaceTension;	
 
 		g_maxDiffuseParticles = 0;
 		g_diffuseScale = 0.5f;
