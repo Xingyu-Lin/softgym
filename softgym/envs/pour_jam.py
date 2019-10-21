@@ -12,7 +12,7 @@ import random
 
 
 class PourJamPosControlEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, horizon = 300):
+    def __init__(self, observation_mode, action_mode, horizon = 400, deterministic = False):
         '''
         This class implements a pouring water task.
         
@@ -23,11 +23,6 @@ class PourJamPosControlEnv(FlexEnv):
         TODO: add more description of the task.
         TODO: allow parameter configuring of the scence.
         '''
-
-        # des_dir = '../data/video/test_PourWater/'
-        # os.system('mkdir -p ' + des_dir)    
-        # self.video_path = des_dir
-        # print(self.video_path)
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
@@ -44,6 +39,7 @@ class PourJamPosControlEnv(FlexEnv):
         self.time_step = 0
 
         self.debug = False
+        self.deterministic = deterministic
 
         super().__init__()
         assert observation_mode in ['cam_img', 'full_state'] 
@@ -98,7 +94,7 @@ class PourJamPosControlEnv(FlexEnv):
         x_center = self.x_center # center of the glass floor
         z = self.fluid_params['z'] # lower corner of the water fluid along z-axis.
         self.camera_params = {
-                        'pos': np.array([x_center + 0.2, 0.7 + 3, z + 1]),
+                        'pos': np.array([x_center + 1.2, 0.7 + 3, z + 1]),
                         'angle': np.array([0., -70/180. * np.pi, 0.]),
                         'width': self.camera_width,
                         'height': self.camera_height
@@ -112,11 +108,20 @@ class PourJamPosControlEnv(FlexEnv):
         params['plate_height_range'] = 0.1, 0.2
 
         # make pouring glass params
-        self.border = self.rand_float(params['border_range'][0], params['border_range'][1]) # the thickness of the glass wall.
-        self.height = self.rand_float(params['height_range'][0], params['height_range'][1]) # the height of the glass
-        fluid_radis = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
-        self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.1) # glass floor length
-        self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0, 0.1) # glass width
+        
+        if not self.deterministic: 
+            self.border = self.rand_float(params['border_range'][0], params['border_range'][1]) # the thickness of the glass wall.
+            self.height = self.rand_float(params['height_range'][0], params['height_range'][1]) # the height of the glass
+            fluid_radis = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
+            self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.1) # glass floor length
+            self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0, 0.1) # glass width
+        else:
+            self.border = 0.02
+            self.height = 0.4
+            fluid_radis = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
+            self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.05 # glass floor length
+            self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.05 # glass width
+        
         params['border'] = self.border
         params['height'] = self.height
         params['glass_dis_x'] = self.glass_dis_x
@@ -124,19 +129,27 @@ class PourJamPosControlEnv(FlexEnv):
         params['init_glass_x_center'] = self.x_center
 
         # make jam plate params
-        self.plate_num = 3
-        self.plate_distances = np.zeros(3)
-        self.plate_centers = np.zeros(3)
-        self.plate_borders = np.zeros(3)
-        self.plate_heights = np.zeros(3)
-        self.plate_dis_x = np.zeros(3)
-        self.plate_dis_z = np.zeros(3)
+        self.plate_num = 2
+        self.plate_distances = np.zeros(self.plate_num )
+        self.plate_centers = np.zeros(self.plate_num )
+        self.plate_borders = np.zeros(self.plate_num )
+        self.plate_heights = np.zeros(self.plate_num )
+        self.plate_dis_x = np.zeros(self.plate_num )
+        self.plate_dis_z = np.zeros(self.plate_num)
         for i in range(self.plate_num):
-            self.plate_distances[i] = self.rand_float(params['plate_distance_range'][0], params['plate_distance_range'][1]) # distance between the pouring glass and the poured glass
-            self.plate_borders[i] = self.rand_float(params['border_range'][0], params['border_range'][1])
-            self.plate_heights[i] = self.rand_float(params['plate_height_range'][0], params['plate_height_range'][1])
-            self.plate_dis_x[i] = (self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.2)) * 0.5 
-            self.plate_dis_z[i] = (self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0., 0.2)) * 0.5
+            if not self.deterministic:
+                self.plate_distances[i] = self.rand_float(params['plate_distance_range'][0], params['plate_distance_range'][1]) # distance between the pouring glass and the poured glass
+                self.plate_borders[i] = self.rand_float(params['border_range'][0], params['border_range'][1])
+                self.plate_heights[i] = self.rand_float(params['plate_height_range'][0], params['plate_height_range'][1])
+                self.plate_dis_x[i] = (self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.2)) * 0.7
+                self.plate_dis_z[i] = (self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0., 0.2)) * 0.7
+            else:
+                self.plate_distances[i] = 0.6
+                self.plate_borders[i] = 0.01
+                self.plate_heights[i] = 0.15
+                self.plate_dis_x[i] = (self.fluid_params['dim_x'] * fluid_radis + 0.2) * 0.7 
+                self.plate_dis_z[i] = (self.fluid_params['dim_z'] * fluid_radis + 0.2) * 0.7
+            
             self.plate_centers[i] = self.x_center
             for j in range(i + 1):
                 self.plate_centers[i] += self.plate_distances[j]
@@ -156,21 +169,31 @@ class PourJamPosControlEnv(FlexEnv):
         params = {}
         params['radius_range'] = [0.09, 0.11] # 1.0
         params['rest_dis_coef_range'] = [0.4, 0.6] # 0.55
-        params['cohension_range'] = [0.25, 0.4] # large, like mud. // 0.02f;
+        params['cohension_range'] = [0.1, 0.18] # large, like mud. // 0.02f;
         params['viscosity_range'] = [1.5, 2.5] # //2.0f;
         params['surfaceTension_range'] = [0., 0.1] # 0.0
         params['adhesion_range'] = [0.05, 0.1] # how fluid adhead to shape. do not set to too large! # 0.0
         params['vorticityConfinement_range'] = [39.99, 40.01] # // 40.0f;
         params['solidPressure_range'] = [0., 0.01] #//0.f;
 
-        params['radius'] = self.rand_float(params['radius_range'][0], params['radius_range'][1])
-        params['rest_dis_coef'] = self.rand_float(params['rest_dis_coef_range'][0], params['rest_dis_coef_range'][1])
-        params['cohesion'] = self.rand_float(params['cohension_range'][0], params['cohension_range'][1])
-        params['viscosity'] = self.rand_float(params['viscosity_range'][0], params['viscosity_range'][1])
-        params['surfaceTension'] = self.rand_float(params['surfaceTension_range'][0], params['surfaceTension_range'][1])
-        params['adhesion'] = self.rand_float(params['adhesion_range'][0], params['adhesion_range'][1])
-        params['vorticityConfinement'] = self.rand_float(params['vorticityConfinement_range'][0], params['vorticityConfinement_range'][1])
-        params['solidpressure'] = self.rand_float(params['solidPressure_range'][0], params['solidPressure_range'][1])
+        if not self.deterministic:
+            params['radius'] = self.rand_float(params['radius_range'][0], params['radius_range'][1])
+            params['rest_dis_coef'] = self.rand_float(params['rest_dis_coef_range'][0], params['rest_dis_coef_range'][1])
+            params['cohesion'] = self.rand_float(params['cohension_range'][0], params['cohension_range'][1])
+            params['viscosity'] = self.rand_float(params['viscosity_range'][0], params['viscosity_range'][1])
+            params['surfaceTension'] = self.rand_float(params['surfaceTension_range'][0], params['surfaceTension_range'][1])
+            params['adhesion'] = self.rand_float(params['adhesion_range'][0], params['adhesion_range'][1])
+            params['vorticityConfinement'] = self.rand_float(params['vorticityConfinement_range'][0], params['vorticityConfinement_range'][1])
+            params['solidpressure'] = self.rand_float(params['solidPressure_range'][0], params['solidPressure_range'][1])
+        else:
+            params['radius'] = 0.1
+            params['rest_dis_coef'] = 0.45
+            params['cohesion'] = 0.05
+            params['viscosity'] = 2.0
+            params['surfaceTension'] = 0.0
+            params['adhesion'] = 0.0
+            params['vorticityConfinement'] = 40.0
+            params['solidpressure'] = 0.
 
         self.fluid_params = params
 
@@ -179,9 +202,14 @@ class PourJamPosControlEnv(FlexEnv):
         self.fluid_params['dim_y_range'] = 16, 20
         self.fluid_params['dim_z_range'] = 4, 6 
      
-        self.fluid_params['dim_x'] = self.rand_int(self.fluid_params['dim_x_range'][0], self.fluid_params['dim_x_range'][1]) 
-        self.fluid_params['dim_y'] = self.rand_int(self.fluid_params['dim_y_range'][0], self.fluid_params['dim_y_range'][1])
-        self.fluid_params['dim_z'] = self.rand_int(self.fluid_params['dim_z_range'][0], self.fluid_params['dim_z_range'][1])
+        if not self.deterministic:
+            self.fluid_params['dim_x'] = self.rand_int(self.fluid_params['dim_x_range'][0], self.fluid_params['dim_x_range'][1]) 
+            self.fluid_params['dim_y'] = self.rand_int(self.fluid_params['dim_y_range'][0], self.fluid_params['dim_y_range'][1])
+            self.fluid_params['dim_z'] = self.rand_int(self.fluid_params['dim_z_range'][0], self.fluid_params['dim_z_range'][1])
+        else:
+            self.fluid_params['dim_x'] = 3
+            self.fluid_params['dim_y'] = 15
+            self.fluid_params['dim_z'] = 3
 
         # center of the glass floor, and lowere corner of x,y,z axis of the fluid grid
         fluid_radis = params['radius'] * params['rest_dis_coef']
