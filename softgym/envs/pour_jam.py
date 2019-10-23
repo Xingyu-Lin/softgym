@@ -11,8 +11,8 @@ from pyquaternion import Quaternion
 import random
 
 
-class PourWaterPosControlEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, horizon = 300, deterministic = False):
+class PourJamPosControlEnv(FlexEnv):
+    def __init__(self, observation_mode, action_mode, horizon = 400, deterministic = False):
         '''
         This class implements a pouring water task.
         
@@ -56,7 +56,10 @@ class PourWaterPosControlEnv(FlexEnv):
             self.action_space = Box(np.array([-1.] * self.action_direct_dim), np.array([1.] * self.action_direct_dim), dtype=np.float32)
         else:
             raise NotImplementedError
+
+        self.init_flex_state = self.get_state()
         
+
     def reset(self):
         '''
         reset to environment to the initial state.
@@ -91,8 +94,8 @@ class PourWaterPosControlEnv(FlexEnv):
         x_center = self.x_center # center of the glass floor
         z = self.fluid_params['z'] # lower corner of the water fluid along z-axis.
         self.camera_params = {
-                        'pos': np.array([x_center + 1.3, 1.0 + 2.5, z + 1]),
-                        'angle': np.array([0.4 * np.pi, -70/180. * np.pi, 0]),
+                        'pos': np.array([x_center + 1.2, 0.7 + 3, z + 1]),
+                        'angle': np.array([0., -70/180. * np.pi, 0.]),
                         'width': self.camera_width,
                         'height': self.camera_height
                         }
@@ -101,47 +104,61 @@ class PourWaterPosControlEnv(FlexEnv):
         params = {}
         params['border_range'] = 0.015, 0.025
         params['height_range'] = 0.5, 0.7
-        params['glass_distance_range'] = 0.5, 0.8
-        params['poured_border_range'] = 0.015, 0.025
-        params['poured_height_range'] = 0.5, 0.7
+        params['plate_distance_range'] = 0.5, 0.8
+        params['plate_height_range'] = 0.1, 0.2
 
-        if not self.deterministic:
+        # make pouring glass params
+        
+        if not self.deterministic: 
             self.border = self.rand_float(params['border_range'][0], params['border_range'][1]) # the thickness of the glass wall.
-            self.height = self.rand_float(params['height_range'][0], params['height_range'][1]) # the height of the glass.
-            self.glass_distance = self.rand_float(params['glass_distance_range'][0], params['glass_distance_range'][1]) # distance between the pouring glass and the poured glass
-            self.poured_border = self.rand_float(params['poured_border_range'][0], params['poured_border_range'][1])
-            self.poured_height = self.rand_float(params['poured_height_range'][0], params['poured_height_range'][1])
-        else:
-            self.border = 0.02
-            self.height = 0.6
-            self.glass_distance = 0.75
-            self.poured_border = 0.02
-            self.poured_height = 0.5
-
-        params['border'] = self.border
-        params['height'] = self.height
-        params['glass_distance'] = self.glass_distance
-        params['poured_border'] = self.poured_border
-        params['poured_height'] = self.poured_height
-
-        fluid_radis = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
-        if not self.deterministic:
+            self.height = self.rand_float(params['height_range'][0], params['height_range'][1]) # the height of the glass
+            fluid_radis = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
             self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.1) # glass floor length
             self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0, 0.1) # glass width
-            self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.1) # glass floor length
-            self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0, 0.1) # glass width
         else:
-            self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.1 # glass floor length
-            self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.1 # glass width
-            self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis # glass floor length
-            self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis # glass width
-
+            self.border = 0.02
+            self.height = 0.4
+            fluid_radis = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
+            self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.05 # glass floor length
+            self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.05 # glass width
+        
+        params['border'] = self.border
+        params['height'] = self.height
         params['glass_dis_x'] = self.glass_dis_x
         params['glass_dis_z'] = self.glass_dis_z
-        params['poured_glass_dis_x'] = self.poured_glass_dis_x
-        params['poured_glass_dis_z'] = self.poured_glass_dis_z
         params['init_glass_x_center'] = self.x_center
-        params['poured_glass_x_center'] = self.x_center + params['glass_distance']
+
+        # make jam plate params
+        self.plate_num = 2
+        self.plate_distances = np.zeros(self.plate_num )
+        self.plate_centers = np.zeros(self.plate_num )
+        self.plate_borders = np.zeros(self.plate_num )
+        self.plate_heights = np.zeros(self.plate_num )
+        self.plate_dis_x = np.zeros(self.plate_num )
+        self.plate_dis_z = np.zeros(self.plate_num)
+        for i in range(self.plate_num):
+            if not self.deterministic:
+                self.plate_distances[i] = self.rand_float(params['plate_distance_range'][0], params['plate_distance_range'][1]) # distance between the pouring glass and the poured glass
+                self.plate_borders[i] = self.rand_float(params['border_range'][0], params['border_range'][1])
+                self.plate_heights[i] = self.rand_float(params['plate_height_range'][0], params['plate_height_range'][1])
+                self.plate_dis_x[i] = (self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.2)) * 0.7
+                self.plate_dis_z[i] = (self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0., 0.2)) * 0.7
+            else:
+                self.plate_distances[i] = 0.6
+                self.plate_borders[i] = 0.01
+                self.plate_heights[i] = 0.15
+                self.plate_dis_x[i] = (self.fluid_params['dim_x'] * fluid_radis + 0.2) * 0.7 
+                self.plate_dis_z[i] = (self.fluid_params['dim_z'] * fluid_radis + 0.2) * 0.7
+            
+            self.plate_centers[i] = self.x_center
+            for j in range(i + 1):
+                self.plate_centers[i] += self.plate_distances[j]
+
+        params['plate_center'] = self.plate_centers
+        params['plate_border'] = self.plate_borders
+        params['plate_height'] = self.plate_heights
+        params['plate_dis_x'] = self.plate_dis_x
+        params['plate_dix_z'] = self.plate_dis_z
 
         self.glass_params = params
 
@@ -152,10 +169,10 @@ class PourWaterPosControlEnv(FlexEnv):
         params = {}
         params['radius_range'] = [0.09, 0.11] # 1.0
         params['rest_dis_coef_range'] = [0.4, 0.6] # 0.55
-        params['cohension_range'] = [0.015, 0.025] # large, like mud. // 0.02f;
+        params['cohension_range'] = [0.1, 0.18] # large, like mud. // 0.02f;
         params['viscosity_range'] = [1.5, 2.5] # //2.0f;
         params['surfaceTension_range'] = [0., 0.1] # 0.0
-        params['adhesion_range'] = [0., 0.002] # how fluid adhead to shape. do not set to too large! # 0.0
+        params['adhesion_range'] = [0.05, 0.1] # how fluid adhead to shape. do not set to too large! # 0.0
         params['vorticityConfinement_range'] = [39.99, 40.01] # // 40.0f;
         params['solidPressure_range'] = [0., 0.01] #//0.f;
 
@@ -171,11 +188,11 @@ class PourWaterPosControlEnv(FlexEnv):
         else:
             params['radius'] = 0.1
             params['rest_dis_coef'] = 0.45
-            params['cohesion'] = 0.1
+            params['cohesion'] = 0.05
             params['viscosity'] = 2.0
-            params['surfaceTension'] = 0.
+            params['surfaceTension'] = 0.0
             params['adhesion'] = 0.0
-            params['vorticityConfinement'] = 40
+            params['vorticityConfinement'] = 40.0
             params['solidpressure'] = 0.
 
         self.fluid_params = params
@@ -190,11 +207,11 @@ class PourWaterPosControlEnv(FlexEnv):
             self.fluid_params['dim_y'] = self.rand_int(self.fluid_params['dim_y_range'][0], self.fluid_params['dim_y_range'][1])
             self.fluid_params['dim_z'] = self.rand_int(self.fluid_params['dim_z_range'][0], self.fluid_params['dim_z_range'][1])
         else:
-            self.fluid_params['dim_x'] = 5
-            self.fluid_params['dim_y'] = 18
-            self.fluid_params['dim_z'] = 4
+            self.fluid_params['dim_x'] = 3
+            self.fluid_params['dim_y'] = 15
+            self.fluid_params['dim_z'] = 3
 
-        # center of the glass floor. lower corner of the water fluid grid along x,y,z-axis. 
+        # center of the glass floor, and lowere corner of x,y,z axis of the fluid grid
         fluid_radis = params['radius'] * params['rest_dis_coef']
         self.x_center = self.rand_float(-0.2, 0.2) 
         self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/2.*fluid_radis 
@@ -237,34 +254,35 @@ class PourWaterPosControlEnv(FlexEnv):
             quat = glass[i][2]
             pyflex.add_box(halfEdge, center, quat)
 
-        # create poured glass
-        poured_glass = self.create_glass(self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
-        for i in range(len(poured_glass)):
-            halfEdge = poured_glass[i][0]
-            center = poured_glass[i][1]
-            quat = poured_glass[i][2]
-            pyflex.add_box(halfEdge, center, quat)
+        # create poured jam plate
+        for j in range(self.plate_num):
+            plate = self.create_glass(self.plate_dis_x[j], self.plate_dis_z[j], self.plate_heights[j], self.plate_borders[j])
+            for i in range(len(plate)):
+                halfEdge = plate[i][0]
+                center = plate[i][1]
+                quat = plate[i][2]
+                pyflex.add_box(halfEdge, center, quat)
         
         # move pouring glass to be at ground
         self.glass_floor_centerx = self.x_center
         self.glass_states = self.init_glass_state(self.x_center, 0, self.glass_dis_x, self.glass_dis_z, self.height, self.border)
 
         # move poured glass to be at ground
-        self.poured_glass_states = self.init_glass_state(self.x_center + self.glass_distance, 0, 
-            self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
+        self.plate_states = np.zeros((self.plate_num * self.wall_num, self.dim_shape_state))
+        for j in range(self.plate_num):
+            self.plate_states[j*self.wall_num:(j+1)*self.wall_num] = self.init_glass_state(self.plate_centers[j], 0, 
+                self.plate_dis_x[j], self.plate_dis_z[j], self.plate_heights[j], self.plate_borders[j])
 
-        self.set_shape_states(self.glass_states, self.poured_glass_states)
+        self.set_shape_states(self.glass_states, self.plate_states)
 
         # give some time for water to stablize 
-        for i in range(150):
+        for i in range(100):
             pyflex.step()
 
         # record glass floor center x, y, and rotation
         self.action_x = self.x_center
         self.action_y = 0
         self.rotation = 0
-
-        self.init_flex_state = self.get_state()
 
         print("pour water inital scene constructed over...")
 
@@ -309,8 +327,8 @@ class PourWaterPosControlEnv(FlexEnv):
         # make action as increasement
         # move = action[:2]
         # rotate = action[2]
-        # move = np.clip(move, a_min = -0.1, a_max = 0.1)
-        # rotate = np.clip(rotate, a_min = -0.05, a_max = 0.05)
+        # move = np.clip(move, a_min = -0.3, a_max = 0.3)
+        # rotate = np.clip(rotate, a_min = -0.2, a_max = 0.2)
         # x, y, theta = move[0], move[1], rotate
         # x, y, theta = self.action_x + x, self.action_y + y, self.rotation + theta
         # self.action_x, self.action_y, self.rotation = x, y, theta
@@ -321,7 +339,7 @@ class PourWaterPosControlEnv(FlexEnv):
         self.glass_states = self.rotate_glass(self.glass_states, x, y, theta)
 
         # pyflex takes a step to update the glass and the water fluid
-        self.set_shape_states(self.glass_states, self.poured_glass_states)
+        self.set_shape_states(self.glass_states, self.plate_states)
         if self.record_video:
             pyflex.step(capture = 1, path = self.video_path + 'render_' + str(self.time_step) + '.tga')
         else:
@@ -500,24 +518,24 @@ class PourWaterPosControlEnv(FlexEnv):
         judge whether a water particle is in the poured glass
         water: [x, y, z, 1/m] water particle state.
         '''
-
+        return 0
         # floor, left, right, back, front
         # state:
         # 0-3: current (x, y, z) coordinate of the center point
         # 3-6: previous (x, y, z) coordinate of the center point
         # 6-10: current quat 
         # 10-14: previous quat 
-        x_lower = self.poured_glass_states[1][0]
-        x_upper = self.poured_glass_states[2][0]
-        z_lower = self.poured_glass_states[3][2]
-        z_upper = self.poured_glass_states[4][2]
-        y_lower = self.poured_border
-        y_upper = self.poured_height
-        x, y, z = water[0], water[1], water[2]
-        if x >= x_lower and x <= x_upper and y >= y_lower and y <= y_upper and z >= z_lower and z <= z_upper:
-            return 1
-        else:
-            return 0
+        # x_lower = self.poured_glass_states[1][0]
+        # x_upper = self.poured_glass_states[2][0]
+        # z_lower = self.poured_glass_states[3][2]
+        # z_upper = self.poured_glass_states[4][2]
+        # y_lower = self.poured_border
+        # y_upper = self.poured_height
+        # x, y, z = water[0], water[1], water[2]
+        # if x >= x_lower and x <= x_upper and y >= y_lower and y <= y_upper and z >= z_lower and z <= z_upper:
+        #     return 1
+        # else:
+        #     return 0
 
     def set_video_recording_params(self):
         """

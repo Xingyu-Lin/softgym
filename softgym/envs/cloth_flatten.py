@@ -14,6 +14,9 @@ class ClothFlattenPointControlEnv(FlexEnv):
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
+        self.video_path = "data/videos"
+
+        self.horizon = 100
 
         if observation_mode == 'key_point':
             self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()), np.array([np.inf] * pyflex.get_n_particles()), dtype=np.float32)
@@ -21,8 +24,8 @@ class ClothFlattenPointControlEnv(FlexEnv):
             raise NotImplementedError
 
         if action_mode.startswith('key_point'):
-            space_low = np.array([0, -0.1, -0.1, -0.1])
-            space_high = np.array([pyflex.get_n_particles(), 0.1, 0.1, 0.1])
+            space_low = np.array([0, -0.1, -0.1, -0.1]*2)
+            space_high = np.array([3.9, 0.1, 0.1, 0.1]*2)
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         else:
             raise NotImplementedError
@@ -30,8 +33,18 @@ class ClothFlattenPointControlEnv(FlexEnv):
         self.init_state = self.get_state()
         self.storage_name = "test_flatten"
         self.i = 0
+        self.initPos = None
+        self.initVel = None
+        self.video_height = 240
+        self.video_width = 320
 
-    def reset(self, dropPoint = None, xdim=64, ydim=32):
+    def reset(self, dropPoint = 1000, xdim=64, ydim=32):
+        self.i=0
+        if self.initPos is not None:
+            print("resetting")
+            pyflex.set_positions(self.initPos)
+            pyflex.set_positions(self.initVel)
+            return
 
         pickpoint = random.randint(0, xdim * ydim)
         if dropPoint is not None:
@@ -54,7 +67,7 @@ class ClothFlattenPointControlEnv(FlexEnv):
             stopped = True
             for j in range(pyflex.get_n_particles()):
                 if vels[j] > 0.01:
-                    print("stopped check at {} with vel {}".format(j, vels[j]))
+                    #print("stopped check at {} with vel {}".format(j, vels[j]))
                     stopped = False
                     break
             if stopped:
@@ -63,6 +76,12 @@ class ClothFlattenPointControlEnv(FlexEnv):
 
             pyflex.set_velocities(vels)
             pyflex.set_positions(newPos)
+        print("dropping")
+        lastPos = pyflex.get_positions()
+        lastPos[pickpoint * 4 + 3] = 1
+        pyflex.set_positions(lastPos)
+        for i in range(0, 100):
+            pyflex.step()
         self.initPos = pyflex.get_positions()
         self.initVel = pyflex.get_velocities()
 
@@ -73,29 +92,43 @@ class ClothFlattenPointControlEnv(FlexEnv):
         pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         return pos[:, :3].flatten()
 
+    def set_video_recording_params(self):
+        """
+        Set the following parameters if video recording is needed:
+            video_idx_st, video_idx_en, video_height, video_width
+        """
+        self.video_height = 240
+        self.video_width = 320
+
     def step(self, action):
+        print("stepping")
+        valid_idxs = np.array([0, 63, 31*64, 32*64-1])
         last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         des_dir = self.storage_name
-        pyflex.step(capture=1, path=os.path.join(des_dir, 'render_%d.tga' % self.i))
+        pyflex.step(capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
         self.i = self.i+1
         cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         action = action.reshape([-1, 4])
         idxs = np.hstack(action[:, 0])
+        print("idxs: {}".format(valid_idxs[idxs.astype(int)]))
         updates = action[:, 1:]
         action = np.hstack([action, np.zeros([action.shape[0], 1])])
         vels = pyflex.get_velocities()
         cur_pos[:, 3] = 1
         if self.action_mode == 'key_point_pos':
-            cur_pos[idxs.astype(int), :3] = last_pos[idxs.astype(int)][:, :3] + updates
-            cur_pos[idxs.astype(int), 3] = 0
+            cur_pos[valid_idxs[idxs.astype(int)], :3] = last_pos[valid_idxs[idxs.astype(int)]][:, :3] + updates
+            cur_pos[valid_idxs[idxs.astype(int)], 3] = 0
+
 
         else:
             vels = np.array(vels).reshape([-1, 3])
             vels[idxs.astype(int), :] = updates
         pyflex.set_positions(cur_pos.flatten())
         pyflex.set_velocities(vels.flatten())
+        print("computing reward")
         obs = self.get_current_observation()
         reward = self.compute_reward()
+        print("returning")
         return obs, reward, False, {}
 
     def compute_reward(self):
@@ -188,6 +221,12 @@ class ClothFlattenSphereControlEnv(FlexEnv):
 
             pyflex.set_velocities(vels)
             pyflex.set_positions(newPos)
+        print("dropping")
+        lastPos = pyflex.get_positions()
+        lastPos[pickpoint*4+3] = 1
+        pyflex.set_positions(lastPos)
+        for i in range (0, 100):
+            pyflex.step()
         self.initPos = pyflex.get_positions()
         self.initVel = pyflex.get_velocities()
         pyflex.add_sphere(0.1, [0.5, 0.5, 0], [1, 0, 0, 0])

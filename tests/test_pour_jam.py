@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import pyflex
-from softgym.envs.pour_water import PourWaterPosControlEnv
+from softgym.envs.pour_jam import PourJamPosControlEnv
 import os, argparse, sys
 
 args = argparse.ArgumentParser(sys.argv[0])
@@ -10,34 +10,61 @@ args.add_argument("--cem_traj_path", type = str, default = '../data/traj/pour_wa
 args.add_argument("--replay", type = int, default = 0, help = 'if load pre-stored actions and make gifs')
 args = args.parse_args()
 
+env = PourJamPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', deterministic=True)
 
+timestep = env.horizon
+move_part = int(0.3 * timestep)
+stable_part = int(0.0 * timestep)
+
+vy = 0.1
+vx = 0.02
+vx2 = 0.15
+y = 0
+dt = 0.1
+x = env.glass_floor_centerx
+total_rotate1 = 0.57* np.pi
+total_rotate2 = 0.67* np.pi
+
+move0 = 0.1 * timestep
+move1 = 0.2 * timestep
+rotate1 = 0.4 * timestep
+rotateback1 = 0.55 * timestep
+move2 = 0.65 * timestep
+rotate2 = 0.85 * timestep
+rotateback2 = 0.95 * timestep
+
+env.start_record(video_path='../data/video/', video_name='pour_jam.gif')
+env.reset()
 if args.policy == 'heuristic':
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', deterministic=True)
-
-    timestep = env.horizon
-    move_part = 50
-    stable_part = int(0.0 * timestep)
-
-    v = 0.26
-    y = 0
-    dt = 0.1
-    x = env.glass_floor_centerx
-    total_rotate = 0.5* np.pi
-
-    env.start_record(video_path='../data/video/', video_name='pour_water_large_cohesion.gif')
-    env.reset()
     for i in range(timestep):
-        if i < stable_part:
-            action = np.array([x, y, 0])
-
-        elif stable_part <= i < move_part + stable_part:
-            y = y + v * dt
+        if i < move0:
+            y = y + vy * dt
             action = np.array([x, y, 0.])
 
-        else:
-            theta = min(1, (i - move_part - stable_part) / float(timestep - 200 - move_part - stable_part)) * total_rotate
-            # print(theta / np.pi)
+        elif i >= move0 and i < move1:
+            x = x + vx * dt
+            action = np.array([x, y, 0])
+        
+        elif i >= move1 and i < rotate1:
+            theta = (i - move1) / float(rotate1 - move1) * total_rotate1
             action = np.array([x, y, theta])
+
+        elif i >= rotate1 and i < rotateback1:
+            theta = (1 - (i - rotate1) / float(rotateback1 - rotate1)) * total_rotate1
+            action = np.array([x, y, theta])
+
+        elif i >= rotateback1 and i < move2:
+            x = x + vx2 * dt
+            action = np.array([x, y, theta])
+        
+        elif i >= move2 and i < rotate2:
+            theta = (i - move2) / float(rotate2 - move2) * total_rotate2
+            action = np.array([x, y, theta])
+
+        elif i >= rotate2 and i < rotateback2:
+            theta = (1 - (i - rotate2) / float(rotateback2 - rotate2)) * total_rotate2
+            action = np.array([x, y, theta])
+        
 
         _, reward, done, _ = env.step(action)
 
@@ -51,12 +78,11 @@ elif args.policy == 'cem':
     import copy, pickle
 
     traj_path = args.cem_traj_path
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', horizon=90)
 
     if not args.replay:
         policy = CEMPolicy(env,
-                        plan_horizon=10,
-                        max_iters=5,
+                        plan_horizon=30,
+                        max_iters=10,
                         population_size=30,
                         num_elites=5)
         # Run policy

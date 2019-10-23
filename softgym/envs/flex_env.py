@@ -18,7 +18,7 @@ class FlexEnv(gym.Env):
         pyflex.init()  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.record_video, self.video_path, self.video_name = False, None, None
 
-        self.initialize_camera()
+        # self.initialize_camera()
         self.set_scene()
         self.set_video_recording_params()
         self.get_pyflex_camera_params()
