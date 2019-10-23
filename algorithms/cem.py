@@ -119,7 +119,7 @@ if __name__ == '__main__':
     traj_path = args.traj_path
 
     softgym.register_flex_envs()
-    env = gym.make('ClothFoldPointControl-v0')
+    env = gym.make('ClothFlattenPointControl-v0')
 
     if not args.replay:
         policy = CEMPolicy(env,

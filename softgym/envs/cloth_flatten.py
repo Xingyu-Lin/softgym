@@ -76,6 +76,12 @@ class ClothFlattenPointControlEnv(FlexEnv):
 
             pyflex.set_velocities(vels)
             pyflex.set_positions(newPos)
+        print("dropping")
+        lastPos = pyflex.get_positions()
+        lastPos[pickpoint * 4 + 3] = 1
+        pyflex.set_positions(lastPos)
+        for i in range(0, 100):
+            pyflex.step()
         self.initPos = pyflex.get_positions()
         self.initVel = pyflex.get_velocities()
 
@@ -215,6 +221,12 @@ class ClothFlattenSphereControlEnv(FlexEnv):
 
             pyflex.set_velocities(vels)
             pyflex.set_positions(newPos)
+        print("dropping")
+        lastPos = pyflex.get_positions()
+        lastPos[pickpoint*4+3] = 1
+        pyflex.set_positions(lastPos)
+        for i in range (0, 100):
+            pyflex.step()
         self.initPos = pyflex.get_positions()
         self.initVel = pyflex.get_velocities()
         pyflex.add_sphere(0.1, [0.5, 0.5, 0], [1, 0, 0, 0])
