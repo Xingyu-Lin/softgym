@@ -8,7 +8,7 @@ from softgym.envs.flex_env import FlexEnv
 
 
 class ClothFoldPointControlEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, horizon=200):
+    def __init__(self, observation_mode, action_mode, horizon=150):
         self.cloth_xdim = 64
         self.cloth_ydim = 32
         self.camera_width = 960
