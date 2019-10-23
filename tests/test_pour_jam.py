@@ -10,51 +10,67 @@ args.add_argument("--cem_traj_path", type = str, default = '../data/traj/pour_wa
 args.add_argument("--replay", type = int, default = 0, help = 'if load pre-stored actions and make gifs')
 args = args.parse_args()
 
-env = PourJamPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct')
+env = PourJamPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', deterministic=True)
 
 timestep = env.horizon
 move_part = int(0.3 * timestep)
 stable_part = int(0.0 * timestep)
 
-v = 0.1
+vy = 0.1
+vx = 0.02
+vx2 = 0.15
 y = 0
 dt = 0.1
 x = env.glass_floor_centerx
-total_rotate = 0.6* np.pi
-dim_position = 4
-dim_velocity = 3
-dim_shape_state = 14
+total_rotate1 = 0.57* np.pi
+total_rotate2 = 0.67* np.pi
 
-n_particles = pyflex.get_n_particles()
-n_shapes = pyflex.get_n_shapes()
-n_rigids = pyflex.get_n_rigids()
-n_rigidPositions = pyflex.get_n_rigidPositions()
-positions = np.zeros((timestep, n_particles, dim_position))
-velocities = np.zeros((timestep, n_particles, dim_velocity))
-shape_states = np.zeros((timestep, n_shapes, dim_shape_state))
+move0 = 0.1 * timestep
+move1 = 0.2 * timestep
+rotate1 = 0.4 * timestep
+rotateback1 = 0.55 * timestep
+move2 = 0.65 * timestep
+rotate2 = 0.85 * timestep
+rotateback2 = 0.95 * timestep
 
+env.start_record(video_path='../data/video/', video_name='pour_jam.gif')
 env.reset()
 if args.policy == 'heuristic':
     for i in range(timestep):
-        if i < stable_part:
-            action = np.array([x, y, 0])
-
-        elif stable_part <= i < move_part + stable_part:
-            y = y + v * dt
+        if i < move0:
+            y = y + vy * dt
             action = np.array([x, y, 0.])
 
-        else:
-            theta = min(1, (i - move_part - stable_part) / float(timestep - 100 - move_part - stable_part)) * total_rotate
-            # print(theta / np.pi)
+        elif i >= move0 and i < move1:
+            x = x + vx * dt
+            action = np.array([x, y, 0])
+        
+        elif i >= move1 and i < rotate1:
+            theta = (i - move1) / float(rotate1 - move1) * total_rotate1
             action = np.array([x, y, theta])
 
-        positions[i] = pyflex.get_positions().reshape(-1, dim_position)
-        velocities[i] = pyflex.get_velocities().reshape(-1, dim_velocity)
-        shape_states[i] = pyflex.get_shape_states().reshape(-1, dim_shape_state)   
+        elif i >= rotate1 and i < rotateback1:
+            theta = (1 - (i - rotate1) / float(rotateback1 - rotate1)) * total_rotate1
+            action = np.array([x, y, theta])
+
+        elif i >= rotateback1 and i < move2:
+            x = x + vx2 * dt
+            action = np.array([x, y, theta])
+        
+        elif i >= move2 and i < rotate2:
+            theta = (i - move2) / float(rotate2 - move2) * total_rotate2
+            action = np.array([x, y, theta])
+
+        elif i >= rotate2 and i < rotateback2:
+            theta = (1 - (i - rotate2) / float(rotateback2 - rotate2)) * total_rotate2
+            action = np.array([x, y, theta])
+        
+
         _, reward, done, _ = env.step(action)
 
         # print("step {} reward {}".format(i, reward))
         if done:
+            env.end_record()
             break
 
 elif args.policy == 'cem':

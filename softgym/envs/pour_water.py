@@ -12,7 +12,7 @@ import random
 
 
 class PourWaterPosControlEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, horizon = 200):
+    def __init__(self, observation_mode, action_mode, horizon = 300, deterministic = False):
         '''
         This class implements a pouring water task.
         
@@ -23,11 +23,6 @@ class PourWaterPosControlEnv(FlexEnv):
         TODO: add more description of the task.
         TODO: allow parameter configuring of the scence.
         '''
-
-        # des_dir = '../data/video/test_PourWater/'
-        # os.system('mkdir -p ' + des_dir)    
-        # self.video_path = des_dir
-        # print(self.video_path)
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
@@ -44,6 +39,7 @@ class PourWaterPosControlEnv(FlexEnv):
         self.time_step = 0
 
         self.debug = False
+        self.deterministic = deterministic
 
         super().__init__()
         assert observation_mode in ['cam_img', 'full_state'] 
@@ -60,10 +56,7 @@ class PourWaterPosControlEnv(FlexEnv):
             self.action_space = Box(np.array([-1.] * self.action_direct_dim), np.array([1.] * self.action_direct_dim), dtype=np.float32)
         else:
             raise NotImplementedError
-
-        self.init_flex_state = self.get_state()
         
-
     def reset(self):
         '''
         reset to environment to the initial state.
@@ -98,8 +91,8 @@ class PourWaterPosControlEnv(FlexEnv):
         x_center = self.x_center # center of the glass floor
         z = self.fluid_params['z'] # lower corner of the water fluid along z-axis.
         self.camera_params = {
-                        'pos': np.array([x_center + 0.2, 0.7 + 3, z + 1]),
-                        'angle': np.array([0., -70/180. * np.pi, 0.]),
+                        'pos': np.array([x_center + 1.3, 1.0 + 2.5, z + 1]),
+                        'angle': np.array([0.4 * np.pi, -70/180. * np.pi, 0]),
                         'width': self.camera_width,
                         'height': self.camera_height
                         }
@@ -112,11 +105,18 @@ class PourWaterPosControlEnv(FlexEnv):
         params['poured_border_range'] = 0.015, 0.025
         params['poured_height_range'] = 0.5, 0.7
 
-        self.border = self.rand_float(params['border_range'][0], params['border_range'][1]) # the thickness of the glass wall.
-        self.height = self.rand_float(params['height_range'][0], params['height_range'][1]) # the height of the glass.
-        self.glass_distance = self.rand_float(params['glass_distance_range'][0], params['glass_distance_range'][1]) # distance between the pouring glass and the poured glass
-        self.poured_border = self.rand_float(params['poured_border_range'][0], params['poured_border_range'][1])
-        self.poured_height = self.rand_float(params['poured_height_range'][0], params['poured_height_range'][1])
+        if not self.deterministic:
+            self.border = self.rand_float(params['border_range'][0], params['border_range'][1]) # the thickness of the glass wall.
+            self.height = self.rand_float(params['height_range'][0], params['height_range'][1]) # the height of the glass.
+            self.glass_distance = self.rand_float(params['glass_distance_range'][0], params['glass_distance_range'][1]) # distance between the pouring glass and the poured glass
+            self.poured_border = self.rand_float(params['poured_border_range'][0], params['poured_border_range'][1])
+            self.poured_height = self.rand_float(params['poured_height_range'][0], params['poured_height_range'][1])
+        else:
+            self.border = 0.02
+            self.height = 0.6
+            self.glass_distance = 0.75
+            self.poured_border = 0.02
+            self.poured_height = 0.5
 
         params['border'] = self.border
         params['height'] = self.height
@@ -125,10 +125,17 @@ class PourWaterPosControlEnv(FlexEnv):
         params['poured_height'] = self.poured_height
 
         fluid_radis = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
-        self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.1) # glass floor length
-        self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0, 0.1) # glass width
-        self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.1) # glass floor length
-        self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0, 0.1) # glass width
+        if not self.deterministic:
+            self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.1) # glass floor length
+            self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0, 0.1) # glass width
+            self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + self.rand_float(0., 0.1) # glass floor length
+            self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + self.rand_float(0, 0.1) # glass width
+        else:
+            self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.1 # glass floor length
+            self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.1 # glass width
+            self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis # glass floor length
+            self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis # glass width
+
         params['glass_dis_x'] = self.glass_dis_x
         params['glass_dis_z'] = self.glass_dis_z
         params['poured_glass_dis_x'] = self.poured_glass_dis_x
@@ -152,31 +159,47 @@ class PourWaterPosControlEnv(FlexEnv):
         params['vorticityConfinement_range'] = [39.99, 40.01] # // 40.0f;
         params['solidPressure_range'] = [0., 0.01] #//0.f;
 
-        params['radius'] = self.rand_float(params['radius_range'][0], params['radius_range'][1])
-        params['rest_dis_coef'] = self.rand_float(params['rest_dis_coef_range'][0], params['rest_dis_coef_range'][1])
-        params['cohesion'] = self.rand_float(params['cohension_range'][0], params['cohension_range'][1])
-        params['viscosity'] = self.rand_float(params['viscosity_range'][0], params['viscosity_range'][1])
-        params['surfaceTension'] = self.rand_float(params['surfaceTension_range'][0], params['surfaceTension_range'][1])
-        params['adhesion'] = self.rand_float(params['adhesion_range'][0], params['adhesion_range'][1])
-        params['vorticityConfinement'] = self.rand_float(params['vorticityConfinement_range'][0], params['vorticityConfinement_range'][1])
-        params['solidpressure'] = self.rand_float(params['solidPressure_range'][0], params['solidPressure_range'][1])
+        if not self.deterministic:
+            params['radius'] = self.rand_float(params['radius_range'][0], params['radius_range'][1])
+            params['rest_dis_coef'] = self.rand_float(params['rest_dis_coef_range'][0], params['rest_dis_coef_range'][1])
+            params['cohesion'] = self.rand_float(params['cohension_range'][0], params['cohension_range'][1])
+            params['viscosity'] = self.rand_float(params['viscosity_range'][0], params['viscosity_range'][1])
+            params['surfaceTension'] = self.rand_float(params['surfaceTension_range'][0], params['surfaceTension_range'][1])
+            params['adhesion'] = self.rand_float(params['adhesion_range'][0], params['adhesion_range'][1])
+            params['vorticityConfinement'] = self.rand_float(params['vorticityConfinement_range'][0], params['vorticityConfinement_range'][1])
+            params['solidpressure'] = self.rand_float(params['solidPressure_range'][0], params['solidPressure_range'][1])
+        else:
+            params['radius'] = 0.1
+            params['rest_dis_coef'] = 0.45
+            params['cohesion'] = 0.1
+            params['viscosity'] = 2.0
+            params['surfaceTension'] = 0.
+            params['adhesion'] = 0.0
+            params['vorticityConfinement'] = 40
+            params['solidpressure'] = 0.
 
         self.fluid_params = params
 
+        # num of particles in x,y,z-axis
         self.fluid_params['dim_x_range'] = 4, 6
         self.fluid_params['dim_y_range'] = 16, 20
         self.fluid_params['dim_z_range'] = 4, 6 
      
-        # num of particles in x,y,z-axis
-        self.fluid_params['dim_x'] = self.rand_int(self.fluid_params['dim_x_range'][0], self.fluid_params['dim_x_range'][1]) 
-        self.fluid_params['dim_y'] = self.rand_int(self.fluid_params['dim_y_range'][0], self.fluid_params['dim_y_range'][1])
-        self.fluid_params['dim_z'] = self.rand_int(self.fluid_params['dim_z_range'][0], self.fluid_params['dim_z_range'][1])
+        if not self.deterministic:
+            self.fluid_params['dim_x'] = self.rand_int(self.fluid_params['dim_x_range'][0], self.fluid_params['dim_x_range'][1]) 
+            self.fluid_params['dim_y'] = self.rand_int(self.fluid_params['dim_y_range'][0], self.fluid_params['dim_y_range'][1])
+            self.fluid_params['dim_z'] = self.rand_int(self.fluid_params['dim_z_range'][0], self.fluid_params['dim_z_range'][1])
+        else:
+            self.fluid_params['dim_x'] = 5
+            self.fluid_params['dim_y'] = 18
+            self.fluid_params['dim_z'] = 4
 
+        # center of the glass floor. lower corner of the water fluid grid along x,y,z-axis. 
         fluid_radis = params['radius'] * params['rest_dis_coef']
-        self.x_center = self.rand_float(-0.2, 0.2) # center of the glass floor
-        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/2.*fluid_radis # lower corner of the water fluid grid along x-axis. 
-        self.fluid_params['y'] = fluid_radis/2. + 0.025 # lower corner of the water fluid along y-axis.
-        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z']-1)/2.*fluid_radis # lower corner of the water fluid along z-axis.
+        self.x_center = self.rand_float(-0.2, 0.2) 
+        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/2.*fluid_radis 
+        self.fluid_params['y'] = fluid_radis/2. + 0.025 
+        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z']-1)/2.*fluid_radis 
         
         return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'], 
             params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'], 
@@ -233,13 +256,15 @@ class PourWaterPosControlEnv(FlexEnv):
         self.set_shape_states(self.glass_states, self.poured_glass_states)
 
         # give some time for water to stablize 
-        for i in range(100):
+        for i in range(150):
             pyflex.step()
 
         # record glass floor center x, y, and rotation
         self.action_x = self.x_center
         self.action_y = 0
         self.rotation = 0
+
+        self.init_flex_state = self.get_state()
 
         print("pour water inital scene constructed over...")
 
@@ -284,8 +309,8 @@ class PourWaterPosControlEnv(FlexEnv):
         # make action as increasement
         # move = action[:2]
         # rotate = action[2]
-        # move = np.clip(move, a_min = -0.3, a_max = 0.3)
-        # rotate = np.clip(rotate, a_min = -0.2, a_max = 0.2)
+        # move = np.clip(move, a_min = -0.1, a_max = 0.1)
+        # rotate = np.clip(rotate, a_min = -0.05, a_max = 0.05)
         # x, y, theta = move[0], move[1], rotate
         # x, y, theta = self.action_x + x, self.action_y + y, self.rotation + theta
         # self.action_x, self.action_y, self.rotation = x, y, theta

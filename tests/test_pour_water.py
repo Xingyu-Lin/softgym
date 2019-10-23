@@ -10,31 +10,22 @@ args.add_argument("--cem_traj_path", type = str, default = '../data/traj/pour_wa
 args.add_argument("--replay", type = int, default = 0, help = 'if load pre-stored actions and make gifs')
 args = args.parse_args()
 
-env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct')
 
-timestep = env.horizon
-move_part = int(0.3 * timestep)
-stable_part = int(0.0 * timestep)
-
-v = 0.22
-y = 0
-dt = 0.1
-x = env.glass_floor_centerx
-total_rotate = 0.6* np.pi
-dim_position = 4
-dim_velocity = 3
-dim_shape_state = 14
-
-n_particles = pyflex.get_n_particles()
-n_shapes = pyflex.get_n_shapes()
-n_rigids = pyflex.get_n_rigids()
-n_rigidPositions = pyflex.get_n_rigidPositions()
-positions = np.zeros((timestep, n_particles, dim_position))
-velocities = np.zeros((timestep, n_particles, dim_velocity))
-shape_states = np.zeros((timestep, n_shapes, dim_shape_state))
-
-env.reset()
 if args.policy == 'heuristic':
+    env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', deterministic=True)
+
+    timestep = env.horizon
+    move_part = 50
+    stable_part = int(0.0 * timestep)
+
+    v = 0.26
+    y = 0
+    dt = 0.1
+    x = env.glass_floor_centerx
+    total_rotate = 0.5* np.pi
+
+    env.start_record(video_path='../data/video/', video_name='pour_water_large_cohesion.gif')
+    env.reset()
     for i in range(timestep):
         if i < stable_part:
             action = np.array([x, y, 0])
@@ -44,17 +35,15 @@ if args.policy == 'heuristic':
             action = np.array([x, y, 0.])
 
         else:
-            theta = min(1, (i - move_part - stable_part) / float(timestep - 50 - move_part - stable_part)) * total_rotate
+            theta = min(1, (i - move_part - stable_part) / float(timestep - 200 - move_part - stable_part)) * total_rotate
             # print(theta / np.pi)
             action = np.array([x, y, theta])
 
-        positions[i] = pyflex.get_positions().reshape(-1, dim_position)
-        velocities[i] = pyflex.get_velocities().reshape(-1, dim_velocity)
-        shape_states[i] = pyflex.get_shape_states().reshape(-1, dim_shape_state)   
         _, reward, done, _ = env.step(action)
 
         # print("step {} reward {}".format(i, reward))
         if done:
+            env.end_record()
             break
 
 elif args.policy == 'cem':
@@ -62,11 +51,12 @@ elif args.policy == 'cem':
     import copy, pickle
 
     traj_path = args.cem_traj_path
+    env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', horizon=90)
 
     if not args.replay:
         policy = CEMPolicy(env,
-                        plan_horizon=30,
-                        max_iters=10,
+                        plan_horizon=10,
+                        max_iters=5,
                         population_size=30,
                         num_elites=5)
         # Run policy
