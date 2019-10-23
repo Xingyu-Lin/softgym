@@ -9,6 +9,10 @@ from softgym.envs.flex_env import FlexEnv
 
 class ClothFoldPointControlEnv(FlexEnv):
     def __init__(self, observation_mode, action_mode, horizon=100):
+        self.cloth_xdim = 64
+        self.cloth_ydim = 32
+        self.render_type = 0  # 0: only points, 1: only mesh, 2: points + mesh
+
         super().__init__()
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point']
@@ -31,10 +35,6 @@ class ClothFoldPointControlEnv(FlexEnv):
 
         self.init_state = self.get_state()
         self.init_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
-
-        self.cloth_xdim = 64
-        self.cloth_ydim = 32
-        self.render_type = 0  # 0: only points, 1: only mesh, 2: points + mesh
 
     # Cloth index looks like the following:
     # 0, 1, ..., cloth_xdim -1
@@ -110,6 +110,8 @@ class ClothFoldPointControlEnv(FlexEnv):
         return -distance - distance_to_init
 
     def step(self, action):
+        action[2] = 0
+        action[5] = 0
         action = np.array(action) / 10.
         last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         self.time_step += 1

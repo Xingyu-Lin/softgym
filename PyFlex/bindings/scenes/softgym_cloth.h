@@ -6,12 +6,10 @@ public:
 
     void Initialize(py::array_t<float> scene_params, int thread_idx = 0) {
         auto ptr = (float *) scene_params.request().ptr;
-        float pickp = ptr[0];
-        int pickpoint = (int) pickp;
 
-        int dimx = (int) ptr[1]; //64;
-        int dimz = (int) ptr[2]; //32;
-        int render_type = (int) ptr[3]; // 0: only points, 1: only mesh, 2: points + mesh
+        int dimx = (int) ptr[0]; //64;
+        int dimz = (int) ptr[1]; //32;
+        int render_type = (int) ptr[2]; // 0: only points, 1: only mesh, 2: points + mesh
 
         float radius = 0.05f;
 
