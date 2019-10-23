@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     if not args.replay:
         policy = CEMPolicy(env,
-                           plan_horizon=10,
+                           plan_horizon=20,
                            max_iters=5,
                            population_size=50,
                            num_elites=5)

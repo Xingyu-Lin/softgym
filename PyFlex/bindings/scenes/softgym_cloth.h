@@ -1,6 +1,14 @@
 
 class softgym_FlagCloth : public Scene {
 public:
+    float cam_x;
+    float cam_y;
+    float cam_z;
+    float cam_angle_x;
+    float cam_angle_y;
+    float cam_angle_z;
+    int cam_width;
+    int cam_height;
 
     softgym_FlagCloth(const char *name) : Scene(name) {}
 
@@ -11,6 +19,15 @@ public:
         int dimz = (int) ptr[1]; //32;
         int render_type = (int) ptr[2]; // 0: only points, 1: only mesh, 2: points + mesh
 
+        cam_x = ptr[3];
+        cam_y = ptr[4];
+        cam_z = ptr[5];
+        cam_angle_x = ptr[6];
+        cam_angle_y = ptr[7];
+        cam_angle_z = ptr[8];
+        cam_width = int(ptr[9]);
+        cam_height = int(ptr[10]);
+
         float radius = 0.05f;
 
         float stretchStiffness = 0.9f;
@@ -18,7 +35,7 @@ public:
         float shearStiffness = 0.9f;
         int phase = NvFlexMakePhase(0, eNvFlexPhaseSelfCollide);
 
-        CreateSpringGrid(Vec3(0.0f, -1.0f, -3.0f), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness,
+        CreateSpringGrid(Vec3(0.0f, -0.025f, -3.0f), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness,
                          shearStiffness, 0.0f, 1.0f);
 
         const int c1 = 0;
@@ -69,6 +86,14 @@ public:
         g_windFrequency *= 2.0f;
         g_windStrength = 10.0f;
 
+    }
+
+    virtual void CenterCamera(void)
+    {
+        g_camPos = Vec3(cam_x, cam_y, cam_z);
+        g_camAngle = Vec3(cam_angle_x, cam_angle_y, cam_angle_z);
+        g_screenHeight = cam_height;
+        g_screenWidth = cam_width;
     }
 
     void Update() {

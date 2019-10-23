@@ -69,20 +69,21 @@ class FlexEnv(gym.Env):
 
     def initialize_camera(self):
         '''
-        This func sets the postion and angel of the camera
-        camera_pos: np.ndarray (3x1). (x,y,z) coordinate of the camear.
+        This function sets the postion and angel of the camera
+        camera_pos: np.ndarray (3x1). (x,y,z) coordinate of the camera
         camera_angle: np.ndarray (3x1). (x,y,z) angle of the camera (in degree).
 
         Note: to set camera, you need 
         1) implement this function in your environement, set value of self.camera_pos and self.camera_angle.
-        2) add the self.camera_pos and self.camera_angle to your scene parameters, and pass it when initialzing your scene.
+        2) add the self.camera_pos and self.camera_angle to your scene parameters,
+            and pass it when initializing your scene.
         3) implement the CenterCamera function in your scene.h file.
         Pls see a sample usage in pour_water.py and yz_fluidshake.h
 
         if you do not want to set the camera, you can just not implement CenterCamera in your scene.h file, 
         and pass no camera params to your scene.
         '''
-        # raise NotImplementedError
+        raise NotImplementedError
 
     def get_state(self):
         pos = pyflex.get_positions()

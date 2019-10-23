@@ -8,9 +8,11 @@ from softgym.envs.flex_env import FlexEnv
 
 
 class ClothFoldPointControlEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, horizon=100):
+    def __init__(self, observation_mode, action_mode, horizon=200):
         self.cloth_xdim = 64
         self.cloth_ydim = 32
+        self.camera_width = 960
+        self.camera_height = 720
         self.render_type = 0  # 0: only points, 1: only mesh, 2: points + mesh
 
         super().__init__()
@@ -51,12 +53,36 @@ class ClothFoldPointControlEnv(FlexEnv):
         idx_p2 = self.cloth_xdim * (self.cloth_ydim - 1)
         return np.array([idx_p1, idx_p2])
 
+    def initialize_camera(self):
+        '''
+        set the camera width, height, position and angle.
+        **Note: width and height is actually the screen width and screen height of FLex.
+        I suggest to keep them the same as the ones used in pyflex.cpp.
+        '''
+        self.camera_params = {
+            'pos': np.array([1.7, 2., 1]),
+            'angle': np.array([0., -30 / 180. * np.pi, 0.]),
+            'width': self.camera_width,
+            'height': self.camera_height
+        }
+
     def set_scene(self):
         '''
         Setup the cloth scene and split particles into two groups for folding
         :return:
         '''
-        self.scene_params = np.array([self.cloth_xdim, self.cloth_ydim, self.render_type])
+        # Set camera parameters.
+        camera_x, camera_y, camera_z = self.camera_params['pos'][0], \
+                                       self.camera_params['pos'][1], \
+                                       self.camera_params['pos'][2]
+        camera_ax, camera_ay, camera_az = self.camera_params['angle'][0], \
+                                          self.camera_params['angle'][1], \
+                                          self.camera_params['angle'][2]
+        scene_params = [self.cloth_xdim, self.cloth_ydim, self.render_type]
+        scene_params.extend(
+            [camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
+
+        self.scene_params = np.array(scene_params)
         pyflex.set_scene(9, self.scene_params, 0)
 
         # Set folding group
