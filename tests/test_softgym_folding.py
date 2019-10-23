@@ -6,7 +6,6 @@ if __name__ == '__main__':
     # env = ClothFoldPointControlEnv(observation_mode='key_point', action_mode='key_point')
     softgym.register_flex_envs()
     env = gym.make('ClothFoldPointControl-v0')
-    # env = gym.make('ClothFlattenPointControl-v0')
     while (1):
         env.reset()
         for i in range(150):

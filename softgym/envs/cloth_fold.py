@@ -28,8 +28,13 @@ class ClothFoldPointControlEnv(FlexEnv):
             self.action_key_point_idx = self.get_action_key_point_idx()
         else:
             raise NotImplementedError
+
         self.init_state = self.get_state()
         self.init_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
+
+        self.cloth_xdim = 64
+        self.cloth_ydim = 32
+        self.render_type = 0  # 0: only points, 1: only mesh, 2: points + mesh
 
     # Cloth index looks like the following:
     # 0, 1, ..., cloth_xdim -1
@@ -51,11 +56,8 @@ class ClothFoldPointControlEnv(FlexEnv):
         Setup the cloth scene and split particles into two groups for folding
         :return:
         '''
-        self.cloth_xdim = 64
-        self.cloth_ydim = 32
-
-        scene_params = np.array([])
-        pyflex.set_scene(9, scene_params, 0)
+        self.scene_params = np.array([self.cloth_xdim, self.cloth_ydim, self.render_type])
+        pyflex.set_scene(9, self.scene_params, 0)
 
         # Set folding group
         particle_grid_idx = np.array(list(range(self.cloth_xdim * self.cloth_ydim))).reshape(self.cloth_ydim,
@@ -111,7 +113,10 @@ class ClothFoldPointControlEnv(FlexEnv):
         action = np.array(action) / 10.
         last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         self.time_step += 1
-        pyflex.step(capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
+        if self.video_path is not None:
+            pyflex.step(capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
+        else:
+            pyflex.step()
         cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         action = action.reshape([-1, 3])
         action = np.hstack([action, np.zeros([action.shape[0], 1])])
