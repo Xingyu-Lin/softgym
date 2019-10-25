@@ -4,10 +4,10 @@ import os.path as osp
 from gym.spaces import Box
 
 import pyflex
-from softgym.envs.flex_env import FlexEnv
+from softgym.envs.cloth_env import ClothEnv
 
 
-class ClothFoldPointControlEnv(FlexEnv):
+class ClothFoldPointControlEnv(ClothEnv):
     def __init__(self, observation_mode, action_mode, horizon=150):
         self.cloth_xdim = 64
         self.cloth_ydim = 32
@@ -22,6 +22,7 @@ class ClothFoldPointControlEnv(FlexEnv):
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.horizon = horizon
+        self.video_path = "gif_images"
 
         if observation_mode == 'key_point':
             self.observation_space = Box(np.array([-np.inf] * 6), np.array([np.inf] * 6), dtype=np.float32)
@@ -60,7 +61,7 @@ class ClothFoldPointControlEnv(FlexEnv):
         I suggest to keep them the same as the ones used in pyflex.cpp.
         '''
         self.camera_params = {
-            'pos': np.array([1.7, 2., 1]),
+            'pos': np.array([1.7, 2., 8]),
             'angle': np.array([0., -30 / 180. * np.pi, 0.]),
             'width': self.camera_width,
             'height': self.camera_height
@@ -83,8 +84,8 @@ class ClothFoldPointControlEnv(FlexEnv):
             [camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
 
         self.scene_params = np.array(scene_params)
-        pyflex.set_scene(9, self.scene_params, 0)
-
+        #pyflex.set_scene(9, self.scene_params, 0)
+        super().set_scene(sizex = self.cloth_xdim, sizey = self.cloth_ydim)
         # Set folding group
         particle_grid_idx = np.array(list(range(self.cloth_xdim * self.cloth_ydim))).reshape(self.cloth_ydim,
                                                                                              self.cloth_xdim)
@@ -136,13 +137,14 @@ class ClothFoldPointControlEnv(FlexEnv):
         return -distance - distance_to_init
 
     def step(self, action):
+
         action[2] = 0
         action[5] = 0
         action = np.array(action) / 10.
         last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         self.time_step += 1
         if self.video_path is not None:
-            pyflex.step(capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
+            pyflex.step()#capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
         else:
             pyflex.step()
         cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])

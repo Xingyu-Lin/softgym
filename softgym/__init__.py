@@ -34,3 +34,12 @@ def register_flex_envs():
             'action_mode': 'key_point_pos'
         }
     )
+
+    register(
+        id='ClothFlattenSphereControl-v0',
+        entry_point='softgym.envs.cloth_flatten:ClothFlattenPointControlEnv',
+        kwargs={
+            'observation_mode': 'key_point',
+            'action_mode': 'sphere'
+        }
+    )
