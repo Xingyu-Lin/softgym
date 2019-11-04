@@ -10,7 +10,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
     def __init__(self, observation_mode, action_mode):
         self.camera_width = 960
         self.camera_height = 720
-        super().__init__()
+        config = open("ClothDefaultConfig.yaml", 'r')
+        super().__init__(config.read())
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
 
@@ -18,7 +19,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.action_mode = action_mode
         self.video_path = "data/videos"
 
-        self.horizon = 100
+        self.horizon = 150
 
         if observation_mode == 'key_point':
             self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()), np.array([np.inf] * pyflex.get_n_particles()), dtype=np.float32)
@@ -30,7 +31,10 @@ class ClothFlattenPointControlEnv(ClothEnv):
             space_high = np.array([3.9, 0.1, 0.1, 0.1]*2)
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         elif action_mode.startswith('sphere'):
-            self.action_space = Box(np.array([-0.1]*6), np.array([0.1]*6), dtype=np.float32)
+            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1])
+            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1])
+
+            self.action_space = Box(space_low, space_high, dtype=np.float32)
         self.time_step = 500
         self.init_state = self.get_state()
         self.storage_name = "test_flatten"
@@ -70,6 +74,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.set_scene()
         firstPos = pyflex.get_positions()
         firstPos[pickpoint * 4 + 3] = 0
+        print("{}".format(firstPos[pickpoint * 4: pickpoint*4 + 3]))
         pyflex.set_positions(firstPos)
         pos = pyflex.get_shape_states()
         pyflex.set_shape_states(pos)
@@ -82,12 +87,13 @@ class ClothFlattenPointControlEnv(ClothEnv):
             vels = pyflex.get_velocities()
             if stopParticle:
                 newPos[pickpoint * 4: pickpoint * 4 + 3] = particle_pos
+                print("pick pos: {}".format(newPos[pickpoint * 4 + 2]))
                 #newPos[pickpoint * 4 + 3] = 0.0
                 vels[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
             stopped = True
             for j in range(pyflex.get_n_particles()):
                 if vels[j] > 0.01:
-                    #print("stopped check at {} with vel {}".format(j, vels[j]))
+                    print("stopped check at {} with vel {}".format(j, vels[j]))
                     stopped = False
                     break
             if stopped:
@@ -152,7 +158,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         else:
             print("sphering")
             last_pos = pyflex.get_shape_states()
-            pyflex.step()#capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
+            pyflex.step(capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
             super().sphereStep(action, last_pos)
         print("computing reward")
         obs = self.get_current_observation()
@@ -354,6 +360,6 @@ if __name__ == "__main__":
     env.reset(dropPoint=100)
     print("reset, entering loop")
     for i in range(0, 500):
-        obs, reward, _, _ = env.step(np.array([[0, -0.001, 0], [0, -0.001, 0.00]]))
+        obs, reward, _, _ = env.step(np.array([0, -0.001, 0, 0, -0.001]))
         print("reward: {}".format(reward))
 
