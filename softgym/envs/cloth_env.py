@@ -16,8 +16,8 @@ class ClothEnv(FlexEnv):
         super().__init__()
         self.is_randomized = randomized
         self.horizon = 100
-        self.prev_rot = 0
-        self.prev_dist = 0
+        self.prev_rot = np.array([0.0, 0.0])
+        self.prev_middle = None
 
     def initialize_camera(self):
         '''
@@ -55,32 +55,49 @@ class ClothEnv(FlexEnv):
         pyflex.set_scene(9, params, 0)
 
 
-    def addSpheres(self, radii = 0.1, initPos1 = [1.5, 0.25, 3.5], initPos2 = [2.0, 0.25, 3.5]):
-        pyflex.add_sphere(radii, initPos1, [1, 0, 0, 0])
-        pyflex.add_sphere(radii, initPos2, [1, 0, 0, 0])
+    def addSpheres(self, radii = 0.1, initPos1 = [1.5, 0.25, 3.4], initPos2 = [1.5, 0.25, 3.6]):
+        grip1sphere1pos = initPos1
+        grip1sphere2pos = initPos1
+        grip2sphere1pos = initPos2
+        grip2sphere2pos = initPos2
+        grip1sphere1pos[0] = grip1sphere1pos[0] + 0.25
+        grip1sphere2pos[0] = grip1sphere2pos[0] - 0.25
+        grip2sphere1pos[0] = grip2sphere1pos[0] + 0.25
+        grip2sphere2pos[0] = grip2sphere2pos[0] - 0.25
+        pyflex.add_sphere(radii, grip1sphere1pos, [1, 0, 0, 0])
+        pyflex.add_sphere(radii, grip1sphere2pos, [1, 0, 0, 0])
+        pyflex.add_sphere(radii, grip2sphere1pos, [1, 0, 0, 0])
+        pyflex.add_sphere(radii, grip2sphere2pos, [1, 0, 0, 0])
+        self.prev_middle = np.array([initPos1, initPos2])
+        self.prev_dist = np.array([0.0, 0.0])
 
     """
     sphere manipulation function just in case
     """
     def sphereStep(self, action, last_pos):
-        actionPos = action[:3]
-        actionRot = action[3]
-        actionDist = action[4]
-        new_rot = actionRot+self.prev_rot
-        new_dist = actionDist+self.prev_dist
-        new_dist = min(new_dist, 0.4)
-        new_dist = max(new_dist, 0.1)
-        last_pos = np.reshape(last_pos, [-1, 14])
+        action = np.reshape(action, [-1, 5])
         cur_pos = np.array(pyflex.get_shape_states())
-        cur_pos = np.reshape(cur_pos, [-1, 14])
-        cur_middle = cur_pos[0][0:3] +  np.array([self.prev_dist/2 * np.cos(new_rot), 0, self.prev_dist/2 * np.sin(new_rot)])
-        cur_pos[0][0:3] = cur_middle + actionPos -  np.array([new_dist/2 * np.cos(new_rot), 0, new_dist/2 * np.sin(new_rot)])
-        cur_pos[1][0:3] = cur_middle + actionPos + np.array([new_dist/2 * np.cos(new_rot), 0, new_dist/2 * np.sin(new_rot)])
-        cur_pos[0][3:6] = last_pos[0][0:3]
-        cur_pos[1][3:6] = last_pos[1][0:3]
-        cur_pos[0][1] = max(cur_pos[0][1], 0.06)
-        cur_pos[1][1] = max(cur_pos[1][1], 0.06)
+        for i in range(0, 2):
+            actionPos = action[i,0:3]
+            actionRot = action[i,3]
+            actionDist = action[i,4]
 
+            new_rot = actionRot+self.prev_rot[i]
+            new_dist = actionDist+self.prev_dist[i]
+            new_dist = min(new_dist, 0.6)
+            new_dist = max(new_dist, 0.2)
+            last_pos = np.reshape(last_pos, [-1, 14])
+            cur_pos = np.reshape(cur_pos, [-1, 14])
+            #cur_middle = cur_pos[0][0:3] +  np.array([self.prev_dist[i]/2 * np.cos(new_rot), 0, self.prev_dist[i]/2 * np.sin(new_rot)])
+            cur_middle = self.prev_middle[i, :] + actionPos
+            offset =  np.array([new_dist/2 * np.cos(new_rot), 0.0, new_dist/2 * np.sin(new_rot)])
+            cur_pos[i*2][0:3] = cur_middle - offset
+            cur_pos[i*2+1][0:3] = cur_middle + offset
+            cur_pos[i*2][3:6] = last_pos[i*2][0:3]
+            cur_pos[i*2+1][3:6] = last_pos[i*2+1][0:3]
+            self.prev_middle[i, :] = cur_middle
+            self.prev_middle[i, 1] = max(cur_pos[i*2][1], 0.1)
+            self.prev_rot[i] = new_rot
+            self.prev_dist[i] = new_dist
+        print("prev dists: {}".format(self.prev_dist))
         pyflex.set_shape_states(cur_pos.flatten())
-        self.prev_rot = new_rot
-        self.prev_dist = new_dist

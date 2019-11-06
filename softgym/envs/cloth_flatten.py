@@ -31,8 +31,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
             space_high = np.array([3.9, 0.1, 0.1, 0.1]*2)
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         elif action_mode.startswith('sphere'):
-            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1])
-            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1])
+            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1]*2)
+            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1]*2)
 
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         self.time_step = 500
@@ -359,7 +359,18 @@ if __name__ == "__main__":
     os.system('mkdir -p ' + des_dir)
     env.reset(dropPoint=100)
     print("reset, entering loop")
-    for i in range(0, 500):
-        obs, reward, _, _ = env.step(np.array([0, -0.001, 0, 0, -0.001]))
-        print("reward: {}".format(reward))
+    env.video_path = "test_flatten/"
+    haveGrasped = False
+    for i in range(0, 700):
+        if env.prev_middle[0, 1] > 0.11 and not haveGrasped:
+            obs, reward, _, _ = env.step(np.array([0., -0.001, 0, 0, 0.01]*2))
+            print("reward: {}".format(reward))
+        elif not haveGrasped:
+            obs, reward, _, _ = env.step(np.array([0., -0.001, 0, 0, -0.01] * 2))
+            print("reward: {}".format(reward))
+            if env.prev_dist[0] < 0.21:
+                haveGrasped = True
+        else:
+            obs, reward, _, _ = env.step(np.array([0., 0.001, 0, 0, 0] * 2))
+            print("reward: {}".format(reward))
 
