@@ -59,6 +59,7 @@ public:
 		cam_angle_z = ptr[19];
 		cam_width = int(ptr[20]);
 		cam_height = int(ptr[21]);
+		int render = int(ptr[22]);
 
 		
 		/*
@@ -100,8 +101,8 @@ public:
 		g_params.relaxationFactor = 0.0f;
 		g_params.cohesion = cohesion; // 0.02f;
 		g_params.collisionDistance = 0.01f;
-		g_params.adhesion = adhesion;	
-		g_params.surfaceTension = surfaceTension;	
+		// g_params.adhesion = adhesion;	
+		// g_params.surfaceTension = surfaceTension;	
 
 		g_maxDiffuseParticles = 0;
 		g_diffuseScale = 0.5f;
@@ -129,11 +130,26 @@ public:
 		
 		g_warmup = false;
 
-		// draw options		
-		g_drawPoints = true;
-		g_drawMesh = false;
-		g_drawEllipsoids = false;
-		g_drawDiffuse = true;
+		// std::cout << "render: " << render << endl;
+		// draw options	
+		if (render == 0) {	// particle mode render 
+			g_drawPoints = true;
+			g_drawMesh = false;
+			g_drawEllipsoids = false;
+			g_drawDiffuse = true;
+		}
+
+		else { //human mode render
+			g_drawDensity = true;
+			g_drawDiffuse = true;
+			g_drawEllipsoids = true;
+			g_drawPoints = false;
+		}
+
+		// g_drawDensity = true;
+		// g_drawDiffuse = true;
+		// g_drawEllipsoids = true;
+		// g_drawPoints = false;
 	}
 
 	virtual void CenterCamera(void)

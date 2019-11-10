@@ -1,0 +1,18 @@
+fluid:
+  radius: 0.1
+  rest_dis_coef: 0.55
+  cohesion: 0.02
+  viscosity: 2.0
+  surfaceTension: 0.
+  adhesion: 0.0
+  vorticityConfinement: 40
+  solidpressure: 0.
+  dim_x: 5
+  dim_y: 18
+  dim_z: 4
+glass:
+  border: 0.025
+  height: 0.5
+  glass_distance: 0.5
+  poured_border: 0.025
+  poured_height: 0.5

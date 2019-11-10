@@ -2,7 +2,7 @@ import numpy as np
 from gym.spaces import Box
 
 import pyflex
-from softgym.envs.flex_env import FlexEnv
+from softgym.envs.fluid_env import FluidEnv
 import time
 import copy
 import os
@@ -11,8 +11,8 @@ from pyquaternion import Quaternion
 import random
 
 
-class PourJamPosControlEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, horizon = 400, deterministic = False):
+class PourJamPosControlEnv(FluidEnv):
+    def __init__(self, observation_mode, action_mode, horizon = 400, deterministic = False, render_mode = 'particle'):
         '''
         This class implements a pouring water task.
         
@@ -26,22 +26,9 @@ class PourJamPosControlEnv(FlexEnv):
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
-
-        self.dim_shape_state = 14 # dimension of a shape object in Flex
-        self.dim_position = 4
-        self.dim_velocity = 3
         self.wall_num = 5 # number of glass walls. floor/left/right/front/back 
-       
-        self.camera_width = 960
-        self.camera_height = 720
-        
-        self.horizon = horizon
-        self.time_step = 0
 
-        self.debug = False
-        self.deterministic = deterministic
-
-        super().__init__()
+        super().__init__(horizon, deterministic, render_mode)
         assert observation_mode in ['cam_img', 'full_state'] 
         assert action_mode in ['direct'] 
 
@@ -94,7 +81,7 @@ class PourJamPosControlEnv(FlexEnv):
         x_center = self.x_center # center of the glass floor
         z = self.fluid_params['z'] # lower corner of the water fluid along z-axis.
         self.camera_params = {
-                        'pos': np.array([x_center + 1.2, 0.7 + 3, z + 1]),
+                        'pos': np.array([x_center + 0.5, 0.4 + 2.5, z + 0.8]),
                         'angle': np.array([0., -70/180. * np.pi, 0.]),
                         'width': self.camera_width,
                         'height': self.camera_height
@@ -162,86 +149,36 @@ class PourJamPosControlEnv(FlexEnv):
 
         self.glass_params = params
 
-    def sample_fluid_params(self):
+    def deterministic_fluid_params(self):
         '''
         sample params for the fluid.
         '''
         params = {}
-        params['radius_range'] = [0.09, 0.11] # 1.0
-        params['rest_dis_coef_range'] = [0.4, 0.6] # 0.55
-        params['cohension_range'] = [0.1, 0.18] # large, like mud. // 0.02f;
-        params['viscosity_range'] = [1.5, 2.5] # //2.0f;
-        params['surfaceTension_range'] = [0., 0.1] # 0.0
-        params['adhesion_range'] = [0.05, 0.1] # how fluid adhead to shape. do not set to too large! # 0.0
-        params['vorticityConfinement_range'] = [39.99, 40.01] # // 40.0f;
-        params['solidPressure_range'] = [0., 0.01] #//0.f;
+        params['radius'] = 0.1
+        params['rest_dis_coef'] = 0.45
+        params['cohesion'] = 0.018
+        params['viscosity'] = 2.0
+        params['surfaceTension'] = 0.0
+        params['adhesion'] = 0.0
+        params['vorticityConfinement'] = 40.0
+        params['solidpressure'] = 0.
 
-        if not self.deterministic:
-            params['radius'] = self.rand_float(params['radius_range'][0], params['radius_range'][1])
-            params['rest_dis_coef'] = self.rand_float(params['rest_dis_coef_range'][0], params['rest_dis_coef_range'][1])
-            params['cohesion'] = self.rand_float(params['cohension_range'][0], params['cohension_range'][1])
-            params['viscosity'] = self.rand_float(params['viscosity_range'][0], params['viscosity_range'][1])
-            params['surfaceTension'] = self.rand_float(params['surfaceTension_range'][0], params['surfaceTension_range'][1])
-            params['adhesion'] = self.rand_float(params['adhesion_range'][0], params['adhesion_range'][1])
-            params['vorticityConfinement'] = self.rand_float(params['vorticityConfinement_range'][0], params['vorticityConfinement_range'][1])
-            params['solidpressure'] = self.rand_float(params['solidPressure_range'][0], params['solidPressure_range'][1])
-        else:
-            params['radius'] = 0.1
-            params['rest_dis_coef'] = 0.45
-            params['cohesion'] = 0.05
-            params['viscosity'] = 2.0
-            params['surfaceTension'] = 0.0
-            params['adhesion'] = 0.0
-            params['vorticityConfinement'] = 40.0
-            params['solidpressure'] = 0.
+        params['dim_x'] = 3
+        params['dim_y'] = 15
+        params['dim_z'] = 3
 
-        self.fluid_params = params
-
-        # num of particles in x,y,z-axis
-        self.fluid_params['dim_x_range'] = 4, 6
-        self.fluid_params['dim_y_range'] = 16, 20
-        self.fluid_params['dim_z_range'] = 4, 6 
-     
-        if not self.deterministic:
-            self.fluid_params['dim_x'] = self.rand_int(self.fluid_params['dim_x_range'][0], self.fluid_params['dim_x_range'][1]) 
-            self.fluid_params['dim_y'] = self.rand_int(self.fluid_params['dim_y_range'][0], self.fluid_params['dim_y_range'][1])
-            self.fluid_params['dim_z'] = self.rand_int(self.fluid_params['dim_z_range'][0], self.fluid_params['dim_z_range'][1])
-        else:
-            self.fluid_params['dim_x'] = 3
-            self.fluid_params['dim_y'] = 15
-            self.fluid_params['dim_z'] = 3
-
-        # center of the glass floor, and lowere corner of x,y,z axis of the fluid grid
-        fluid_radis = params['radius'] * params['rest_dis_coef']
-        self.x_center = self.rand_float(-0.2, 0.2) 
-        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/2.*fluid_radis 
-        self.fluid_params['y'] = fluid_radis/2. + 0.025 
-        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z']-1)/2.*fluid_radis 
-        
-        return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'], 
-            params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'], 
-            self.fluid_params['x'], self.fluid_params['y'], self.fluid_params['z'], self.fluid_params['dim_x'], self.fluid_params['dim_y'], self.fluid_params['dim_z']])
-
+        return params
 
     def set_scene(self):
         '''
         Construct the pouring water scence.
         '''
 
-        # sample glass & fluid properties.
-        fluid_params = self.sample_fluid_params()
-        print(self.fluid_params)
-
-        # set camera parameters. 
-        self.initialize_camera()
-        camera_x, camera_y, camera_z = self.camera_params['pos'][0], self.camera_params['pos'][1], self.camera_params['pos'][2]
-        camera_ax, camera_ay, camera_az = self.camera_params['angle'][0], self.camera_params['angle'][1], self.camera_params['angle'][2]
-        camera_params = np.array([camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, 
-            self.camera_width, self.camera_height])
-        
-        # create fluid
-        scene_params = np.concatenate((fluid_params, camera_params))
-        pyflex.set_scene(6, scene_params, 0)
+        # create fluid 
+        if self.deterministic:
+            super().set_scene(self.deterministic_fluid_params())
+        else:
+            super().set_scene()
 
         # compute glass params
         self.sample_glass_params()
@@ -307,7 +244,7 @@ class PourJamPosControlEnv(FlexEnv):
         water_state = state_dic['particle_pos']
         water_num = len(water_state)
         in_glass = 0
-        for idx, water in enumerate(water_state):
+        for water in water_state:
             res = self.in_glass(water)
             in_glass += res
             
@@ -365,25 +302,25 @@ class PourJamPosControlEnv(FlexEnv):
 
         the halfEdge determines the center point of each wall.
         Note: this is merely setting the length of each dimension of the wall, but not the actual position of them.
-        That's why leaf and right walls have exactly the same params, and so do front and back walls.   
+        That's why left and right walls have exactly the same params, and so do front and back walls.   
         """
         center = np.array([0., 0., 0.])
         quat = self.quatFromAxisAngle([0, 0, -1.], 0.) 
         boxes = []
 
         # floor
-        halfEdge = np.array([glass_dis_x/2., border/2., glass_dis_z/2.])
+        halfEdge = np.array([glass_dis_x/2. + border, border/2., glass_dis_z/2. + border])
         boxes.append([halfEdge, center, quat])
 
         # left wall
-        halfEdge = np.array([border/2., (height+border)/2., glass_dis_z/2.])
+        halfEdge = np.array([border/2., (height)/2., glass_dis_z/2. + border])
         boxes.append([halfEdge, center, quat])
 
         # right wall
         boxes.append([halfEdge, center, quat])
 
         # back wall
-        halfEdge = np.array([(glass_dis_x+border*2)/2., (height+border)/2., border/2.])
+        halfEdge = np.array([(glass_dis_x)/2., (height)/2., border/2.])
         boxes.append([halfEdge, center, quat])
 
         # front wall
@@ -406,9 +343,6 @@ class PourJamPosControlEnv(FlexEnv):
         dis_x, dis_z = self.glass_dis_x, self.glass_dis_z
         quat_curr = self.quatFromAxisAngle([0, 0, -1.], theta) 
 
-        w = dis_x / 2.
-        h = self.height / 2.
-        b = self.border / 2.
         border = self.border
 
         # states of 5 walls
@@ -483,28 +417,6 @@ class PourJamPosControlEnv(FlexEnv):
         return states
 
 
-    def rand_float(self, lo, hi):
-        return np.random.rand() * (hi - lo) + lo
-
-    def rand_int(self, lo, hi):
-        return np.random.randint(lo, hi)
-
-
-    def quatFromAxisAngle(self, axis, angle):
-        '''
-        given a rotation axis and angle, return a quatirian that represents such roatation.
-        '''
-        axis /= np.linalg.norm(axis)
-
-        half = angle * 0.5
-        w = np.cos(half)
-
-        sin_theta_over_two = np.sin(half)
-        axis *= sin_theta_over_two
-
-        quat = np.array([axis[0], axis[1], axis[2], w])
-
-        return quat
 
     def set_shape_states(self, glass_states, poured_glass_states):
         '''
@@ -536,14 +448,6 @@ class PourJamPosControlEnv(FlexEnv):
         #     return 1
         # else:
         #     return 0
-
-    def set_video_recording_params(self):
-        """
-        Set the following parameters if video recording is needed:
-            video_idx_st, video_idx_en, video_height, video_width
-        """
-        self.video_height = 240
-        self.video_width = 320
 
 
 
