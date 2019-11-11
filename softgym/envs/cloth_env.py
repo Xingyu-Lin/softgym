@@ -70,6 +70,7 @@ class ClothEnv(FlexEnv):
         pyflex.add_sphere(radii, grip2sphere2pos, [1, 0, 0, 0])
         self.prev_middle = np.array([initPos1, initPos2])
         self.prev_dist = np.array([0.0, 0.0])
+        self.radii = radii
 
     """
     sphere manipulation function just in case
@@ -77,6 +78,7 @@ class ClothEnv(FlexEnv):
     def sphereStep(self, action, last_pos):
         action = np.reshape(action, [-1, 5])
         cur_pos = np.array(pyflex.get_shape_states())
+        cur_middle = np.zeros((2,3))
         for i in range(0, 2):
             actionPos = action[i,0:3]
             actionRot = action[i,3]
@@ -89,15 +91,29 @@ class ClothEnv(FlexEnv):
             last_pos = np.reshape(last_pos, [-1, 14])
             cur_pos = np.reshape(cur_pos, [-1, 14])
             #cur_middle = cur_pos[0][0:3] +  np.array([self.prev_dist[i]/2 * np.cos(new_rot), 0, self.prev_dist[i]/2 * np.sin(new_rot)])
-            cur_middle = self.prev_middle[i, :] + actionPos
+            cur_middle[i,:] = self.prev_middle[i, :] + actionPos
             offset =  np.array([new_dist/2 * np.cos(new_rot), 0.0, new_dist/2 * np.sin(new_rot)])
-            cur_pos[i*2][0:3] = cur_middle - offset
-            cur_pos[i*2+1][0:3] = cur_middle + offset
+            cur_pos[i*2][0:3] = cur_middle[i,:] - offset
+            cur_pos[i*2+1][0:3] = cur_middle[i,:] + offset
             cur_pos[i*2][3:6] = last_pos[i*2][0:3]
             cur_pos[i*2+1][3:6] = last_pos[i*2+1][0:3]
-            self.prev_middle[i, :] = cur_middle
-            self.prev_middle[i, 1] = max(cur_pos[i*2][1], 0.1)
+
             self.prev_rot[i] = new_rot
             self.prev_dist[i] = new_dist
         print("prev dists: {}".format(self.prev_dist))
-        pyflex.set_shape_states(cur_pos.flatten())
+        if self.checkSphereCollisions(cur_pos[0][0:3], cur_pos[1][0:3], cur_pos[2][0:3], cur_pos[3][0:3]):
+            pyflex.set_shape_states(cur_pos.flatten())
+            self.prev_middle = cur_middle
+            self.prev_middle[0, 1] = max(self.prev_middle[0,1], 0.1)
+            self.prev_middle[1, 1] = max(self.prev_middle[1,1], 0.1)
+        else:
+            self.prev_rot = self.prev_rot - action[:,3]
+            self.prev_dist = self.prev_dist - action[:,4]
+
+    def checkSphereCollisions(self, sp1, sp2, sp3, sp4):
+        sp13dist = np.linalg.norm(sp1 - sp3)
+        sp14dist = np.linalg.norm(sp1 - sp4)
+        sp23dist = np.linalg.norm((sp2-sp3))
+        sp24dist = np.linalg.norm(sp2-sp4)
+
+        return sp13dist > self.radii and sp14dist > self.radii and sp23dist > self.radii and sp24dist > self.radii

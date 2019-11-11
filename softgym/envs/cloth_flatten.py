@@ -19,7 +19,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.action_mode = action_mode
         self.video_path = "data/videos"
 
-        self.horizon = 150
+        self.horizon = 250
 
         if observation_mode == 'key_point':
             self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()), np.array([np.inf] * pyflex.get_n_particles()), dtype=np.float32)
