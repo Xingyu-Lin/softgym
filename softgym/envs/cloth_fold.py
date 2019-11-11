@@ -14,13 +14,15 @@ class ClothFoldPointControlEnv(ClothEnv):
         self.camera_width = 960
         self.camera_height = 720
         self.render_type = 0  # 0: only points, 1: only mesh, 2: points + mesh
+        self.action_mode = action_mode
+        config = open("ClothDefaultConfig.yaml", 'r')
 
-        super().__init__()
+        super().__init__(config.read())
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['key_point']
+        assert action_mode in ['key_point', 'sphere']
 
         self.observation_mode = observation_mode
-        self.action_mode = action_mode
+
         self.horizon = horizon
         self.video_path = "gif_images"
 
@@ -33,6 +35,11 @@ class ClothFoldPointControlEnv(ClothEnv):
         if action_mode == 'key_point':
             self.action_space = Box(np.array([-1.] * 6), np.array([1.] * 6), dtype=np.float32)
             self.action_key_point_idx = self.get_action_key_point_idx()
+        elif action_mode == 'sphere':
+            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1] * 2)
+            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2)
+            self.action_space = Box(space_low, space_high, dtype=np.float32)
+
         else:
             raise NotImplementedError
 
@@ -98,6 +105,8 @@ class ClothFoldPointControlEnv(ClothEnv):
         colors[self.fold_group_b] = 1
 
         self.set_colors(colors)
+        if self.action_mode == 'sphere':
+            self.addSpheres()
         # self.set_test_color()
 
     def set_test_color(self):
@@ -120,6 +129,8 @@ class ClothFoldPointControlEnv(ClothEnv):
     def reset(self):
         self.time_step = 0
         self.set_state(self.init_state)
+        if self.action_mode == 'sphere':
+            self.sphere_reset()
         # for _ in range(100):
         #     pyflex.step()
         return self.get_current_observation()
@@ -138,22 +149,29 @@ class ClothFoldPointControlEnv(ClothEnv):
 
     def step(self, action):
 
-        action[2] = 0
-        action[5] = 0
-        action = np.array(action) / 10.
-        last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
-        self.time_step += 1
+        lastPos = pyflex.get_shape_states()
         if self.video_path is not None:
             pyflex.step()#capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
         else:
             pyflex.step()
-        cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
-        action = action.reshape([-1, 3])
-        action = np.hstack([action, np.zeros([action.shape[0], 1])])
-        cur_pos[self.action_key_point_idx, :] = last_pos[self.action_key_point_idx] + action
-        pyflex.set_positions(cur_pos.flatten())
+        if self.action_mode != 'sphere':
+            action[2] = 0
+            action[5] = 0
+            action = np.array(action) / 10.
+            last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
+            self.time_step += 1
+            cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
+            action = action.reshape([-1, 3])
+            action = np.hstack([action, np.zeros([action.shape[0], 1])])
+            cur_pos[self.action_key_point_idx, :] = last_pos[self.action_key_point_idx] + action
+            pyflex.set_positions(cur_pos.flatten())
+            reward = self.compute_reward(cur_pos)
+        else:
+            self.sphereStep(action, lastPos)
+            cur_pos = np.array(pyflex.get_positions()).reshape([-1,4])
+            reward = self.compute_reward(cur_pos)
         obs = self.get_current_observation()
-        reward = self.compute_reward(cur_pos)
+
         return obs, reward, False, {}
 
     def set_video_recording_params(self):
