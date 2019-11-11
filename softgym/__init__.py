@@ -27,6 +27,19 @@ def register_flex_envs():
     )
 
     register(
+        id='ClothFoldSphereControl-v0',
+        entry_point='softgym.envs.cloth_fold:ClothFoldPointControlEnv',
+        # tags={
+        #     'git-commit-hash': '2d95c75',
+        #     'author': 'murtaza'
+        # },
+        kwargs={
+            'observation_mode': 'key_point',
+            'action_mode': 'sphere',
+        },
+    )
+
+    register(
         id='ClothFlattenPointControl-v0',
         entry_point='softgym.envs.cloth_flatten:ClothFlattenPointControlEnv',
         kwargs={
