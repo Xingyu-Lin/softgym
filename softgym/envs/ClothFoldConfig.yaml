@@ -1,0 +1,21 @@
+ClothPos:
+  x: 0.0
+  y: 0.025
+  z: 3.0
+ClothSize:
+  x: 64
+  y: 32
+ClothStiff:
+  stretch: 0.9
+  bend: 1.0
+  shear: 0.9
+RenderMode: 2
+Camera:
+  xPos: 1.7
+  yPos: 3.0
+  zPos: 8.0
+  xAngle: 0
+  yAngle: -0.5235
+  zAngle: 0
+  width: 960
+  height: 720

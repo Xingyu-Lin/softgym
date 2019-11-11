@@ -5,6 +5,7 @@ from scipy.spatial.transform import Rotation as R
 from softgym.envs.flex_env import FlexEnv
 import yaml
 
+
 class ClothEnv(FlexEnv):
 
     def __init__(self, configFile, randomized=True, horizon=100, device_id=-1):
@@ -18,7 +19,7 @@ class ClothEnv(FlexEnv):
         self.horizon = 100
         self.prev_rot = np.array([0.0, 0.0])
         self.init_rot = self.prev_rot
-        #self.prev_middle = None
+        # self.prev_middle = None
 
     def initialize_camera(self):
         '''
@@ -32,31 +33,37 @@ class ClothEnv(FlexEnv):
             'width': self.camera_width,
             'height': self.camera_height
         }
+
     """
     There's always the same parameters that you can set 
     """
-    def set_scene(self, initX=0.0, initY=-1.0, initZ=3.0, sizex=64.0, sizey=32.0, stretch=0.9, bend=1.0, shear=0.9, render_mode=2,
-                        cam__x = 6.0, cam_y = 8.0, cam_z = 18.0, angle_x = 0.0, angle_y = -np.deg2rad(20.0), angle_z = 0.0,
-                         width = 960, height = 720):
+
+    def set_scene(self, initX=0.0, initY=-1.0, initZ=3.0, sizex=64.0, sizey=32.0, stretch=0.9, bend=1.0, shear=0.9,
+                  render_mode=2,
+                  cam_x=6.0, cam_y=8.0, cam_z=18.0, angle_x=0.0, angle_y=-np.deg2rad(20.0), angle_z=0.0,
+                  width=960, height=720):
         camera_x, camera_y, camera_z = self.camera_params['pos'][0], \
                                        self.camera_params['pos'][1], \
                                        self.camera_params['pos'][2]
         camera_ax, camera_ay, camera_az = self.camera_params['angle'][0], \
                                           self.camera_params['angle'][1], \
                                           self.camera_params['angle'][2]
-        print("cloth pos: {} {} {}".format(self.config['ClothPos']['x'], self.config['ClothPos']['y'], self.config['ClothPos']['z']))
+        print("cloth pos: {} {} {}".format(self.config['ClothPos']['x'], self.config['ClothPos']['y'],
+                                           self.config['ClothPos']['z']))
         params = np.array([self.config['ClothPos']['x'], self.config['ClothPos']['y'], self.config['ClothPos']['z'],
                            self.config['ClothSize']['x'], self.config['ClothSize']['y'],
-                           self.config['ClothStiff']['stretch'], self.config['ClothStiff']['bend'], self.config['ClothStiff']['shear'],
-                           self.config['RenderMode'], self.config['Camera']['xPos'], self.config['Camera']['yPos'], self.config['Camera']['zPos'],
-                           self.config['Camera']['xAngle'], self.config['Camera']['yAngle'], self.config['Camera']['zAngle'],
+                           self.config['ClothStiff']['stretch'], self.config['ClothStiff']['bend'],
+                           self.config['ClothStiff']['shear'],
+                           self.config['RenderMode'], self.config['Camera']['xPos'], self.config['Camera']['yPos'],
+                           self.config['Camera']['zPos'],
+                           self.config['Camera']['xAngle'], self.config['Camera']['yAngle'],
+                           self.config['Camera']['zAngle'],
                            self.config['Camera']['width'], self.config['Camera']['height']])
-        #params = np.array([initX, initY, initZ, sizex, sizey, stretch, bend, shear, render_mode,
+        # params = np.array([initX, initY, initZ, sizex, sizey, stretch, bend, shear, render_mode,
         #                  camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
         pyflex.set_scene(9, params, 0)
 
-
-    def addSpheres(self, radii = 0.1, initPos1 = [1.5, 0.25, 3.4], initPos2 = [1.5, 0.25, 3.6]):
+    def addSpheres(self, radii=0.1, initPos1=[1.5, 0.25, 3.4], initPos2=[1.5, 0.25, 3.6]):
         grip1sphere1pos = initPos1
         grip1sphere2pos = initPos1
         grip2sphere1pos = initPos2
@@ -79,29 +86,30 @@ class ClothEnv(FlexEnv):
     """
     sphere manipulation function just in case
     """
+
     def sphereStep(self, action, last_pos):
         action = np.reshape(action, [-1, 5])
         cur_pos = np.array(pyflex.get_shape_states())
-        cur_middle = np.zeros((2,3))
+        cur_middle = np.zeros((2, 3))
         for i in range(0, 2):
-            actionPos = action[i,0:3]
-            actionRot = action[i,3]
-            actionDist = action[i,4]
+            actionPos = action[i, 0:3]
+            actionRot = action[i, 3]
+            actionDist = action[i, 4]
 
-            new_rot = actionRot+self.prev_rot[i]
-            new_dist = actionDist+self.prev_dist[i]
+            new_rot = actionRot + self.prev_rot[i]
+            new_dist = actionDist + self.prev_dist[i]
             new_dist = min(new_dist, 0.6)
             new_dist = max(new_dist, 0.2)
             last_pos = np.reshape(last_pos, [-1, 14])
             cur_pos = np.reshape(cur_pos, [-1, 14])
-            #cur_middle = cur_pos[0][0:3] +  np.array([self.prev_dist[i]/2 * np.cos(new_rot), 0, self.prev_dist[i]/2 * np.sin(new_rot)])
+            # cur_middle = cur_pos[0][0:3] +  np.array([self.prev_dist[i]/2 * np.cos(new_rot), 0, self.prev_dist[i]/2 * np.sin(new_rot)])
             print("cur middle: {} prev_mid: {}".format(cur_middle, self.prev_middle))
-            cur_middle[i,:] = self.prev_middle[i, :] + actionPos
-            offset =  np.array([new_dist/2 * np.cos(new_rot), 0.0, new_dist/2 * np.sin(new_rot)])
-            cur_pos[i*2][0:3] = cur_middle[i,:] - offset
-            cur_pos[i*2+1][0:3] = cur_middle[i,:] + offset
-            cur_pos[i*2][3:6] = last_pos[i*2][0:3]
-            cur_pos[i*2+1][3:6] = last_pos[i*2+1][0:3]
+            cur_middle[i, :] = self.prev_middle[i, :] + actionPos
+            offset = np.array([new_dist / 2 * np.cos(new_rot), 0.0, new_dist / 2 * np.sin(new_rot)])
+            cur_pos[i * 2][0:3] = cur_middle[i, :] - offset
+            cur_pos[i * 2 + 1][0:3] = cur_middle[i, :] + offset
+            cur_pos[i * 2][3:6] = last_pos[i * 2][0:3]
+            cur_pos[i * 2 + 1][3:6] = last_pos[i * 2 + 1][0:3]
 
             self.prev_rot[i] = new_rot
             self.prev_dist[i] = new_dist
@@ -109,22 +117,21 @@ class ClothEnv(FlexEnv):
         if self.checkSphereCollisions(cur_pos[0][0:3], cur_pos[1][0:3], cur_pos[2][0:3], cur_pos[3][0:3]):
             pyflex.set_shape_states(cur_pos.flatten())
             self.prev_middle = cur_middle
-            self.prev_middle[0, 1] = max(self.prev_middle[0,1], 0.1)
-            self.prev_middle[1, 1] = max(self.prev_middle[1,1], 0.1)
+            self.prev_middle[0, 1] = max(self.prev_middle[0, 1], 0.1)
+            self.prev_middle[1, 1] = max(self.prev_middle[1, 1], 0.1)
         else:
-            self.prev_rot = self.prev_rot - action[:,3]
-            self.prev_dist = self.prev_dist - action[:,4]
+            self.prev_rot = self.prev_rot - action[:, 3]
+            self.prev_dist = self.prev_dist - action[:, 4]
 
     def sphere_reset(self):
         self.prev_middle = self.init_mid
         self.prev_rot = self.init_rot
         self.prev_dist = self.init_dist
 
-
     def checkSphereCollisions(self, sp1, sp2, sp3, sp4):
         sp13dist = np.linalg.norm(sp1 - sp3)
         sp14dist = np.linalg.norm(sp1 - sp4)
-        sp23dist = np.linalg.norm((sp2-sp3))
-        sp24dist = np.linalg.norm(sp2-sp4)
+        sp23dist = np.linalg.norm((sp2 - sp3))
+        sp24dist = np.linalg.norm(sp2 - sp4)
 
         return sp13dist > self.radii and sp14dist > self.radii and sp23dist > self.radii and sp24dist > self.radii

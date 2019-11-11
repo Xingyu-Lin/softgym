@@ -15,7 +15,8 @@ class ClothFoldPointControlEnv(ClothEnv):
         self.camera_height = 720
         self.render_type = 0  # 0: only points, 1: only mesh, 2: points + mesh
         self.action_mode = action_mode
-        config = open("ClothDefaultConfig.yaml", 'r')
+        config_dir = osp.dirname(osp.abspath(__file__))
+        config = open(osp.join(config_dir, "ClothFoldConfig.yaml"), 'r')
 
         super().__init__(config.read())
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
@@ -91,8 +92,8 @@ class ClothFoldPointControlEnv(ClothEnv):
             [camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
 
         self.scene_params = np.array(scene_params)
-        #pyflex.set_scene(9, self.scene_params, 0)
-        super().set_scene(sizex = self.cloth_xdim, sizey = self.cloth_ydim)
+        # pyflex.set_scene(9, self.scene_params, 0)
+        super().set_scene(sizex=self.cloth_xdim, sizey=self.cloth_ydim)
         # Set folding group
         particle_grid_idx = np.array(list(range(self.cloth_xdim * self.cloth_ydim))).reshape(self.cloth_ydim,
                                                                                              self.cloth_xdim)
@@ -151,7 +152,7 @@ class ClothFoldPointControlEnv(ClothEnv):
 
         lastPos = pyflex.get_shape_states()
         if self.video_path is not None:
-            pyflex.step()#capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
+            pyflex.step()  # capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
         else:
             pyflex.step()
         if self.action_mode != 'sphere':
@@ -168,7 +169,7 @@ class ClothFoldPointControlEnv(ClothEnv):
             reward = self.compute_reward(cur_pos)
         else:
             self.sphereStep(action, lastPos)
-            cur_pos = np.array(pyflex.get_positions()).reshape([-1,4])
+            cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
             reward = self.compute_reward(cur_pos)
         obs = self.get_current_observation()
 
