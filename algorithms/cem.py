@@ -8,7 +8,7 @@ class CEMOptimizer(object):
     def __init__(self, cost_function, solution_dim, max_iters, population_size, num_elites,
                  upper_bound=None, lower_bound=None, epsilon=0.05):
         """
-        :param cost_function: Takes input one or multiple data points in R^{sol_dim}
+        :param cost_function: Takes input one or multiple data points in R^{sol_dim}\
         :param solution_dim: The dimensionality of the problem space
         :param max_iters: The maximum number of iterations to perform during optimization
         :param population_size: The number of candidate solutions to be sampled at every iteration
@@ -64,8 +64,9 @@ class CEMOptimizer(object):
 class CEMPolicy(object):
     """ Use the ground truth dynamics to optimize a trajectory of actions. """
 
-    def __init__(self, env, plan_horizon, max_iters, population_size, num_elites):
+    def __init__(self, env, use_mpc, plan_horizon, max_iters, population_size, num_elites):
         self.env = env
+        self.use_mpc = use_mpc
         self.plan_horizon, self.action_dim = plan_horizon, len(env.action_space.sample())
         self.action_buffer = []
 
@@ -96,7 +97,7 @@ class CEMPolicy(object):
         return costs
 
     def get_action(self, state):
-        if len(self.action_buffer) > 0:
+        if len(self.action_buffer) > 0 and not self.use_mpc:
             action, self.action_buffer = self.action_buffer[0], self.action_buffer[1:]
             return action
         self.env.debug = False
@@ -114,6 +115,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--replay", action="store_true")
+    parser.add_argument("-mpc", "--use_mpc", action="store_true")
     parser.add_argument("--traj_path", default="./data/folding_traj/traj.pkl")
     args = parser.parse_args()
     traj_path = args.traj_path
@@ -123,6 +125,7 @@ if __name__ == '__main__':
 
     if not args.replay:
         policy = CEMPolicy(env,
+                           args.use_mpc,
                            plan_horizon=20,
                            max_iters=5,
                            population_size=50,

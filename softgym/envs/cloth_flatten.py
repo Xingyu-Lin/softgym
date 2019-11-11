@@ -2,6 +2,7 @@ import numpy as np
 from gym.spaces import Box
 import random
 import os
+import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
 
@@ -10,7 +11,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
     def __init__(self, observation_mode, action_mode):
         self.camera_width = 960
         self.camera_height = 720
-        config = open("ClothDefaultConfig.yaml", 'r')
+        config_dir = osp.dirname(osp.abspath(__file__))
+        config = open(osp.join(config_dir, "ClothDefaultConfig.yaml"), 'r')
         super().__init__(config.read())
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
@@ -22,17 +24,18 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.horizon = 150
 
         if observation_mode == 'key_point':
-            self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()), np.array([np.inf] * pyflex.get_n_particles()), dtype=np.float32)
+            self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()),
+                                         np.array([np.inf] * pyflex.get_n_particles()), dtype=np.float32)
         else:
             raise NotImplementedError
 
         if action_mode.startswith('key_point'):
-            space_low = np.array([0, -0.1, -0.1, -0.1]*2)
-            space_high = np.array([3.9, 0.1, 0.1, 0.1]*2)
+            space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
+            space_high = np.array([3.9, 0.1, 0.1, 0.1] * 2)
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         elif action_mode.startswith('sphere'):
-            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1]*2)
-            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1]*2)
+            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1] * 2)
+            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2)
 
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         self.time_step = 500
@@ -58,8 +61,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
             'height': self.camera_height
         }
 
-    def reset(self, dropPoint = 1000, xdim=64, ydim=32):
-        self.i=0
+    def reset(self, dropPoint=1000, xdim=64, ydim=32):
+        self.i = 0
         if self.initPos is not None:
             print("resetting")
             pyflex.set_positions(self.initPos)
@@ -70,11 +73,11 @@ class ClothFlattenPointControlEnv(ClothEnv):
         pickpoint = random.randint(0, xdim * ydim)
         if dropPoint is not None:
             pickpoint = dropPoint
-        #pyflex.set_scene(10, np.array([pickpoint, xdim, ydim]), 0)
+        # pyflex.set_scene(10, np.array([pickpoint, xdim, ydim]), 0)
         self.set_scene()
         firstPos = pyflex.get_positions()
         firstPos[pickpoint * 4 + 3] = 0
-        print("{}".format(firstPos[pickpoint * 4: pickpoint*4 + 3]))
+        print("{}".format(firstPos[pickpoint * 4: pickpoint * 4 + 3]))
         pyflex.set_positions(firstPos)
         pos = pyflex.get_shape_states()
         pyflex.set_shape_states(pos)
@@ -88,7 +91,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
             if stopParticle:
                 newPos[pickpoint * 4: pickpoint * 4 + 3] = particle_pos
                 print("pick pos: {}".format(newPos[pickpoint * 4 + 2]))
-                #newPos[pickpoint * 4 + 3] = 0.0
+                # newPos[pickpoint * 4 + 3] = 0.0
                 vels[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
             stopped = True
             for j in range(pyflex.get_n_particles()):
@@ -113,8 +116,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.initPos = pyflex.get_positions()
         self.initVel = pyflex.get_velocities()
         self.initState = pyflex.get_shape_states()
-        #pyflex.set_scene(9, np.array([]), 0)
-        #pyflex.set_positions(self.initPos)
+        # pyflex.set_scene(9, np.array([]), 0)
+        # pyflex.set_positions(self.initPos)
 
     def get_current_observation(self):
         pos = np.array(pyflex.get_positions()).reshape([-1, 4])
@@ -132,10 +135,10 @@ class ClothFlattenPointControlEnv(ClothEnv):
         print("stepping")
         self.i = self.i + 1
         if self.action_mode.startswith('key_point'):
-            valid_idxs = np.array([0, 63, 31*64, 32*64-1])
+            valid_idxs = np.array([0, 63, 31 * 64, 32 * 64 - 1])
             last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
             des_dir = self.storage_name
-            pyflex.step()#capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
+            pyflex.step()  # capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
 
             cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
             action = action.reshape([-1, 4])
@@ -181,12 +184,12 @@ class ClothFlattenPointControlEnv(ClothEnv):
         maxY = np.max(pos[:, 2])
         grid = np.zeros([101, 101])
         init = np.array([minX, minY])
-        span = np.array([maxX - minX, maxY-minY])/100.
+        span = np.array([maxX - minX, maxY - minY]) / 100.
         pos2d = pos[:, [0, 2]]
         offset = pos2d - init
-        slottedX = (offset[:, 0]//span[0])
-        slottedy = (offset[:, 1]//span[1])
-        grid[slottedy.astype(int),slottedX.astype(int)] = 1
+        slottedX = (offset[:, 0] // span[0])
+        slottedy = (offset[:, 1] // span[1])
+        grid[slottedy.astype(int), slottedX.astype(int)] = 1
         """
         for i in range(len(pos2d)):
             offset = pos2d[i] - init
@@ -195,12 +198,14 @@ class ClothFlattenPointControlEnv(ClothEnv):
             slottedY = int(offset[1]/span[1])
             grid[slottedY,slottedX] = 1
         """
-        return np.sum(np.sum(grid))*span[0]*span[1]
+        return np.sum(np.sum(grid)) * span[0] * span[1]
 
     def set_scene(self):
-        #scene_params = np.array([0, 64, 32])
-        #pyflex.set_scene(10, scene_params, 0)
+        # scene_params = np.array([0, 64, 32])
+        # pyflex.set_scene(10, scene_params, 0)
         super().set_scene(initY=2.0)
+
+
 """
 class ClothFlattenSphereControlEnv(ClothEnv):
     def __init__(self, observation_mode, action_mode):
@@ -363,7 +368,7 @@ if __name__ == "__main__":
     haveGrasped = False
     for i in range(0, 700):
         if env.prev_middle[0, 1] > 0.11 and not haveGrasped:
-            obs, reward, _, _ = env.step(np.array([0., -0.001, 0, 0, 0.01]*2))
+            obs, reward, _, _ = env.step(np.array([0., -0.001, 0, 0, 0.01] * 2))
             print("reward: {}".format(reward))
         elif not haveGrasped:
             obs, reward, _, _ = env.step(np.array([0., -0.001, 0, 0, -0.01] * 2))
@@ -373,4 +378,3 @@ if __name__ == "__main__":
         else:
             obs, reward, _, _ = env.step(np.array([0., 0.001, 0, 0, 0] * 2))
             print("reward: {}".format(reward))
-
