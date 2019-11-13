@@ -19,7 +19,8 @@ class ClothEnv(FlexEnv):
         self.horizon = 100
         self.prev_rot = np.array([0.0, 0.0])
         self.init_rot = self.prev_rot
-        # self.prev_middle = None
+        self.prev_middle = None
+        self.prev_dist = None
 
     def initialize_camera(self):
         '''
@@ -113,7 +114,7 @@ class ClothEnv(FlexEnv):
 
             self.prev_rot[i] = new_rot
             self.prev_dist[i] = new_dist
-        print("prev dists: {}".format(self.prev_dist))
+        #print("prev dists: {}".format(self.prev_dist))
         if self.checkSphereCollisions(cur_pos[0][0:3], cur_pos[1][0:3], cur_pos[2][0:3], cur_pos[3][0:3]):
             pyflex.set_shape_states(cur_pos.flatten())
             self.prev_middle = cur_middle
@@ -127,6 +128,21 @@ class ClothEnv(FlexEnv):
         self.prev_middle = self.init_mid
         self.prev_rot = self.init_rot
         self.prev_dist = self.init_dist
+        print("prev_mid reset: {}".format(self.prev_middle))
+
+
+    def get_state(self):
+        cur_state = super().get_state()
+        cur_state['middle'] = self.prev_middle
+        cur_state['rot'] = self.prev_rot
+        cur_state['dist'] = self.prev_dist
+        return cur_state
+
+    def set_state(self, state_dict):
+        self.prev_middle = state_dict['middle']
+        self.prev_dist = state_dict['dist']
+        self.prev_rot = state_dict['rot']
+        super().set_state(state_dict)
 
     def checkSphereCollisions(self, sp1, sp2, sp3, sp4):
         sp13dist = np.linalg.norm(sp1 - sp3)

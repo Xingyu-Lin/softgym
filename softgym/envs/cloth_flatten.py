@@ -68,6 +68,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
             pyflex.set_positions(self.initPos)
             pyflex.set_positions(self.initVel)
             pyflex.set_shape_states(self.initState)
+            self.sphere_reset()
             return
 
         pickpoint = random.randint(0, xdim * ydim)
@@ -132,7 +133,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.video_width = 320
 
     def step(self, action):
-        print("stepping")
+        #print("stepping")
         self.i = self.i + 1
         if self.action_mode.startswith('key_point'):
             valid_idxs = np.array([0, 63, 31 * 64, 32 * 64 - 1])
@@ -143,7 +144,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
             cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
             action = action.reshape([-1, 4])
             idxs = np.hstack(action[:, 0])
-            print("idxs: {}".format(valid_idxs[idxs.astype(int)]))
+            #print("idxs: {}".format(valid_idxs[idxs.astype(int)]))
             updates = action[:, 1:]
             action = np.hstack([action, np.zeros([action.shape[0], 1])])
             vels = pyflex.get_velocities()
@@ -159,14 +160,14 @@ class ClothFlattenPointControlEnv(ClothEnv):
             pyflex.set_positions(cur_pos.flatten())
             pyflex.set_velocities(vels.flatten())
         else:
-            print("sphering")
+            #print("sphering")
             last_pos = pyflex.get_shape_states()
             pyflex.step(capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
             super().sphereStep(action, last_pos)
-        print("computing reward")
+        #print("computing reward")
         obs = self.get_current_observation()
         reward = self.compute_reward()
-        print("returning")
+        #print("returning")
         return obs, reward, False, {}
 
     def compute_reward(self):
