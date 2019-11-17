@@ -19,30 +19,24 @@ if args.policy == 'heuristic':
     move_part = 50
     stable_part = int(0.0 * timestep)
 
-    v = 0.1
+    v = 0.15
     y = 0
     dt = 0.1
     x = env.glass_floor_centerx
     total_rotate = 0.7* np.pi
 
-    # env.start_record(video_path='../data/video/', video_name='pour_water.gif')
+    # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
     env.reset()
     for i in range(timestep):
         if i < stable_part:
             action = np.array([0, 0, 0])
 
         elif stable_part <= i < move_part + stable_part:
-            # if i % 2 == 0:
-            #     x = v * dt
-            # else:
-            #     x = -v * dt
             y = v * dt
             action = np.array([0, y, 0.])
 
         elif i > move_part + stable_part and i < timestep - 50:
-            # theta = min(1, (i - move_part - stable_part) / float(timestep - 200 - move_part - stable_part)) * total_rotate
             theta = 1 / float(timestep -50 - move_part - stable_part) * total_rotate
-            # print(theta / np.pi)
             action = np.array([0, 0, theta])
 
         _, reward, done, _ = env.step(action)
@@ -57,11 +51,12 @@ elif args.policy == 'cem':
     import copy, pickle
 
     traj_path = args.cem_traj_path
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', horizon=150, deterministic=True)
+    env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', horizon=300, deterministic=True,
+        render_mode='fluid')
 
     if not args.replay:
         policy = CEMPolicy(env,
-                        plan_horizon=50,
+                        plan_horizon=100,
                         max_iters=5,
                         population_size=100,
                         num_elites=10)
@@ -89,7 +84,7 @@ elif args.policy == 'cem':
         initial_state, action_traj = traj_dict['initial_state'], traj_dict['action_traj']
         des_dir = '../data/video/test_PourWater/'
         os.system('mkdir -p ' + des_dir)    
-        env.start_record(video_path=des_dir, video_name='cem_pour_water_1.gif')
+        env.start_record(video_path=des_dir, video_name='cem_pour_water_2.gif')
         env.reset()
         env.set_state(initial_state)
         for action in action_traj:

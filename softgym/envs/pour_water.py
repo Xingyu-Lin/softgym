@@ -218,20 +218,29 @@ class PourWaterPosControlEnv(FluidEnv):
         water_state = state_dic['particle_pos']
         water_num = len(water_state)
         
-        in_poured_glass = 0
-        for water in water_state:
-            res = self.in_glass(water, self.poured_glass_states, self.poured_border, self.poured_height)
-            in_poured_glass += res
+        in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)
 
-        # in_pouring_glass = 0
-        # for idx, water in enumerate(water_state):
-        #     res = self.in_glass(water, self.glass_states, self.border, self.height)
-        #     in_pouring_glass += res
+        # in_poured_glass2 = 0
+        # for water in water_state:
+        #     res = self.in_glass2(water, self.poured_glass_states, self.poured_border, self.poured_height)
+        #     in_poured_glass2 += res
+
+        # assert in_poured_glass == in_poured_glass2
+
+        in_pouring_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+
+        # in_pouring_glass2 = 0
+        # for water in water_state:
+        #     res = self.in_glass2(water, self.glass_states, self.border, self.height)
+        #     in_pouring_glass2 += res
+
+        # print(in_pouring_glass, in_pouring_glass2)
+        # assert in_pouring_glass == in_pouring_glass2
             
         if self.debug:
             print("water num: ", water_num, "in glass num: ", in_poured_glass)
-        return float(in_poured_glass) / water_num 
-        
+        return float(in_poured_glass) / water_num #+ 0.1 * float(in_pouring_glass) / water_num
+
     def compute_in_pouring_glass_water(self):
         state_dic = self.get_state()
         water_state = state_dic['particle_pos']
@@ -440,17 +449,43 @@ class PourWaterPosControlEnv(FluidEnv):
         # 3-6: previous (x, y, z) coordinate of the center point
         # 6-10: current quat 
         # 10-14: previous quat 
-        x_lower = glass_states[1][0]
-        x_upper = glass_states[2][0]
-        z_lower = glass_states[3][2]
-        z_upper = glass_states[4][2]
-        y_lower = border
-        y_upper = height
-        x, y, z = water[0], water[1], water[2]
-        if x >= x_lower and x <= x_upper and y >= y_lower and y <= y_upper and z >= z_lower and z <= z_upper:
-            return 1
-        else:
-            return 0
+        x_lower = glass_states[1][0] - border / 2.
+        x_upper = glass_states[2][0] + border / 2.
+        z_lower = glass_states[3][2] - border / 2.
+        z_upper = glass_states[4][2] + border / 2
+        y_lower = glass_states[0][1] - border / 2.
+        y_upper = glass_states[0][1] + height + border / 2.
+        x, y, z = water[:,0], water[:,1], water[:,2]
+
+        res = (x >= x_lower) * (x <= x_upper) * (y >= y_lower) * (y <= y_upper) * (z >= z_lower) * (z <= z_upper)
+        res = np.sum(res)
+        return res
+
+
+    # def in_glass2(self, water, glass_states, border, height):
+    #     '''
+    #     judge whether a water particle is in the poured glass
+    #     water: [x, y, z, 1/m] water particle state.
+    #     '''
+
+    #     # floor, left, right, back, front
+    #     # state:
+    #     # 0-3: current (x, y, z) coordinate of the center point
+    #     # 3-6: previous (x, y, z) coordinate of the center point
+    #     # 6-10: current quat 
+    #     # 10-14: previous quat 
+    #     x_lower = glass_states[1][0] - border / 2.
+    #     x_upper = glass_states[2][0] + border / 2.
+    #     z_lower = glass_states[3][2] - border / 2.
+    #     z_upper = glass_states[4][2] + border / 2
+    #     y_lower = glass_states[0][1] - border / 2.
+    #     y_upper = glass_states[0][1] + height + border / 2.
+    #     x, y, z = water[0], water[1], water[2]
+
+    #     if x >= x_lower and x <= x_upper and y >= y_lower and y <= y_upper and z >= z_lower and z <= z_upper:
+    #         return 1
+    #     else:
+    #         return 0
 
 
     def judge_glass_collide(self, new_states, rotation):
