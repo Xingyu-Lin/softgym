@@ -148,7 +148,7 @@ class ClothFoldPointControlEnv(ClothEnv):
         distance_to_init = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         return -distance - distance_to_init
 
-    def step(self, action):
+    def _step(self, action):
 
         lastPos = pyflex.get_shape_states()
         if self.video_path is not None:

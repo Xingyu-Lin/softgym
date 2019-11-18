@@ -132,7 +132,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.video_height = 240
         self.video_width = 320
 
-    def step(self, action):
+    def _step(self, action):
         #print("stepping")
         self.i = self.i + 1
         if self.action_mode.startswith('key_point'):

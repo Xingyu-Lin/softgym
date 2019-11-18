@@ -251,7 +251,7 @@ class PourWaterPosControlEnv(FluidEnv):
         return in_pouring_glass
 
 
-    def step(self, action):
+    def _step(self, action):
         '''
         action: np.ndarray of dim 1x3, (x, y, theta). (x, y) specifies the floor center coordinate, and theta 
             specifies the rotation.

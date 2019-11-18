@@ -253,7 +253,7 @@ class PourJamPosControlEnv(FluidEnv):
         return float(in_glass) / water_num
 
 
-    def step(self, action):
+    def _step(self, action):
         '''
         action: np.ndarray of dim 1x3, (x, y, theta). (x, y) specifies the floor center coordinate, and theta 
             specifies the rotation.

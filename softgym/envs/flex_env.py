@@ -148,3 +148,12 @@ class FlexEnv(gym.Env):
         """
         self.video_height = None
         self.video_width = None
+
+    def step(self, action, repeat_time = 2):
+        for i in range(repeat_time):
+            next_state, reward, done, info = self._step(action)
+        return next_state, reward, done, info
+
+    def _step(self, action):
+        raise NotImplementedError
+        
