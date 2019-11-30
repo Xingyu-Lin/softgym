@@ -56,3 +56,14 @@ def register_flex_envs():
             'action_mode': 'sphere'
         }
     )
+
+    register(
+        id='PourWaterPosControl-v0',
+        entry_point='softgym.envs.pour_water:PourWaterPosControlEnv',
+        kwargs={
+            'observation_mode': 'cam_img',
+            'action_mode': 'direct',
+            'render_mode': 'fluid'
+        }
+    )
+
