@@ -3,6 +3,7 @@ import numpy as np
 import pyflex
 from softgym.envs.pour_water import PourWaterPosControlEnv
 import os, argparse, sys
+import softgym
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--policy", type = str, default = 'heuristic', help = 'heuristic or cem')
@@ -12,8 +13,11 @@ args = args.parse_args()
 
 
 if args.policy == 'heuristic':
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 300, 
-        action_mode = 'direct', deterministic=True, render_mode = 'fluid')
+    # env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 300, 
+    #     action_mode = 'direct', deterministic=False, render_mode = 'fluid')
+    softgym.register_flex_envs()
+    env = gym.make('PourWaterPosControl-v0')
+
 
     timestep = env.horizon
     move_part = 50

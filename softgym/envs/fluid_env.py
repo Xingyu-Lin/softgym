@@ -64,8 +64,9 @@ class FluidEnv(FlexEnv):
         self.fluid_params['z'] = 0. - (self.fluid_params['dim_z']-1)/2.*fluid_radis 
 
         # overwrite the parameters speicified by user
-        for k in fluid_param_dic:
-            self.fluid_params[k] = fluid_param_dic[k]
+        if self.deterministic:
+            for k in fluid_param_dic:
+                self.fluid_params[k] = fluid_param_dic[k]
         
         return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'], 
             params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'], 
