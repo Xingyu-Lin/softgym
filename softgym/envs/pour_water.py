@@ -13,6 +13,7 @@ from shapely.geometry import Polygon, LineString
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import yaml
+import os.path as osp
 
 class PourWaterPosControlEnv(FluidEnv):
     def __init__(self, observation_mode, action_mode, horizon = 300, deterministic = False, render_mode = 'particle'):
@@ -37,6 +38,9 @@ class PourWaterPosControlEnv(FluidEnv):
 
         if observation_mode == 'cam_img':
             self.observation_space = Box(low = -np.inf, high = np.inf, shape = (self.camera_height, self.camera_width, 3), 
+                dtype=np.float32)
+        elif self.observation_mode == 'full_state':
+            self.observation_space = Box(low = -np.inf, high = np.inf, shape = (1, 1), 
                 dtype=np.float32)
         else:
             raise NotImplementedError
@@ -76,7 +80,9 @@ class PourWaterPosControlEnv(FluidEnv):
         self.glass_y = state_dic['glass_y']
         self.glass_rotation = state_dic['glass_rotation']
         self.glass_states = state_dic['glass_states']
+        print("in set_state, right before pyflex.step()")
         pyflex.step()
+        print("in set_state, right after pyflex.step()")
 
     def initialize_camera(self):
         '''
@@ -145,7 +151,9 @@ class PourWaterPosControlEnv(FluidEnv):
         Construct the pouring water scence.
         '''
         # create fluid
-        config = open("../softgym/envs/PourWaterDefaultConfig.yaml", 'r')
+        config_dir = osp.dirname(osp.abspath(__file__))
+        config = open(osp.join(config_dir, "PourWaterDefaultConfig.yaml"), 'r')
+        # config = open("../softgym/envs/PourWaterDefaultConfig.yaml", 'r')
         config = yaml.load(config)
         if self.deterministic:
             super().set_scene(config["fluid"])
@@ -206,6 +214,9 @@ class PourWaterPosControlEnv(FluidEnv):
             width, height = self.camera_width, self.camera_height
             img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
             return img
+        elif self.observation_mode == 'full_state':
+            # just for cluster debug usage for now
+            return 0
         else:
             raise NotImplementedError
 
@@ -279,13 +290,16 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             print("shapes collide!")
 
+        print("right before pyflex.step")
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
+        print("after set_shape_states")
         # pyflex.set_shape_states(self.glass_states)
         if self.record_video:
             pyflex.step(capture = 1, path = self.video_path + 'render_' + str(self.time_step) + '.tga')
         else:
             pyflex.step() 
+        print("after pyflex.step()")
 
         flex_states = self.get_state()
         new_poured_glass_states = flex_states['shape_pos'][-5:]
