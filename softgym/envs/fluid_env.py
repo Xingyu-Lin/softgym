@@ -58,7 +58,10 @@ class FluidEnv(FlexEnv):
         
         # center of the glass floor. lower corner of the water fluid grid along x,y,z-axis. 
         fluid_radis = params['radius'] * params['rest_dis_coef']
-        self.x_center = self.rand_float(-0.2, 0.2) 
+        if not self.deterministic:
+            self.x_center = self.rand_float(-0.2, 0.2) 
+        else:
+            self.x_center = 0
         self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/2.*fluid_radis 
         self.fluid_params['y'] = fluid_radis/2. + 0.025 
         self.fluid_params['z'] = 0. - (self.fluid_params['dim_z']-1)/2.*fluid_radis 
@@ -90,7 +93,10 @@ class FluidEnv(FlexEnv):
         
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
+        print("right before set_scene")
         pyflex.set_scene(6, scene_params, 0)
+        print("right after set_scene")
+        print("hahahah")
 
     def rand_float(self, lo, hi):
         return np.random.rand() * (hi - lo) + lo

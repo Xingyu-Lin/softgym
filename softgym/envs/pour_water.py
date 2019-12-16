@@ -63,9 +63,9 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         get the postion, velocity of flex particles, and postions of flex shapes.
         '''
-        particle_pos = pyflex.get_positions().reshape(-1, self.dim_position)
-        particle_vel = pyflex.get_velocities().reshape(-1, self.dim_velocity)
-        shape_position = pyflex.get_shape_states().reshape(-1, self.dim_shape_state)
+        particle_pos = pyflex.get_positions()
+        particle_vel = pyflex.get_velocities()
+        shape_position = pyflex.get_shape_states()
         return {'particle_pos': particle_pos, 'particle_vel': particle_vel, 'shape_pos': shape_position,
             'glass_x': self.glass_x, 'glass_y': self.glass_y, 'glass_rotation': self.glass_rotation, 'glass_states': self.glass_states}
 
@@ -80,9 +80,7 @@ class PourWaterPosControlEnv(FluidEnv):
         self.glass_y = state_dic['glass_y']
         self.glass_rotation = state_dic['glass_rotation']
         self.glass_states = state_dic['glass_states']
-        print("in set_state, right before pyflex.step()")
         pyflex.step()
-        print("in set_state, right after pyflex.step()")
 
     def initialize_camera(self):
         '''
@@ -153,11 +151,9 @@ class PourWaterPosControlEnv(FluidEnv):
         # create fluid
         config_dir = osp.dirname(osp.abspath(__file__))
         config = open(osp.join(config_dir, "PourWaterDefaultConfig.yaml"), 'r')
-        # config = open("../softgym/envs/PourWaterDefaultConfig.yaml", 'r')
         config = yaml.load(config)
         if self.deterministic:
             super().set_scene(config["fluid"])
-            # super().set_scene(self.deterministic_fluid_params())
         else:
             super().set_scene()
 
@@ -210,10 +206,14 @@ class PourWaterPosControlEnv(FluidEnv):
         return the observation based on the current flex state.
         '''
         if self.observation_mode == 'cam_img':
-            img = pyflex.render()
-            width, height = self.camera_width, self.camera_height
-            img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
-            return img
+            # img = pyflex.render()
+            # width, height = self.camera_width, self.camera_height
+            # img = img.reshape(height, width, 4)[::-1, :, :3]
+            # img = img.astype(np.uint8)
+            # plt.imshow(img)
+            # plt.show()
+            # return img
+            return self.get_image(self.camera_width, self.camera_height)
         elif self.observation_mode == 'full_state':
             # just for cluster debug usage for now
             return 0
@@ -226,7 +226,7 @@ class PourWaterPosControlEnv(FluidEnv):
         TODO: do we want to consider the increase of the fraction?
         '''
         state_dic = self.get_state()
-        water_state = state_dic['particle_pos']
+        water_state = state_dic['particle_pos'].reshape(-1, self.dim_position)
         water_num = len(water_state)
         
         in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)
@@ -254,7 +254,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
     def compute_in_pouring_glass_water(self):
         state_dic = self.get_state()
-        water_state = state_dic['particle_pos']
+        water_state = state_dic['particle_pos'].reshape(-1, self.dim_position)
         in_pouring_glass = 0
         for water in water_state:
             res = self.in_glass(water, self.glass_states, self.border, self.height)
@@ -290,30 +290,16 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             print("shapes collide!")
 
-        print("right before pyflex.step")
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
-        print("after set_shape_states")
-        # pyflex.set_shape_states(self.glass_states)
         if self.record_video:
             pyflex.step(capture = 1, path = self.video_path + 'render_' + str(self.time_step) + '.tga')
         else:
             pyflex.step() 
-        print("after pyflex.step()")
-
-        flex_states = self.get_state()
-        new_poured_glass_states = flex_states['shape_pos'][-5:]
-        if (new_poured_glass_states == self.poured_glass_states).all():
-            pass 
-        else: 
-            print(self.time_step, " shapes collide!")
-        self.poured_glass_states = new_poured_glass_states
 
         # get reward and new observation for the agent.
         obs = self.get_current_observation()
         reward = self.compute_reward()
-
-        self.time_step += 1
 
         done = True if self.time_step == self.horizon else False
         return obs, reward, done, {}

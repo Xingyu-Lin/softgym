@@ -6,6 +6,8 @@ import numpy as np
 from os import path
 import gym
 from softgym.utils.make_gif import make_gif
+import cv2
+from matplotlib import pyplot as plt
 
 try:
     import pyflex
@@ -20,6 +22,7 @@ class FlexEnv(gym.Env):
 
         # self.initialize_camera()
         self.set_scene()
+        print("right after set scene")
         self.set_video_recording_params()
         self.get_pyflex_camera_params()
         self.metadata = {
@@ -29,6 +32,7 @@ class FlexEnv(gym.Env):
         if device_id == -1 and 'gpu_id' in os.environ:
             device_id = int(os.environ['gpu_id'])
         self.device_id = device_id
+        print("flex env init done!")
 
     def get_pyflex_camera_params(self):
         '''
@@ -152,8 +156,30 @@ class FlexEnv(gym.Env):
     def step(self, action, repeat_time = 2):
         for i in range(repeat_time):
             next_state, reward, done, info = self._step(action)
+        self.time_step += 1
         return next_state, reward, done, info
 
     def _step(self, action):
         raise NotImplementedError
+
+    def get_image(self, width, height):
+        '''
+        use pyflex.render to get a rendered image.
+        '''
+        img = pyflex.render()
+        img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
+        img = img.astype(np.uint8)
+        # cv2.imshow('ImageEnv', img)
+        # cv2.waitKey(0)
+        plt.imshow(img)
+        plt.show()
+        img = cv2.resize(img, (width, height)) # add this to align with img env.
+        img = img.reshape((width, height, 3)) # in pytorch format, to algin with imgenv
+        # plt.imshow(img)
+        # plt.show()
+        # print("in flex_env, get_image shape is: ", img.shape)
+        return img
+
+    def close(self):
+        pyflex.clean()
         

@@ -1,9 +1,10 @@
 import gym
 import numpy as np
 import pyflex
-from softgym.envs.pour_water import PourWaterPosControlEnv
+from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
 import os, argparse, sys
 import softgym
+from matplotlib import pyplot as plt
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--policy", type = str, default = 'heuristic', help = 'heuristic or cem')
@@ -13,14 +14,10 @@ args = args.parse_args()
 
 
 if args.policy == 'heuristic':
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 300, 
-        action_mode = 'direct', deterministic=True, render_mode = 'fluid')
-    # softgym.register_flex_envs()
-    # env = gym.make('PourWaterPosControl-v0')
-    # env.close()
-    # print("last env closed")
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 300, 
-        action_mode = 'direct', deterministic=True, render_mode = 'fluid')
+    # env = PourWaterPosControlGoalConditionedEnv(observation_mode = 'full_state', horizon = 300, 
+    #     action_mode = 'direct', deterministic=True, render_mode = 'fluid')
+    softgym.register_flex_envs()
+    env = gym.make('PourWaterPosControlGoalConditioned-v0')
 
     print("env make done!")
     timestep = env.horizon
@@ -34,8 +31,13 @@ if args.policy == 'heuristic':
     total_rotate = 0.7* np.pi
 
     # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
-    print("right before reset")
     env.reset()
+    env.set_to_goal(env.state_dict_goal)
+    img = env.get_image(960, 720)
+    plt.imshow(img)
+    plt.show()
+    import time
+    time.sleep(100)
     print("total timestep: ", timestep)
     for i in range(timestep):
         if i < stable_part:
@@ -51,7 +53,7 @@ if args.policy == 'heuristic':
 
         obs, reward, done, _ = env.step(action)
 
-        print("step {} reward {}".format(i, reward))
+        print("step {} obs {} reward {}".format(i, obs, reward))
         if done:
             # env.end_record()
             print("done!")

@@ -128,8 +128,8 @@ char g_deviceName[256];
 bool g_vsync = true;
 
 // these two are migrated from Flex 2.0
-bool g_headless = true;
-bool g_render = false;
+bool g_headless = false;
+bool g_render = true;
 
 bool g_benchmark = false;
 bool g_extensions = true;

@@ -67,3 +67,14 @@ def register_flex_envs():
         }
     )
 
+    register(
+        id='PourWaterPosControlGoalConditioned-v0',
+        entry_point='softgym.envs.pour_water_multitask:PourWaterPosControlGoalConditionedEnv',
+        kwargs={
+            'observation_mode': 'full_state',
+            'action_mode': 'direct',
+            'render_mode': 'fluid',
+            'deterministic': True
+        }
+    )
+
