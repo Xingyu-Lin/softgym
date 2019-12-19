@@ -162,7 +162,7 @@ class FlexEnv(gym.Env):
     def _step(self, action):
         raise NotImplementedError
 
-    def get_image(self, width, height):
+    def get_image(self, width = 960, height = 720):
         '''
         use pyflex.render to get a rendered image.
         '''
@@ -171,13 +171,12 @@ class FlexEnv(gym.Env):
         img = img.astype(np.uint8)
         # cv2.imshow('ImageEnv', img)
         # cv2.waitKey(0)
-        plt.imshow(img)
-        plt.show()
-        img = cv2.resize(img, (width, height)) # add this to align with img env.
+        # if self.time_step  == 200:
+        #     print("show image")
+        #     plt.imshow(img)
+        #     plt.show()
+        img = cv2.resize(img, (width, height)) # add this to align with img env. TODO: this seems to have some problems.
         img = img.reshape((width, height, 3)) # in pytorch format, to algin with imgenv
-        # plt.imshow(img)
-        # plt.show()
-        # print("in flex_env, get_image shape is: ", img.shape)
         return img
 
     def close(self):

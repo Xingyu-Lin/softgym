@@ -14,13 +14,13 @@ args = args.parse_args()
 
 if args.policy == 'heuristic':
     env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 300, 
-        action_mode = 'direct', deterministic=True, render_mode = 'fluid')
+        action_mode = 'direct', deterministic=True, render_mode = 'particle')
     # softgym.register_flex_envs()
     # env = gym.make('PourWaterPosControl-v0')
     # env.close()
     # print("last env closed")
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 300, 
-        action_mode = 'direct', deterministic=True, render_mode = 'fluid')
+    # env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 300, 
+    #     action_mode = 'direct', deterministic=True, render_mode = 'fluid')
 
     print("env make done!")
     timestep = env.horizon
@@ -51,9 +51,16 @@ if args.policy == 'heuristic':
 
         obs, reward, done, _ = env.step(action)
 
+        # if i  == 100:
+        #     from matplotlib import pyplot as plt
+        #     img = env.get_image()
+        #     plt.imshow(img)
+        #     plt.show()
+
         print("step {} reward {}".format(i, reward))
         if done:
             # env.end_record()
+            
             print("done!")
             break
 

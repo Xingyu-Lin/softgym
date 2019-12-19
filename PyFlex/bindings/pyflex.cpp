@@ -128,7 +128,7 @@ char g_deviceName[256];
 bool g_vsync = true;
 
 // these two are migrated from Flex 2.0
-bool g_headless = false;
+bool g_headless = true;
 bool g_render = true;
 
 bool g_benchmark = false;
@@ -923,7 +923,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     for (int i = 0; i < g_buffers->activeIndices.size(); ++i)
         g_buffers->activeIndices[i] = i;
 
-    printf("set active indices done.\n");
+    // printf("set active indices done.\n");
 
     // resize particle buffers to fit
     g_buffers->positions.resize(maxParticles);
@@ -940,7 +940,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     for (int i = 0; i < g_buffers->positions.size(); ++i)
         g_buffers->restPositions[i] = g_buffers->positions[i];
 
-    printf("save rest positions done.\n");
+    // printf("save rest positions done.\n");
 
     // builds rigids constraints
     if (g_buffers->rigidOffsets.size()) {
@@ -968,7 +968,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
                                         &g_buffers->rigidOffsets[0], &g_buffers->rigidTranslations[0],
                                         &g_buffers->rigidIndices[0], numRigids);
         }
-        printf("rigid mass center computation done.\n");
+        // printf("rigid mass center computation done.\n");
 
         // calculate local rest space positions
         g_buffers->rigidLocalPositions.resize(g_buffers->rigidOffsets.back());
@@ -980,7 +980,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
         g_buffers->rigidRotations.resize(g_buffers->rigidOffsets.size() - 1, Quat());
     }
 
-    printf("rigid constraints build done.\n");
+    // printf("rigid constraints build done.\n");
 
     // unmap so we can start transferring data to GPU
     UnmapBuffers(g_buffers);
@@ -1022,7 +1022,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
                         g_buffers->rigidIndices.size());
     }
 
-    std::cout << "rigids setup done" << endl;
+    // std::cout << "rigids setup done" << endl;
 
 
     // inflatables
@@ -1288,6 +1288,7 @@ void RenderScene() {
         if (g_interop) {
             // copy data directly from solver to the renderer buffers
             UpdateFluidRenderBuffers(g_fluidRenderBuffers, g_solver, g_drawEllipsoids, g_drawDensity);
+            // printf("pass UpdateFluidRenderBuffers\n");
         } else {
             // copy particle data to GPU render device
 
@@ -1377,6 +1378,8 @@ void RenderScene() {
 
     // create shadow maps
     ShadowBegin(g_shadowMap);
+    // printf("pass ShadowBegin\n");
+
 
     SetView(lightView, lightPerspective);
     SetCullMode(false);
@@ -1386,8 +1389,11 @@ void RenderScene() {
 
     if (g_drawMesh)
         DrawMesh(g_mesh, g_meshColor);
+    
+    // printf("pass DrawMesh\n");
 
     DrawShapes();
+    // printf("pass DrawShapes\n");
 
     if (g_drawCloth && g_buffers->triangles.size()) {
         DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0], g_buffers->uvs.size() ? &g_buffers->uvs[0].x : NULL,
@@ -1400,6 +1406,7 @@ void RenderScene() {
             DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
                      radius * g_ropeScale, i);
     }
+    // printf("pass DrawRope\n");
 
     int shadowParticles = numParticles;
     int shadowParticlesOffset = 0;
@@ -1423,6 +1430,7 @@ void RenderScene() {
                    g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
 
     ShadowEnd();
+    // printf("pass ShadowEnd\n");
 
     //----------------
     // lighting pass
@@ -1460,6 +1468,7 @@ void RenderScene() {
         g_scenes[g_scene]->Draw(0);
     }
     UnbindSolidShader();
+    // printf("pass UnbindSolidShader\n");
 
     // first pass of diffuse particles (behind fluid surface)
     if (g_drawDiffuse)
@@ -1467,6 +1476,7 @@ void RenderScene() {
                       float(g_screenWidth), aspect, fov, g_diffuseColor, g_lightPos, g_lightTarget, lightTransform,
                       g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow,
                       false);
+    // printf("pass RenderDiffuse\n");
 
     if (g_drawEllipsoids) {
         // draw solid particles separately
@@ -1474,17 +1484,21 @@ void RenderScene() {
             DrawPoints(g_fluidRenderBuffers, g_numSolidParticles, 0, radius, float(g_screenWidth), aspect, fov,
                        g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
 
+        // printf("pass DrawPoints\n");
         // render fluid surface
         RenderEllipsoids(g_fluidRenderer, g_fluidRenderBuffers, numParticles - g_numSolidParticles, g_numSolidParticles,
                          radius, float(g_screenWidth), aspect, fov, g_lightPos, g_lightTarget, lightTransform,
                          g_shadowMap, g_fluidColor, g_blur, g_ior, g_drawOpaque);
 
+        // printf("pass RenderEllipsoids\n");
         // second pass of diffuse particles for particles in front of fluid surface
         if (g_drawDiffuse)
             RenderDiffuse(g_fluidRenderer, g_diffuseRenderBuffers, numDiffuse, radius * g_diffuseScale,
                           float(g_screenWidth), aspect, fov, g_diffuseColor, g_lightPos, g_lightTarget, lightTransform,
                           g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow,
                           true);
+        // printf("pass RenderDiffuse\n");
+        
     } else {
         // draw all particles as spheres
         if (g_drawPoints) {
@@ -1494,9 +1508,11 @@ void RenderScene() {
                 DrawPoints(g_fluidRenderBuffers, numParticles - offset, offset, radius, float(g_screenWidth), aspect,
                            fov, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
         }
+        // printf("pass DrawPoints\n");
     }
 
     GraphicsTimerEnd();
+    // printf("pass GraphicsTimerEnd\n");
 }
 
 void RenderDebug() {
@@ -2108,9 +2124,13 @@ void UpdateFrame(py::array_t<float> update_params) {
         if (g_render) {
             UpdateCamera();
         }
+        // printf("updatecamera done\n");
 		UpdateEmitters();
+        // printf("updateemitters done\n");
 		UpdateWind();
+        // printf("updatewind done\n");
 		UpdateScene(update_params);
+        // printf("updatescene done\n");
 	}
 
     //-------------------------------------------------------------------
@@ -2131,16 +2151,20 @@ void UpdateFrame(py::array_t<float> update_params) {
         }
 
         StartFrame(Vec4(g_clearColor, 1.0f));
+        // printf("start frame done\n");
 
         // main scene render
         RenderScene();
         RenderDebug();
+
+        // printf("render scene & debug done\n");
 
         if (!g_headless) {
             newScene = DoUI();
         }
 
         EndFrame();
+        // printf("endframe done\n");
 
         // If user has disabled async compute, ensure that no compute can overlap
         // graphics by placing a sync between them
@@ -2149,6 +2173,7 @@ void UpdateFrame(py::array_t<float> update_params) {
     }
 
     UnmapBuffers(g_buffers);
+    // printf("unmap buffers done\n");
 
     if (!g_headless) {
         // move mouse particle (must be done here as GetViewRay() uses the GL projection state)
@@ -2170,6 +2195,7 @@ void UpdateFrame(py::array_t<float> update_params) {
             ReadFrame((int *) img.m_data, g_screenWidth, g_screenHeight);
             TgaSave(g_ffmpeg, img, false);
 
+            // printf("readframe done\n");
             // fwrite(img.m_data, sizeof(uint32_t)*g_screenWidth*g_screenHeight, 1, g_ffmpeg);
 
             delete[] img.m_data;
@@ -2289,11 +2315,11 @@ void UpdateFrame(py::array_t<float> update_params) {
 	{
 		PresentFrame(g_vsync);
 	}
-	else if (g_render) 
-	{
-		// PresentFrameHeadless();
-        printf("haha, you want to render on a cluster, but we do not have a device here for render!\n");
-	}
+	// else if (g_render) 
+	// {
+	// 	// PresentFrameHeadless();
+    //     // printf("haha, you want to render on a cluster, but we do not have a device here for render!\n");
+	// }
 
 
     // if gui or benchmark requested a scene change process it now
@@ -2887,8 +2913,6 @@ void pyflex_init() {
     g_scenes.push_back(new BunnyBath("Bunny Bath Dam", true));
      */
 
-    // init graphics
-    RenderInitOptions options;
 
     switch (g_graphics) {
         case 0:
@@ -2926,22 +2950,30 @@ void pyflex_init() {
 
     if (!g_headless) {
         SDLInit(title);
-    }
 
-    options.window = g_window;
-    options.numMsaaSamples = g_msaaSamples;
-    options.asyncComputeBenchmark = g_asyncComputeBenchmark;
-    options.defaultFontHeight = -1;
-    options.fullscreen = g_fullscreen;
+        // init graphics
+        RenderInitOptions options;
+        options.window = g_window;
+        options.numMsaaSamples = g_msaaSamples;
+        options.asyncComputeBenchmark = g_asyncComputeBenchmark;
+        options.defaultFontHeight = -1;
+        options.fullscreen = g_fullscreen;
 
-    if (!g_headless) {
         InitRender(options);
 
-        if (g_fullscreen)
-            SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        // if (g_fullscreen)
+        //     SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
         ReshapeWindow(g_screenWidth, g_screenHeight);
-    }
+    } 
+    else if (g_render == true)
+	{
+		RenderInitOptions options;
+		options.numMsaaSamples = g_msaaSamples;
+
+		InitRenderHeadless(options, g_screenWidth, g_screenHeight);
+        g_fluidRenderer = CreateFluidRenderer(g_screenWidth, g_screenHeight);
+	}
 
     NvFlexInitDesc desc;
     desc.deviceIndex = g_device;
@@ -3264,8 +3296,6 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
     // if (g_buffers->rigidIndices.empty())
 	// 	g_buffers->rigidOffsets.push_back(0);
 
-    printf("active particle num before: %d\n", g_buffers->activeIndices.size());
-
     int phase = NvFlexMakePhase(5, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid);
     for (size_t i = 0; i < (size_t)num; i++) {
         g_buffers->activeIndices.push_back(int(g_buffers->activeIndices.size()));
@@ -3276,8 +3306,6 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
         g_buffers->velocities.push_back(velocity);
         g_buffers->phases.push_back(phase);
     }
-
-    printf("active particle num after: %d\n", g_buffers->activeIndices.size());
 
     // g_buffers->rigidCoefficients.push_back(1.0);
     // g_buffers->rigidOffsets.push_back(int(g_buffers->rigidIndices.size()));

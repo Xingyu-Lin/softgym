@@ -35,6 +35,11 @@
 #include "../../external/SDL2-2.0.4/include/SDL.h"
 #include "../../external/glad/src/glad.c"
 
+// #ifdef __linux__
+#include "../../external/glad/src/glad_egl.c"
+#include "../../external/glad/include/glad/glad_egl.h"
+// #endif
+
 #include "imguiRenderGL.h"
 #include "utilsGL.h"
 
@@ -238,6 +243,13 @@ SDL_Window* g_window;
 static float g_spotMin = 0.5f;
 static float g_spotMax = 1.0f;
 float g_shadowBias = 0.05f;
+
+#ifdef __linux__
+EGLDisplay* g_eglDisplay;
+EGLConfig*  g_eglConfig;
+EGLContext* g_eglContext;
+EGLSurface* g_eglSurface;
+#endif
 
 } // anonymous namespace
 
@@ -2257,12 +2269,10 @@ void RenderEllipsoids(FluidRenderer* render, FluidRenderBuffers* buffersIn, int 
 	glVerify(glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, g_msaaFbo));
 	glVerify(glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, render->mSceneFbo));
 	glVerify(glBlitFramebuffer(0, 0, GLsizei(screenWidth), GLsizei(screenWidth/screenAspect), 0, 0, GLsizei(screenWidth), GLsizei(screenWidth/screenAspect), GL_COLOR_BUFFER_BIT, GL_LINEAR));
-
 	//thickness texture
 	glVerify(glBindFramebuffer(GL_FRAMEBUFFER, render->mThicknessFbo));
 	glVerify(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render->mThicknessTex, 0));
 	glVerify(glDrawBuffer(GL_COLOR_ATTACHMENT0));
-
 	glViewport(0, 0, GLsizei(screenWidth), GLsizei(screenWidth/screenAspect));
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -3271,4 +3281,203 @@ void* DemoContextOGL::getGraphicsCommandQueue()
 void DemoContextOGL::getRenderDevice(void** device, void** context)
 {
 	OGL_Renderer::GetRenderDevice(device, context);
+}
+
+
+// yf: copied from Flex Robotics
+void InitRenderHeadless(const RenderInitOptions& options, int width, int height)
+{
+#ifdef __linux__
+	int msaaSamples = options.numMsaaSamples;
+
+	EGLint ignore;
+	EGLBoolean ok;
+
+    EGLNativeDisplayType native_display = EGL_DEFAULT_DISPLAY;
+
+    const char* s = getenv("EGL_GPU");
+    EGLDisplay selectedDisplay;
+    if (s != NULL)
+    {
+        int egl_index = atoi(s);
+        
+        static const int MAX_DEVICES = 8;
+        EGLDeviceEXT eglDevs[MAX_DEVICES];
+        EGLint numDevices;
+
+        PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
+            (PFNEGLQUERYDEVICESEXTPROC) eglGetProcAddress("eglQueryDevicesEXT");
+
+        eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
+
+        printf("Detected %d devices\n", numDevices);
+
+        PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
+            (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress("eglGetPlatformDisplayEXT");
+
+        selectedDisplay = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[egl_index], 0);
+    }
+    else
+    {
+        selectedDisplay = eglGetDisplay(native_display);
+    }
+
+	EGLint eglSurfaceType = EGL_PBUFFER_BIT;
+
+
+	EGLint eglConfigAttribs[] = {
+		EGL_SURFACE_TYPE,          eglSurfaceType,
+		EGL_RENDERABLE_TYPE,       EGL_OPENGL_BIT,
+
+		EGL_COLOR_BUFFER_TYPE,     EGL_RGB_BUFFER,
+		EGL_BUFFER_SIZE,           32,
+		EGL_RED_SIZE,              8,
+		EGL_GREEN_SIZE,            8,
+		EGL_BLUE_SIZE,             8,
+		EGL_ALPHA_SIZE,            8,
+
+		EGL_DEPTH_SIZE,            24,
+		EGL_STENCIL_SIZE,          8,
+
+		EGL_SAMPLE_BUFFERS,        0,
+		EGL_SAMPLES,               0,
+
+		EGL_NONE,
+	};
+
+	static const EGLint eglPBAttribs[] = {
+		EGL_WIDTH, width,
+		EGL_HEIGHT, height,
+		EGL_NONE,
+	};
+
+
+  
+	ok = eglBindAPI(EGL_OPENGL_API);
+	if (!ok)
+		printf("eglBindAPI(0x%x) failed", EGL_OPENGL_API);
+
+	printf("after eglbindAPI\n");
+
+	EGLDisplay g_eglDisplay = selectedDisplay;
+    
+	if (g_eglDisplay == EGL_NO_DISPLAY)
+		printf("eglGetDisplay() failed");
+
+	ok = eglInitialize(g_eglDisplay, &ignore, &ignore);
+	if (!ok)
+		printf("eglInitialize() failed");
+
+	EGLint configs_size = 256;
+	EGLConfig* configs = new EGLConfig[configs_size];
+	EGLint num_configs;
+	ok = eglChooseConfig(
+						 g_eglDisplay,
+						 eglConfigAttribs,
+						 configs,
+						 configs_size, // num requested configs
+						 &num_configs); // num returned configs
+
+	if (!ok)
+		printf("eglChooseConfig() failed");
+	if (num_configs == 0)
+		printf("failed to find suitable EGLConfig");
+
+	g_eglConfig = configs[0];
+	delete [] configs;
+
+  
+	g_eglContext = eglCreateContext(
+							   g_eglDisplay,
+							   g_eglConfig,
+							   EGL_NO_CONTEXT,
+							   NULL);
+	if (!g_eglContext)
+		printf("eglCreateContext() failed");
+  
+	g_eglSurface = eglCreatePbufferSurface(g_eglDisplay, g_eglConfig,
+									  eglPBAttribs);
+	if (!g_eglSurface)
+		printf("eglCreatePbufferSurface() failed");
+
+
+	
+	ok = eglMakeCurrent(g_eglDisplay, g_eglSurface, g_eglSurface, g_eglContext);
+	if (!ok)
+		printf("eglMakeCurrent() failed");
+
+	// Check if surface is double buffered.
+	EGLint render_buffer;
+	ok = eglQueryContext(
+						 g_eglDisplay,
+						 g_eglContext,
+						 EGL_RENDER_BUFFER,
+						 &render_buffer);
+	if (!ok)
+		printf("eglQueyContext(EGL_RENDER_BUFFER) failed");
+	if (render_buffer == EGL_SINGLE_BUFFER)
+		printf("warn: EGL surface is single buffered\n");
+
+
+
+
+	
+	if (!gladLoadEGL())
+	{
+		printf("Could not initialize EGL extensions\n");
+	}
+
+	if (!gladLoadGL())
+	{
+		printf("Could not initialize GL extensions\n");
+	}
+
+	g_msaaSamples = msaaSamples;
+
+
+
+
+
+	if (g_msaaSamples)
+	{
+		glVerify(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+
+		if (g_msaaFbo)
+		{
+			glVerify(glDeleteFramebuffers(1, &g_msaaFbo));
+			glVerify(glDeleteRenderbuffers(1, &g_msaaColorBuf));
+			glVerify(glDeleteRenderbuffers(1, &g_msaaDepthBuf));
+		}
+
+		int samples;
+		glGetIntegerv(GL_MAX_SAMPLES_EXT, &samples);
+
+		// clamp samples to 4 to avoid problems with point sprite scaling
+		//samples = Min(samples, Min(g_msaaSamples, 4));
+		samples = g_msaaSamples;
+
+		glVerify(glGenFramebuffers(1, &g_msaaFbo));
+		glVerify(glBindFramebuffer(GL_FRAMEBUFFER, g_msaaFbo));
+
+		glVerify(glGenRenderbuffers(1, &g_msaaColorBuf));
+		glVerify(glBindRenderbuffer(GL_RENDERBUFFER, g_msaaColorBuf));
+		glVerify(glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_RGBA8, width, height));
+
+		glVerify(glGenRenderbuffers(1, &g_msaaDepthBuf));
+		glVerify(glBindRenderbuffer(GL_RENDERBUFFER, g_msaaDepthBuf));
+		glVerify(glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT, width, height));
+		glVerify(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_msaaDepthBuf));
+
+		glVerify(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_msaaColorBuf));
+
+		glVerify(glCheckFramebufferStatus(GL_FRAMEBUFFER));
+
+		glEnable(GL_MULTISAMPLE);
+	}
+
+	g_screenWidth = width;
+	g_screenHeight = height;
+
+#endif
+
 }

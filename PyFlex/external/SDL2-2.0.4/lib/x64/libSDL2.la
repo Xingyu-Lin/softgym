@@ -8,7 +8,7 @@
 dlname='libSDL2-2.0.so.0'
 
 # Names of this library.
-library_names='libSDL2-2.0.so.0.4.0 libSDL2-2.0.so.0 libSDL2.so'
+library_names='libSDL2-2.0.so.0.7.0 libSDL2-2.0.so.0 libSDL2.so'
 
 # The name of the static archive.
 old_library='libSDL2.a'
@@ -23,8 +23,8 @@ dependency_libs=' -lm -ldl -lpthread -lrt'
 weak_library_names=''
 
 # Version information for libSDL2.
-current=4
-age=4
+current=7
+age=7
 revision=0
 
 # Is this an already installed library?

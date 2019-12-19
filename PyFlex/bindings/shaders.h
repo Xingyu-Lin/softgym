@@ -58,6 +58,7 @@ struct RenderInitOptions
 };
 
 void InitRender(const RenderInitOptions& options);
+void InitRenderHeadless(const RenderInitOptions& options, int width, int height);
 void DestroyRender();
 void ReshapeRender(SDL_Window* window);
 

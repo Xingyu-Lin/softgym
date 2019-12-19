@@ -31,6 +31,7 @@ class PourWaterPosControlEnv(FluidEnv):
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.wall_num = 5 # number of glass walls. floor/left/right/front/back 
+        self.time_step = 0
 
         super().__init__(horizon, deterministic, render_mode)
         assert observation_mode in ['cam_img', 'full_state'] 
