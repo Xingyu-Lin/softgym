@@ -790,7 +790,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
 
     g_maxDiffuseParticles = 0;    // number of diffuse particles
     g_maxNeighborsPerParticle = 96;
-    g_numExtraParticles = 2000;    // number of particles allocated but not made active
+    g_numExtraParticles = 0;    // number of particles allocated but not made active
     g_maxContactsPerParticle = 6;
 
     g_sceneLower = FLT_MAX;
@@ -806,9 +806,6 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     g_scenes[g_scene]->Initialize(scene_params, thread_idx);
     std::cout << "scenec initialized" << endl;
     EndGpuWork();
-
-
-
 
     uint32_t numParticles = g_buffers->positions.size();
     uint32_t maxParticles = numParticles + g_numExtraParticles * g_numExtraMultiplier;
@@ -2661,9 +2658,12 @@ char *make_path(char *full_path, std::string path) {
     return full_path;
 }
 
-void pyflex_init() {
-    printf("pyflex init: g_headless is: %d\n", g_headless);
-    printf("pyflex init: g_headless is: %d\n", g_render);
+void pyflex_init(bool headless = false, bool render = true) {
+    // printf("pyflex init: g_headless is: %d\n", g_headless);
+    // printf("pyflex init: g_headless is: %d\n", g_render);
+    
+    g_headless = headless;
+    g_render = render;
     if (g_headless) {
         g_interop = false;
         g_pause = false;

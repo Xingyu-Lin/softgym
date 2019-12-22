@@ -13,6 +13,6 @@ fluid:
 glass:
   border: 0.025
   height: 0.5
-  glass_distance: 0.65
+  glass_distance: 0.7
   poured_border: 0.025
   poured_height: 0.5

@@ -74,7 +74,9 @@ def register_flex_envs():
             'observation_mode': 'full_state',
             'action_mode': 'direct',
             'render_mode': 'fluid',
-            'deterministic': True
+            'deterministic': True,
+            'render': True,
+            'headless': True
         }
     )
 

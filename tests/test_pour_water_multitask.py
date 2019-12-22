@@ -30,9 +30,8 @@ if args.policy == 'heuristic':
     x = env.glass_floor_centerx
     total_rotate = 0.7* np.pi
 
-    # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
     env.reset()
-    env.set_to_goal(env.state_dict_goal)
+    env.set_to_goal(env.get_goal())
     img = env.get_image(960, 720)
     plt.imshow(img)
     plt.show()

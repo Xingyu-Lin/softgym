@@ -16,7 +16,8 @@ import yaml
 import os.path as osp
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, horizon = 300, deterministic = False, render_mode = 'particle'):
+    def __init__(self, observation_mode, action_mode, headless = True, render = True, 
+            horizon = 300, deterministic = False, render_mode = 'particle'):
         '''
         This class implements a pouring water task.
         
@@ -33,7 +34,7 @@ class PourWaterPosControlEnv(FluidEnv):
         self.wall_num = 5 # number of glass walls. floor/left/right/front/back 
         self.time_step = 0
 
-        super().__init__(horizon, deterministic, render_mode)
+        super().__init__(horizon = horizon, headless = headless, render = render, deterministic = deterministic, render_mode = render_mode)
         assert observation_mode in ['cam_img', 'full_state'] 
         assert action_mode in ['direct'] 
 
@@ -133,8 +134,8 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.1 # glass floor length
             self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.1 # glass width
-            self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis # glass floor length
-            self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis # glass width
+            self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.05 # glass floor length
+            self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.05 # glass width
 
         params['glass_dis_x'] = self.glass_dis_x
         params['glass_dis_z'] = self.glass_dis_z
@@ -227,19 +228,23 @@ class PourWaterPosControlEnv(FluidEnv):
         TODO: do we want to consider the increase of the fraction?
         '''
         state_dic = self.get_state()
-        water_state = state_dic['particle_pos'].reshape(-1, self.dim_position)
+        water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
         water_num = len(water_state)
         
         in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)
 
         # in_poured_glass2 = 0
+        # cnt = 0
         # for water in water_state:
+        #     cnt += 1
+        #     if self.time_step == self.horizon - 1:
+        #         print(cnt)
         #     res = self.in_glass2(water, self.poured_glass_states, self.poured_border, self.poured_height)
         #     in_poured_glass2 += res
 
         # assert in_poured_glass == in_poured_glass2
 
-        in_pouring_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+        # in_pouring_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
 
         # in_pouring_glass2 = 0
         # for water in water_state:
@@ -249,8 +254,8 @@ class PourWaterPosControlEnv(FluidEnv):
         # print(in_pouring_glass, in_pouring_glass2)
         # assert in_pouring_glass == in_pouring_glass2
             
-        if self.debug:
-            print("water num: ", water_num, "in glass num: ", in_poured_glass)
+        # if self.debug:
+        # print("water num: ", water_num, "in glass num: ", in_poured_glass)
         return float(in_poured_glass) / water_num #+ 0.1 * float(in_pouring_glass) / water_num
 
     def compute_in_pouring_glass_water(self):
@@ -463,30 +468,35 @@ class PourWaterPosControlEnv(FluidEnv):
         return res
 
 
-    # def in_glass2(self, water, glass_states, border, height):
-    #     '''
-    #     judge whether a water particle is in the poured glass
-    #     water: [x, y, z, 1/m] water particle state.
-    #     '''
+    def in_glass2(self, water, glass_states, border, height):
+        '''
+        judge whether a water particle is in the poured glass
+        water: [x, y, z, 1/m] water particle state.
+        '''
 
-    #     # floor, left, right, back, front
-    #     # state:
-    #     # 0-3: current (x, y, z) coordinate of the center point
-    #     # 3-6: previous (x, y, z) coordinate of the center point
-    #     # 6-10: current quat 
-    #     # 10-14: previous quat 
-    #     x_lower = glass_states[1][0] - border / 2.
-    #     x_upper = glass_states[2][0] + border / 2.
-    #     z_lower = glass_states[3][2] - border / 2.
-    #     z_upper = glass_states[4][2] + border / 2
-    #     y_lower = glass_states[0][1] - border / 2.
-    #     y_upper = glass_states[0][1] + height + border / 2.
-    #     x, y, z = water[0], water[1], water[2]
+        # floor, left, right, back, front
+        # state:
+        # 0-3: current (x, y, z) coordinate of the center point
+        # 3-6: previous (x, y, z) coordinate of the center point
+        # 6-10: current quat 
+        # 10-14: previous quat 
+        x_lower = glass_states[1][0] - border / 2.
+        x_upper = glass_states[2][0] + border / 2.
+        z_lower = glass_states[3][2] - border / 2.
+        z_upper = glass_states[4][2] + border / 2
+        y_lower = glass_states[0][1] - border / 2.
+        y_upper = glass_states[0][1] + height + border / 2.
+        x, y, z = water[0], water[1], water[2]
 
-    #     if x >= x_lower and x <= x_upper and y >= y_lower and y <= y_upper and z >= z_lower and z <= z_upper:
-    #         return 1
-    #     else:
-    #         return 0
+        if self.time_step == self.horizon - 1:
+            print(x, y, z)
+            print(x_lower, x_upper, z_lower, z_upper, y_lower, y_upper)
+        # exit()
+
+        if x >= x_lower and x <= x_upper and y >= y_lower and y <= y_upper and z >= z_lower and z <= z_upper:
+            return 1
+        else:
+            return 0
 
 
     def judge_glass_collide(self, new_states, rotation):

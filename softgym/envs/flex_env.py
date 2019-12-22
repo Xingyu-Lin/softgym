@@ -16,13 +16,13 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1):
-        pyflex.init()  # TODO check if pyflex needs to be initialized for each instance of the environment
+    def __init__(self, device_id=-1, headless = True, render = True):
+        pyflex.init(headless, render)  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.record_video, self.video_path, self.video_name = False, None, None
 
         # self.initialize_camera()
         self.set_scene()
-        print("right after set scene")
+        # print("right after set scene")
         self.set_video_recording_params()
         self.get_pyflex_camera_params()
         self.metadata = {
@@ -153,7 +153,7 @@ class FlexEnv(gym.Env):
         self.video_height = None
         self.video_width = None
 
-    def step(self, action, repeat_time = 2):
+    def step(self, action, repeat_time = 4):
         for i in range(repeat_time):
             next_state, reward, done, info = self._step(action)
         self.time_step += 1
@@ -169,6 +169,7 @@ class FlexEnv(gym.Env):
         img = pyflex.render()
         img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
         img = img.astype(np.uint8)
+        # img = img[:,:,::-1]
         # cv2.imshow('ImageEnv', img)
         # cv2.waitKey(0)
         # if self.time_step  == 200:
@@ -176,7 +177,9 @@ class FlexEnv(gym.Env):
         #     plt.imshow(img)
         #     plt.show()
         img = cv2.resize(img, (width, height)) # add this to align with img env. TODO: this seems to have some problems.
-        img = img.reshape((width, height, 3)) # in pytorch format, to algin with imgenv
+        # img = img.reshape((width, height, 3)) # in pytorch format, to algin with imgenv
+        # cv2.imshow('ImageEnv2', img)
+        # cv2.waitKey(0)
         return img
 
     def close(self):

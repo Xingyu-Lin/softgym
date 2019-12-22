@@ -3357,7 +3357,7 @@ void InitRenderHeadless(const RenderInitOptions& options, int width, int height)
 	if (!ok)
 		printf("eglBindAPI(0x%x) failed", EGL_OPENGL_API);
 
-	printf("after eglbindAPI\n");
+	// printf("after eglbindAPI\n");
 
 	EGLDisplay g_eglDisplay = selectedDisplay;
     

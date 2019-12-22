@@ -5,7 +5,7 @@ from softgym.envs.flex_env import FlexEnv
 
 class FluidEnv(FlexEnv):
 
-    def __init__(self, horizon = 300, deterministic = False, render_mode = 'particle'):
+    def __init__(self, horizon = 300, headless = True, render = True, deterministic = False, render_mode = 'particle'):
         self.camera_width = 960
         self.camera_height = 720
         self.dim_shape_state = 14 # dimension of a shape object in Flex
@@ -18,7 +18,7 @@ class FluidEnv(FlexEnv):
         assert render_mode in ['particle', 'fluid']
         self.render_mode = 0 if render_mode == 'particle' else 1
         print(self.render_mode)
-        super().__init__()
+        super().__init__(headless = headless, render = render)
 
 
     def sample_fluid_params(self, fluid_param_dic = None):
@@ -93,10 +93,11 @@ class FluidEnv(FlexEnv):
         
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
-        print("right before set_scene")
+        # print("right before set_scene")
         pyflex.set_scene(6, scene_params, 0)
-        print("right after set_scene")
-        print("hahahah")
+        print("right after pyflex set scene: num particles are: ", pyflex.get_n_particles())
+        # print("right after set_scene")
+        # print("hahahah")
 
     def rand_float(self, lo, hi):
         return np.random.rand() * (hi - lo) + lo

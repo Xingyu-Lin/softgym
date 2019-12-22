@@ -17,7 +17,7 @@ import os.path as osp
 from softgym.core.multitask_env import MultitaskEnv
 
 class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
-    def __init__(self, observation_mode = 'full_state', action_mode = 'direct', 
+    def __init__(self, observation_mode = 'full_state', action_mode = 'direct', render = True, headless = False, 
             horizon = 300, deterministic = True, render_mode = 'particle'):
         '''
         This class implements a pouring water task.
@@ -36,8 +36,10 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
 
         # debug usage
         self.camera_called_time = 0
+        self.state_dict_goal = None
 
-        FluidEnv.__init__(self, horizon, deterministic, render_mode)
+        FluidEnv.__init__(self, horizon = horizon, deterministic = deterministic, render_mode = render_mode, render = render, 
+            headless=headless)
         assert observation_mode in ['full_state'] 
         assert action_mode in ['direct'] 
 
@@ -58,7 +60,7 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
 
         if action_mode == 'direct':
             self.action_direct_dim = 3 # control the (x, y) corrdinate of the floor center, and theta its rotation angel.
-            self.action_space = Box(np.array([-1.] * self.action_direct_dim), np.array([1.] * self.action_direct_dim), dtype=np.float32)
+            self.action_space = Box(np.array([-0.05] * self.action_direct_dim), np.array([0.05] * self.action_direct_dim), dtype=np.float32) # space range: no larger than cup border
         else:
             raise NotImplementedError
 
@@ -82,7 +84,7 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
         lower_z = -self.glass_params['poured_glass_dis_z'] / 2.
         lower_y = self.glass_params['poured_border'] 
         lower = np.array([lower_x, lower_y, lower_z])
-        print("in sample goals, fluid lower x {} lower y {} lower z {}".format(lower_x, lower_y, lower_z))
+        # print("in sample goals, fluid lower x {} lower y {} lower z {}".format(lower_x, lower_y, lower_z))
         cnt = 0
         for x in range(self.fluid_params['dim_x']):
             for y in range(self.fluid_params['dim_y']):
@@ -98,9 +100,9 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
         pouring_glass_z = 0.
         pouring_glass_y = 2.2 * self.glass_params['poured_height']
         pouring_theta = 0.6 * np.pi
-        print("in sampling goal set control cup x {} control cup y {} control cup theta {}".format(
-            pouring_glass_x, pouring_glass_y, pouring_theta
-        ))
+        # print("in sampling goal set control cup x {} control cup y {} control cup theta {}".format(
+        #     pouring_glass_x, pouring_glass_y, pouring_theta
+        # ))
 
         pouring_glass_goal = np.array([pouring_glass_x, pouring_glass_y, pouring_glass_z, pouring_theta, self.glass_params['glass_dis_x'], 
             self.glass_params['glass_dis_z'], self.glass_params['height']])
@@ -110,7 +112,9 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
         goal = np.concatenate((fluid_goal, glass_goal), axis = 1)
         # print("goal.shape:", goal.shape )
 
+        # print("goal :", goal)
         self.state_goal = goal
+        # print("state goal: ", self.state_goal)
 
         return {
             'desired_goal': goal,
@@ -121,11 +125,6 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
         return np.array([self.glass_params['poured_glass_x_center'], self.glass_params['poured_border'], 0, 0,
             self.glass_params['poured_glass_dis_x'], self.glass_params['poured_glass_dis_z'], self.glass_params['poured_height']])
 
-    def get_goal(self):
-        return {
-            'desired_goal': self.state_goal,
-            'state_desired_goal': self.state_goal,
-        }
 
     def compute_reward(self, action, obs, info = None):
         # print(obs)
@@ -148,16 +147,18 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
         return the initial observation.
         '''
         self.set_env_state(self.init_flex_state)
-        self.state_dict_goal = self.sample_goal()        
+        if self.state_dict_goal is None: # only suits for skewfit algorithm, because we are not actually sampling from this
+            # true underlying env, but only sample from the vae latents
+            self.state_dict_goal = self.sample_goal()        
         return self._get_obs()
     
     def get_env_state(self):
         '''
         get the postion, velocity of flex particles, and postions of flex shapes.
         '''
-        particle_pos = pyflex.get_positions().reshape(-1, self.dim_position)
-        particle_vel = pyflex.get_velocities().reshape(-1, self.dim_velocity)
-        shape_position = pyflex.get_shape_states().reshape(-1, self.dim_shape_state)
+        particle_pos = pyflex.get_positions()
+        particle_vel = pyflex.get_velocities()
+        shape_position = pyflex.get_shape_states()
         return {'particle_pos': particle_pos, 'particle_vel': particle_vel, 'shape_pos': shape_position,
             'glass_x': self.glass_x, 'glass_y': self.glass_y, 'glass_rotation': self.glass_rotation, 'glass_states': self.glass_states}
 
@@ -210,18 +211,27 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
         state_goal = goal['state_desired_goal']
         self.state_goal = state_goal
 
+    def get_goal(self):
+        # print("get goal is called!")
+        # print("self.state_goal: ", self.state_goal)
+        # return {
+        #     'desired_goal': self.state_goal,
+        #     'state_desired_goal': self.state_goal,
+        # }
+        return self.state_dict_goal 
+
     def initialize_camera(self, make_multi_world_happy = None):
         '''
         set the camera width, height, position and angle.
         **Note: width and height is actually the screen width and screen height of FLex.
         I suggest to keep them the same as the ones used in pyflex.cpp.
         '''
-        print("intialize camera called time: {}".format(self.camera_called_time))
+        # print("intialize camera called time: {}".format(self.camera_called_time))
         x_center = self.x_center # center of the glass floor
         z = self.fluid_params['z'] # lower corner of the water fluid along z-axis.
         self.camera_params = {
-                        'pos': np.array([x_center + 1.3, 0.8 + 1.5, z + 0.5]),
-                        'angle': np.array([0.4 * np.pi, -70/180. * np.pi, 0]),
+                        'pos': np.array([x_center + 1.5, 0.8 + 1.7, z + 0.3]),
+                        'angle': np.array([0.4 * np.pi, -65/180. * np.pi, 0]),
                         # 'pos': np.array([x_center -1.3, 0.8, z + 0.5]),
                         # 'angle': np.array([0, 0, -0.5 * np.pi]),
                         'width': self.camera_width,
@@ -262,8 +272,8 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
         else:
             self.glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.1 # glass floor length
             self.glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.1 # glass width
-            self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.03# glass floor length
-            self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.03# glass width
+            self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.05# glass floor length
+            self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.05# glass width
 
         params['glass_dis_x'] = self.glass_dis_x
         params['glass_dis_z'] = self.glass_dis_z
@@ -381,7 +391,8 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
             self.glass_states = new_states
             self.glass_x, self.glass_y, self.glass_rotation = x, y, theta
         else:
-            info["glass_collide"] = True
+            # info["glass_collide"] = True
+            pass
 
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
@@ -494,7 +505,7 @@ class PourWaterPosControlGoalConditionedEnv(FluidEnv, MultitaskEnv):
         '''
         dis_x, dis_z = glass_dis_x, glass_dis_z
         x_center, y_curr, y_last  = x, y, y_last
-        print("in init_glass_state, y_curr is: ", y_curr)
+        # print("in init_glass_state, y_curr is: ", y_curr)
         quat = self.quatFromAxisAngle([0, 0, -1.], theta) 
         if theta_last is None:
             quat_last = quat
