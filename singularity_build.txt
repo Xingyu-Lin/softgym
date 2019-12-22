@@ -1,0 +1,54 @@
+Bootstrap: docker
+From: ubuntu:16.04
+%help
+   This is a singularity container that runs Deep Reinforcement Learning algorithms on ubuntu
+   Also designed for compiling and running Pyflex for the softgym project
+   Packages installed include:
+       * cuda 9.1 and cuDNN
+	sed -i 's/$/ universe/' /etc/apt/sources.list
+%runscript
+   /usr/bin/nvidia-smi -L
+%environment
+   LD_LIBRARY_PATH=/usr/local/cuda-9.1/cuda/lib64:/usr/local/cuda-9.1/lib64:$LD_LIBRARY_PATH
+%setup
+   echo "Let us have CUDA..."
+   sh ~/cuda_9.1.85_387.26_linux.run -silent -toolkit -toolkitpath=${SINGULARITY_ROOTFS}/usr/local/cuda-9.1
+   ln  -s ${SINGULARITY_ROOTFS}/usr/local/cuda-9.1 ${SINGULARITY_ROOTFS}/usr/local/cuda
+   echo "Let us also have cuDNN..."
+   cp -prv /media/yufei/DATA/CMU/RL-pad/Flex/cudann/cuda/* ${SINGULARITY_ROOTFS}/usr/local/cuda-9.1/
+%labels
+   AUTHOR yufeiw2@andrew.cmu.edu
+   VERSION v1.0
+%post
+   echo "Hello from inside the container"
+   touch /usr/bin/nvidia-smi
+   chmod +x /usr/bin/nvidia-smi
+   apt-get -y update
+   apt-get -y install software-properties-common vim make wget curl emacs ffmpeg git htop libffi-dev libglew-dev libgl1-mesa-glx libosmesa6 libosmesa6-dev libssl-dev mesa-utils module-init-tools openjdk-8-jdk python-dev python-numpy python-tk bzip2
+   apt-get -y install xvfb
+   apt-get -y install libglfw3-dev libgles2-mesa-dev
+   apt-get -y install build-essential
+   apt-get -y install libgl1-mesa-dev libglfw3-dev freeglut3-dev xvfb
+   apt-get -y install strace
+   echo "Install openmpi 3.1.1"
+   cd /tmp
+   wget https://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.1.tar.gz
+   tar xf openmpi-3.1.1.tar.gz
+   cd openmpi-3.1.1
+   mkdir -p build
+   cd build
+   ../configure
+   make -j 8 all
+   make install
+   apt-get -y install openmpi-bin
+   rm -rf /tmp/openmpi*
+   rm -rf /usr/bin/mpirun
+   ln -s /usr/local/bin/mpirun /usr/bin/mpirun
+   echo "Install mpi4py 3.0.0"
+   cd /tmp
+   wget https://bitbucket.org/mpi4py/mpi4py/downloads/mpi4py-3.0.0.tar.gz
+   tar -zxf mpi4py-3.0.0.tar.gz
+   cd mpi4py-3.0.0
+   python setup.py build --mpicc=
+   python setup.py install --user
+
