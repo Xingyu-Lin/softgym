@@ -8,3 +8,5 @@ dependencies:
   - opencv-python=5.1.1
   - imageio=2.6.1
   - glob2=0.7
+  - cmake=3.14.0
+  - pybind11=2.4.3
