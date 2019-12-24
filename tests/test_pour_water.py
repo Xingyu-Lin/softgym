@@ -13,7 +13,7 @@ args = args.parse_args()
 
 
 if args.policy == 'heuristic':
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 75, render = True, headless= True,
+    env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 75, render = True, headless= False,
         action_mode = 'direct', deterministic=True, render_mode = 'particle')
     # softgym.register_flex_envs()
     # env = gym.make('PourWaterPosControl-v0')
@@ -54,12 +54,12 @@ if args.policy == 'heuristic':
 
         obs, reward, done, _ = env.step(action)
 
-        if i  == 250:
+        # if i  == 250:
             # from matplotlib import pyplot as plt
-            import cv2
-            img = env.get_image(48, 48)
-            cv2.imshow('test_img', img)
-            cv2.waitKey(0)
+            # import cv2
+            # img = env.get_image(48, 48)
+            # cv2.imshow('test_img', img)
+            # cv2.waitKey(0)
 
         print("step {} reward {}".format(i, reward))
         if done:

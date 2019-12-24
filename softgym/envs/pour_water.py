@@ -59,7 +59,7 @@ class PourWaterPosControlEnv(FluidEnv):
         return the initial observation.
         '''
         self.set_state(self.init_flex_state)
-        return self.get_current_observation()
+        return self._get_obs()
     
     def get_state(self):
         '''
@@ -141,7 +141,7 @@ class PourWaterPosControlEnv(FluidEnv):
         params['glass_dis_z'] = self.glass_dis_z
         params['poured_glass_dis_x'] = self.poured_glass_dis_x
         params['poured_glass_dis_z'] = self.poured_glass_dis_z
-        params['init_glass_x_center'] = self.x_center
+        params['glass_x_center'] = self.x_center
         params['poured_glass_x_center'] = self.x_center + params['glass_distance']
 
         self.glass_params = params
@@ -188,7 +188,6 @@ class PourWaterPosControlEnv(FluidEnv):
 
         
         self.set_shape_states(self.glass_states, self.poured_glass_states)
-        # pyflex.set_shape_states(self.glass_states)
 
         # give some time for water to stablize 
         for i in range(150):
@@ -203,7 +202,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
         print("pour water inital scene constructed over...")
 
-    def get_current_observation(self):
+    def _get_obs(self):
         '''
         return the observation based on the current flex state.
         '''
@@ -222,10 +221,11 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             raise NotImplementedError
 
-    def compute_reward(self):
+    def compute_reward(self, obs = None, action = None):
         '''
         the reward is computed as the fraction of water in the poured glass.
         TODO: do we want to consider the increase of the fraction?
+        NOTE: the obs and action params are made here to be compatiable with the MultiGoal env wrapper.
         '''
         state_dic = self.get_state()
         water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
@@ -294,7 +294,8 @@ class PourWaterPosControlEnv(FluidEnv):
             self.glass_states = new_states
             self.glass_x, self.glass_y, self.glass_rotation = x, y, theta
         else:
-            print("shapes collide!")
+            # print("shapes collide!")
+            pass
 
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
@@ -304,8 +305,8 @@ class PourWaterPosControlEnv(FluidEnv):
             pyflex.step() 
 
         # get reward and new observation for the agent.
-        obs = self.get_current_observation()
-        reward = self.compute_reward()
+        obs = self._get_obs()
+        reward = self.compute_reward(action, obs)
 
         done = True if self.time_step == self.horizon else False
         return obs, reward, done, {}

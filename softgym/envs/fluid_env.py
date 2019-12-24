@@ -62,9 +62,9 @@ class FluidEnv(FlexEnv):
             self.x_center = self.rand_float(-0.2, 0.2) 
         else:
             self.x_center = 0
-        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/2.*fluid_radis 
-        self.fluid_params['y'] = fluid_radis/2. + 0.025 
-        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z']-1)/2.*fluid_radis 
+        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/1.*fluid_radis 
+        self.fluid_params['y'] = fluid_radis/1.5 + 0.05
+        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z'])/1.2*fluid_radis 
 
         # overwrite the parameters speicified by user
         if self.deterministic:
