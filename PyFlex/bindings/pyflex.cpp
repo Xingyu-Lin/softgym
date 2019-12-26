@@ -3153,6 +3153,12 @@ void pyflex_add_box(py::array_t<float> halfEdge_, py::array_t<float> center_, py
     pyflex_UnmapShapeBuffers(g_buffers);
 }
 
+void pyflex_pop_box(int num) {
+    pyflex_MapShapeBuffers(g_buffers);
+    PopBox(num);
+    pyflex_UnmapShapeBuffers(g_buffers);
+}
+
 void pyflex_add_sphere(float radius, py::array_t<float> position_, py::array_t<float> quat_) {
     pyflex_MapShapeBuffers(g_buffers);
 
@@ -3883,6 +3889,8 @@ PYBIND11_MODULE(pyflex, m) {
 
     m.def("add_box", &pyflex_add_box, "Add box to the scene");
     m.def("add_sphere", &pyflex_add_sphere, "Add sphere to the scene");
+
+    m.def("pop_box", &pyflex_pop_box, "remove box from the scene");
 
     m.def("get_n_particles", &pyflex_get_n_particles, "Get the number of particles");
     m.def("get_n_shapes", &pyflex_get_n_shapes, "Get the number of shapes");

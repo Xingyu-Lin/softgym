@@ -457,6 +457,15 @@ void AddBox(Vec3 halfEdge = Vec3(2.0f), Vec3 center=Vec3(0.0f), Quat quat=Quat()
 	g_buffers->shapeFlags.push_back(NvFlexMakeShapeFlagsWithChannels(eNvFlexShapeBox, dynamic, channels));
 }
 
+void PopBox(int num){
+	g_buffers->shapePositions.resize(g_buffers->shapePositions.size() - num);
+	g_buffers->shapeRotations.resize(g_buffers->shapeRotations.size() - num);
+	g_buffers->shapePrevPositions.resize(g_buffers->shapePrevPositions.size() - num);
+	g_buffers->shapePrevRotations.resize(g_buffers->shapePrevRotations.size() - num);
+	g_buffers->shapeGeometry.resize(g_buffers->shapeGeometry.size() - num);
+	g_buffers->shapeFlags.resize(g_buffers->shapeFlags.size() - num);
+}
+
 // helper that creates a plinth whose center matches the particle bounds
 void AddPlinth()
 {

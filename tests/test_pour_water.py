@@ -4,6 +4,7 @@ import pyflex
 from softgym.envs.pour_water import PourWaterPosControlEnv
 import os, argparse, sys
 import softgym
+from matplotlib import pyplot as plt
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--policy", type = str, default = 'heuristic', help = 'heuristic or cem')
@@ -14,7 +15,7 @@ args = args.parse_args()
 
 if args.policy == 'heuristic':
     env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 75, render = True, headless= False,
-        action_mode = 'direct', deterministic=True, render_mode = 'particle')
+        action_mode = 'direct', deterministic=False, render_mode = 'particle')
     # softgym.register_flex_envs()
     # env = gym.make('PourWaterPosControl-v0')
     # env.close()
@@ -33,9 +34,15 @@ if args.policy == 'heuristic':
     x = env.glass_floor_centerx
     total_rotate = 0.28* np.pi
 
-    # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
-    print("right before reset")
-    env.reset()
+    # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')2
+    for i in range(5):
+        env.reset()
+        print("after reset!")
+        img = env.get_image(960, 720)
+        plt.imshow(img)
+        plt.show()
+
+
     print("total timestep: ", timestep)
     for i in range(timestep):
         if i < stable_part:
