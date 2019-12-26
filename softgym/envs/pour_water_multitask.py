@@ -31,12 +31,6 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         TODO: allow parameter configuring of the scence.
         '''
 
-        self.observation_mode = observation_mode
-        self.action_mode = action_mode
-        self.wall_num = 5 # number of glass walls. floor/left/right/front/back 
-
-        # debug usage
-        self.camera_called_time = 0
         self.state_dict_goal = None
 
         PourWaterPosControlEnv.__init__(self, observation_mode = observation_mode, action_mode = action_mode,
@@ -58,14 +52,6 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
             ('achieved_goal', self.goal_box),
             ('state_achieved_goal', self.goal_box),
         ])
-
-        if action_mode == 'direct':
-            self.action_direct_dim = 3 # control the (x, y) corrdinate of the floor center, and theta its rotation angel.
-            self.action_space = Box(np.array([-0.05] * self.action_direct_dim), np.array([0.05] * self.action_direct_dim), dtype=np.float32) # space range: no larger than cup border
-        else:
-            raise NotImplementedError
-
-        ### goal related vars
 
     def sample_goals(self, batch_size):
         '''
@@ -221,7 +207,6 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
                         'width': self.camera_width,
                         'height': self.camera_height
                         }
-        self.camera_called_time += 1
 
     def _get_obs(self):
         '''
