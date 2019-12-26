@@ -49,15 +49,23 @@ class PourWaterPosControlEnv(FluidEnv):
 
         if action_mode == 'direct':
             self.action_direct_dim = 3 # control the (x, y) corrdinate of the floor center, and theta its rotation angel.
-            self.action_space = Box(np.array([-1.] * self.action_direct_dim), np.array([1.] * self.action_direct_dim), dtype=np.float32)
+            self.action_space = Box(np.array([-0.05] * self.action_direct_dim), np.array([0.05] * self.action_direct_dim), dtype=np.float32)
         else:
             raise NotImplementedError
         
-    def reset(self):
+    def reset(self): # TODO: add task variation
         '''
         reset to environment to the initial state.
         return the initial observation.
+
+        TODO: thoughts on task variation:
+        * in set_scene, only sets water and control cup (should separate the sampling parameters func for control cup and target cup)
+        * move everything with target cup here. i.e., at each reset,
+        (1) sample different target cup shape and position parameters
+        (2) use self.create_glass to create a new target glass 
+        (3) use self.init_glass_state to move the new target glass to the ground
         '''
+        self.time_step = 0
         self.set_state(self.init_flex_state)
         return self._get_obs()
     
