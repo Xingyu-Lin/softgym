@@ -69,7 +69,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
         if not self.deterministic:
             print("reset target cup distance and shape!")
-            pyflex.pop_box(5) # pop out the last target glass
+            pyflex.pop_box(self.wall_num) # pop out the last target glass
             self.sample_poured_glass_params(self.config["glass"])
 
             # create poured glass with the newly sampled parameters
