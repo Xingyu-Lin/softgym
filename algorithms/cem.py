@@ -45,7 +45,8 @@ class CEMOptimizer(object):
         t = 0
         X = stats.norm(loc=np.zeros_like(mean), scale=np.ones_like(mean))
 
-        while (t < self.max_iters) and np.max(var) > self.epsilon:
+        while (t < self.max_iters): #and np.max(var) > self.epsilon:
+            print("inside CEM, iteration {}".format(t))
             samples = X.rvs(size=[self.population_size, self.solution_dim]) * np.sqrt(var) + mean
             samples = np.clip(samples, self.lb, self.ub)
             costs = self.cost_function(cur_state, samples)

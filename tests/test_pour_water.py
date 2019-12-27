@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--policy", type = str, default = 'heuristic', help = 'heuristic or cem')
-args.add_argument("--cem_traj_path", type = str, default = '../data/traj/pour_water_cem_traj.pkl')
+args.add_argument("--cem_traj_path", type = str, default = './data/traj/pour_water_cem_traj.pkl')
 args.add_argument("--replay", type = int, default = 0, help = 'if load pre-stored actions and make gifs')
 args = args.parse_args()
 
@@ -81,22 +81,23 @@ elif args.policy == 'cem':
     import copy, pickle
 
     traj_path = args.cem_traj_path
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', horizon=300, deterministic=True,
-        render_mode='fluid')
+    env = PourWaterPosControlEnv(observation_mode = 'full_state', action_mode = 'direct', horizon=75, deterministic=True,
+        render_mode='fluid', headless=True, render=False)
 
     if not args.replay:
         policy = CEMPolicy(env,
-                        plan_horizon=100,
-                        max_iters=5,
-                        population_size=100,
+                        plan_horizon=75,
+                        max_iters=20,
+                        population_size=50,
+                        use_mpc=False,
                         num_elites=10)
+
         # Run policy
         obs = env.reset()
         initial_state = env.get_state()
         action_traj = []
         for _ in range(env.horizon):
             action = policy.get_action(obs)
-            env.debug = True
             action_traj.append(copy.deepcopy(action))
             obs, reward, _, _ = env.step(action)
             print('reward:', reward)
@@ -112,7 +113,7 @@ elif args.policy == 'cem':
         with open(traj_path, 'rb') as f:
             traj_dict = pickle.load(f)
         initial_state, action_traj = traj_dict['initial_state'], traj_dict['action_traj']
-        des_dir = '../data/video/test_PourWater/'
+        des_dir = './data/video/test_PourWater/'
         os.system('mkdir -p ' + des_dir)    
         env.start_record(video_path=des_dir, video_name='cem_pour_water_2.gif')
         env.reset()
@@ -120,14 +121,3 @@ elif args.policy == 'cem':
         for action in action_traj:
             env.step(action)
         env.end_record()
-
-    
-
-# env.reset()
-# for i in range(timestep):
-#     pyflex.set_positions(positions[i])
-#     pyflex.set_shape_states(shape_states[i, :-1]) ### render removes front wall
-
-#     pyflex.render(capture=1, path=os.path.join(des_dir, 'render_%d.tga' % i))
-
-# pyflex.clean()
