@@ -34,7 +34,8 @@ if args.policy == 'heuristic':
     x = env.glass_floor_centerx
     total_rotate = 0.28* np.pi
 
-    # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')2
+    # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
+    # this is for test that we can correctly vary the target glass position and shape
     for i in range(5):
         env.reset()
         print("after reset!")
@@ -42,7 +43,7 @@ if args.policy == 'heuristic':
         plt.imshow(img)
         plt.show()
 
-
+    # below is testing a naive heuristic policy
     print("total timestep: ", timestep)
     for i in range(timestep):
         if i < stable_part:
