@@ -8,7 +8,7 @@ from softgym.envs.cloth_env import ClothEnv
 
 
 class ClothFlattenPointControlEnv(ClothEnv):
-    def __init__(self, observation_mode, action_mode):
+    def __init__(self, observation_mode, action_mode): #TODO: add render, headless, render_mode
         self.camera_width = 960
         self.camera_height = 720
         config_dir = osp.dirname(osp.abspath(__file__))
@@ -23,7 +23,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
 
         self.horizon = 250
 
-        if observation_mode == 'key_point':
+        if observation_mode == 'key_point': # TODO: add sphere position
             self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()),
                                          np.array([np.inf] * pyflex.get_n_particles()), dtype=np.float32)
         else:
@@ -46,7 +46,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.initVel = None
         self.video_height = 240
         self.video_width = 320
-        self.initialize_camera()
+        # self.initialize_camera()
 
     def initialize_camera(self):
         '''
@@ -61,12 +61,12 @@ class ClothFlattenPointControlEnv(ClothEnv):
             'height': self.camera_height
         }
 
-    def reset(self, dropPoint=1000, xdim=64, ydim=32):
+    def reset(self, dropPoint=1000, xdim=64, ydim=32): # TODO: should return an obs
         self.i = 0
         if self.initPos is not None:
             print("resetting")
             pyflex.set_positions(self.initPos)
-            pyflex.set_positions(self.initVel)
+            pyflex.set_velocities(self.initVel) # YF: should this be set velocity?
             pyflex.set_shape_states(self.initState)
             self.sphere_reset()
             return
@@ -75,7 +75,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
         if dropPoint is not None:
             pickpoint = dropPoint
         # pyflex.set_scene(10, np.array([pickpoint, xdim, ydim]), 0)
-        self.set_scene()
+        # self.set_scene() NOTE: should not re initialize scene here, it's already done in the init of the 
+        # base flex env
         firstPos = pyflex.get_positions()
         firstPos[pickpoint * 4 + 3] = 0
         print("{}".format(firstPos[pickpoint * 4: pickpoint * 4 + 3]))
@@ -120,7 +121,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         # pyflex.set_scene(9, np.array([]), 0)
         # pyflex.set_positions(self.initPos)
 
-    def get_current_observation(self):
+    def _get_obs(self): # NOTE: just rename to _get_obs
         pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         return pos[:, :3].flatten()
 
@@ -162,15 +163,18 @@ class ClothFlattenPointControlEnv(ClothEnv):
         else:
             #print("sphering")
             last_pos = pyflex.get_shape_states()
-            pyflex.step(capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
+            if self.record_video: # NOTE: just add a flag
+                pyflex.step(capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
+            else:
+                pyflex.step()
             super().sphereStep(action, last_pos)
         #print("computing reward")
-        obs = self.get_current_observation()
-        reward = self.compute_reward()
+        obs = self._get_obs()
+        reward = self.compute_reward(action, obs)
         #print("returning")
         return obs, reward, False, {}
 
-    def compute_reward(self):
+    def compute_reward(self, obs = None, action = None): 
         """
         calculate by taking max x,y cood and min x,y coord, create a discritized grid between
         the points
@@ -288,7 +292,7 @@ class ClothFlattenSphereControlEnv(ClothEnv):
         #pyflex.set_scene(9, np.array([]), 0)
         #pyflex.set_positions(self.initPos)
 
-    def get_current_observation(self):
+    def _get_obs(self):
         pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         return pos[:, :3].flatten()
 
@@ -315,7 +319,7 @@ class ClothFlattenSphereControlEnv(ClothEnv):
 
         pyflex.set_shape_states(cur_pos.flatten())
         #pyflex.set_velocities(vels.flatten())
-        obs = self.get_current_observation()
+        obs = self._get_obs()
         reward = self.compute_reward()
         return obs, reward, False, {}
 
@@ -358,14 +362,14 @@ class ClothFlattenSphereControlEnv(ClothEnv):
 """
 
 if __name__ == "__main__":
-    pyflex.init()
+    # pyflex.init(False, True)
 
     env = ClothFlattenPointControlEnv('key_point', 'sphere')
-    des_dir = env.storage_name
-    os.system('mkdir -p ' + des_dir)
+    # des_dir = env.storage_name
+    # os.system('mkdir -p ' + des_dir)
     env.reset(dropPoint=100)
     print("reset, entering loop")
-    env.video_path = "test_flatten/"
+    # env.video_path = "test_flatten/"
     haveGrasped = False
     for i in range(0, 700):
         if env.prev_middle[0, 1] > 0.11 and not haveGrasped:

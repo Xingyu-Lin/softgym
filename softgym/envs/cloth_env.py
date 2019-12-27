@@ -51,15 +51,25 @@ class ClothEnv(FlexEnv):
                                           self.camera_params['angle'][2]
         print("cloth pos: {} {} {}".format(self.config['ClothPos']['x'], self.config['ClothPos']['y'],
                                            self.config['ClothPos']['z']))
+                                           
+        # params = np.array([self.config['ClothPos']['x'], self.config['ClothPos']['y'], self.config['ClothPos']['z'],
+        #                    self.config['ClothSize']['x'], self.config['ClothSize']['y'],
+        #                    self.config['ClothStiff']['stretch'], self.config['ClothStiff']['bend'],
+        #                    self.config['ClothStiff']['shear'],
+        #                    self.config['RenderMode'], self.config['Camera']['xPos'], self.config['Camera']['yPos'],
+        #                    self.config['Camera']['zPos'],
+        #                    self.config['Camera']['xAngle'], self.config['Camera']['yAngle'],
+        #                    self.config['Camera']['zAngle'],
+        #                    self.config['Camera']['width'], self.config['Camera']['height']])
+
         params = np.array([self.config['ClothPos']['x'], self.config['ClothPos']['y'], self.config['ClothPos']['z'],
                            self.config['ClothSize']['x'], self.config['ClothSize']['y'],
                            self.config['ClothStiff']['stretch'], self.config['ClothStiff']['bend'],
-                           self.config['ClothStiff']['shear'],
-                           self.config['RenderMode'], self.config['Camera']['xPos'], self.config['Camera']['yPos'],
-                           self.config['Camera']['zPos'],
-                           self.config['Camera']['xAngle'], self.config['Camera']['yAngle'],
-                           self.config['Camera']['zAngle'],
-                           self.config['Camera']['width'], self.config['Camera']['height']])
+                           self.config['ClothStiff']['shear'], self.config['RenderMode'], camera_x, camera_y, 
+                           camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
+
+        self.params = params # YF NOTE: need to save the params for sampling goals
+        
         # params = np.array([initX, initY, initZ, sizex, sizey, stretch, bend, shear, render_mode,
         #                  camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
         pyflex.set_scene(9, params, 0)
