@@ -16,7 +16,7 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless = True, render = True):
+    def __init__(self, device_id=-1, headless = False, render = True):
         pyflex.init(headless, render)  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.record_video, self.video_path, self.video_name = False, None, None
 
