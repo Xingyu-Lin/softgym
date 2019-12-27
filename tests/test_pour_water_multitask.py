@@ -17,9 +17,9 @@ if args.policy == 'heuristic':
     env = PourWaterPosControlGoalConditionedEnv(observation_mode = 'full_state', horizon = 75, 
         action_mode = 'direct', deterministic=True, render_mode = 'fluid', render = True, headless= False)
     softgym.register_flex_envs()
-    # env = gym.make('PourWaterPosControlGoalConditioned-v0')/
     print("env make done")
 
+    # test that we have sampled a correct goal and that we have implemented the right set_to_goal
     env.reset()
     env.set_to_goal(env.get_goal())
     img = env.get_image(960, 720)
@@ -36,7 +36,7 @@ if args.policy == 'heuristic':
     x = env.glass_floor_centerx
     total_rotate = 0.28* np.pi
 
-    # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
+    # test a heuristic policy
     print("right before reset")
     env.reset()
     print("total timestep: ", timestep)
