@@ -161,6 +161,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         control_cup_x, control_cup_y, control_cup_z, control_cup_theta = \
                 state_goal[tmp], state_goal[tmp + 1], state_goal[tmp+2], state_goal[tmp+3]     
      
+        # move controled cup tp target position
         tmp_states = self.glass_states
         diff_x = control_cup_x - self.glass_x
         diff_y = control_cup_y - self.glass_y
@@ -172,6 +173,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
             pyflex.step()
             tmp_states = glass_new_states
 
+        # move water to target cup, wait for it to be stable
         pyflex.set_positions(particle_pos)
         pyflex.set_velocities(particle_vel)
         steps = 200
