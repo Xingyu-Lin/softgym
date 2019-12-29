@@ -12,7 +12,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.camera_width = 960
         self.camera_height = 720
         config_dir = osp.dirname(osp.abspath(__file__))
-        config = open(osp.join(config_dir, "ClothDefaultConfig.yaml"), 'r')
+        config = open(osp.join(config_dir, "ClothFlattenConfig.yaml"), 'r')
         super().__init__(config.read())
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
@@ -24,8 +24,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.horizon = 250
 
         if observation_mode == 'key_point': # TODO: add sphere position
-            self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()),
-                                         np.array([np.inf] * pyflex.get_n_particles()), dtype=np.float32)
+            self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()*3),
+                                         np.array([np.inf] * pyflex.get_n_particles()*3), dtype=np.float32)
         else:
             raise NotImplementedError
 
@@ -66,10 +66,12 @@ class ClothFlattenPointControlEnv(ClothEnv):
         if self.initPos is not None:
             # print("resetting")
             pyflex.set_positions(self.initPos)
-            pyflex.set_velocities(self.initVel) # YF: should this be set velocity?
+            pyflex.set_velocities(self.initVel) 
             pyflex.set_shape_states(self.initState)
-            self.sphere_reset()
-            return
+            if self.action_mode == 'sphere':
+                self.sphere_reset()
+            pyflex.step()            
+            return self._get_obs()
 
         pickpoint = random.randint(0, xdim * ydim)
         if dropPoint is not None:
@@ -79,11 +81,11 @@ class ClothFlattenPointControlEnv(ClothEnv):
         # base flex env
         firstPos = pyflex.get_positions()
         firstPos[pickpoint * 4 + 3] = 0
-        print("{}".format(firstPos[pickpoint * 4: pickpoint * 4 + 3]))
+        # print("{}".format(firstPos[pickpoint * 4: pickpoint * 4 + 3]))
         pyflex.set_positions(firstPos)
         pos = pyflex.get_shape_states()
         pyflex.set_shape_states(pos)
-        print("pick point: {}".format(pickpoint))
+        # print("pick point: {}".format(pickpoint))
         particle_pos = pyflex.get_positions()[pickpoint * 4: pickpoint * 4 + 3]
         stopParticle = True
         for i in range(0, self.time_step):
@@ -118,6 +120,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.initPos = pyflex.get_positions()
         self.initVel = pyflex.get_velocities()
         self.initState = pyflex.get_shape_states()
+        return self._get_obs()
         # pyflex.set_scene(9, np.array([]), 0)
         # pyflex.set_positions(self.initPos)
 
