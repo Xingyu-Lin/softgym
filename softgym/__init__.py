@@ -58,6 +58,15 @@ def register_flex_envs():
     )
 
     register(
+        id='ClothFlattenSphereControlGoalConditioned-v0',
+        entry_point='softgym.envs.cloth_flatten_multitask:ClothFlattenPointControlGoalConditionedEnv',
+        kwargs={
+            'observation_mode': 'key_point',
+            'action_mode': 'sphere'
+        }
+    )
+
+    register(
         id='PourWaterPosControl-v0',
         entry_point='softgym.envs.pour_water:PourWaterPosControlEnv',
         kwargs={

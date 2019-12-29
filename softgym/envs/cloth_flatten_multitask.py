@@ -54,7 +54,7 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
         dimx = int(self.params[3])
         dimy = int(self.params[4])
         dimz = 1
-        print("dimx: {}, dimy: {}, dimz: {}".format(dimx, dimy, dimz))
+        # print("dimx: {}, dimy: {}, dimz: {}".format(dimx, dimy, dimz))
         cnt = 0
         radius = 0.05
         for z in range(dimz):
@@ -94,9 +94,9 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
         '''
         reward is the l2 distance between the goal state and the current state.
         '''
-        print("shape of obs['state_achieved_goal']: {}, shape of obs['state_desired_goal']: {}".format(
-            obs['state_achieved_goal'].shape, obs['state_desired_goal'].shape
-        ))
+        # print("shape of obs['state_achieved_goal']: {}, shape of obs['state_desired_goal']: {}".format(
+        #     obs['state_achieved_goal'].shape, obs['state_desired_goal'].shape
+        # ))
         r = -np.linalg.norm(
             obs['state_achieved_goal'] - obs['state_desired_goal'])
         return r
@@ -171,8 +171,8 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
             pos_diff_y = (gripper_y - init_middle[1]) / steps
             pos_diff_z = (gripper_z - init_middle[2]) / steps
 
-            print("pos_diff_x: {}, pos_diff_y: {}, pos_diff_z: {}".format(pos_diff_x, pos_diff_y, pos_diff_z))
-            print("diff_dist: {}".format(diff_dist))
+            # print("pos_diff_x: {}, pos_diff_y: {}, pos_diff_z: {}".format(pos_diff_x, pos_diff_y, pos_diff_z))
+            # print("diff_dist: {}".format(diff_dist))
 
             for _ in range(steps):
                 last_states = pyflex.get_shape_states()
@@ -187,7 +187,7 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
     def get_goal(self):
         return self.state_dict_goal 
 
-    def initialize_camera(self):
+    def initialize_camera(self, make_multiworld_happy = None):
         '''
         set the camera width, height, ition and angle.
         **Note: width and height is actually the screen width and screen height of FLex.

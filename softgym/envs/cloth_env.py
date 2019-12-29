@@ -89,7 +89,7 @@ class ClothEnv(FlexEnv):
         pyflex.add_sphere(radii, grip2sphere2pos, [1, 0, 0, 0])
         self.prev_middle = np.array([initPos1, initPos2])
         self.init_mid = self.prev_middle
-        print("init prev_mid: {}".format(self.prev_middle))
+        # print("init prev_mid: {}".format(self.prev_middle))
         self.prev_dist = np.array([0.0, 0.0])
         self.init_dist = self.prev_dist
         self.radii = radii
@@ -114,7 +114,7 @@ class ClothEnv(FlexEnv):
             last_pos = np.reshape(last_pos, [-1, 14])
             cur_pos = np.reshape(cur_pos, [-1, 14])
             # cur_middle = cur_pos[0][0:3] +  np.array([self.prev_dist[i]/2 * np.cos(new_rot), 0, self.prev_dist[i]/2 * np.sin(new_rot)])
-            print("cur middle: {} prev_mid: {}".format(cur_middle, self.prev_middle))
+            # print("cur middle: {} prev_mid: {}".format(cur_middle, self.prev_middle))
             cur_middle[i, :] = self.prev_middle[i, :] + actionPos
             offset = np.array([new_dist / 2 * np.cos(new_rot), 0.0, new_dist / 2 * np.sin(new_rot)])
             cur_pos[i * 2][0:3] = cur_middle[i, :] - offset
@@ -138,7 +138,7 @@ class ClothEnv(FlexEnv):
         self.prev_middle = self.init_mid
         self.prev_rot = self.init_rot
         self.prev_dist = self.init_dist
-        print("prev_mid reset: {}".format(self.prev_middle))
+        # print("prev_mid reset: {}".format(self.prev_middle))
 
 
     def get_state(self):

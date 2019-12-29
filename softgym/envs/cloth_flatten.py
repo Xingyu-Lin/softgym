@@ -64,7 +64,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
     def reset(self, dropPoint=1000, xdim=64, ydim=32): # TODO: should return an obs
         self.i = 0
         if self.initPos is not None:
-            print("resetting")
+            # print("resetting")
             pyflex.set_positions(self.initPos)
             pyflex.set_velocities(self.initVel) # YF: should this be set velocity?
             pyflex.set_shape_states(self.initState)
@@ -92,13 +92,13 @@ class ClothFlattenPointControlEnv(ClothEnv):
             vels = pyflex.get_velocities()
             if stopParticle:
                 newPos[pickpoint * 4: pickpoint * 4 + 3] = particle_pos
-                print("pick pos: {}".format(newPos[pickpoint * 4 + 2]))
+                # print("pick pos: {}".format(newPos[pickpoint * 4 + 2]))
                 # newPos[pickpoint * 4 + 3] = 0.0
                 vels[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
             stopped = True
             for j in range(pyflex.get_n_particles()):
                 if vels[j] > 0.01:
-                    print("stopped check at {} with vel {}".format(j, vels[j]))
+                    # print("stopped check at {} with vel {}".format(j, vels[j]))
                     stopped = False
                     break
             if stopped:
