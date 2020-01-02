@@ -72,7 +72,11 @@ def register_flex_envs():
         kwargs={
             'observation_mode': 'cam_img',
             'action_mode': 'direct',
-            'render_mode': 'fluid'
+            'render_mode': 'fluid',
+            'deterministic': True,
+            'render': True,
+            'headless': False
+
         }
     )
 
@@ -88,4 +92,3 @@ def register_flex_envs():
             'headless': True
         }
     )
-
