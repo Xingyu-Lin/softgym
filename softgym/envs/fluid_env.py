@@ -6,7 +6,7 @@ from softgym.envs.flex_env import FlexEnv
 class FluidEnv(FlexEnv):
 
     def __init__(self, horizon = 300, headless = True, render = True, deterministic = False, render_mode = 'particle'):
-        self.camera_width = 960
+        self.camera_width = 720
         self.camera_height = 720
         self.dim_shape_state = 14 # dimension of a shape object in Flex
         self.dim_position = 4

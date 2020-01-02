@@ -76,7 +76,6 @@ def register_flex_envs():
             'deterministic': True,
             'render': True,
             'headless': False
-
         }
     )
 
