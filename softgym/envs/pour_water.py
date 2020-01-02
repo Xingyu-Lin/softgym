@@ -32,8 +32,9 @@ class PourWaterPosControlEnv(FluidEnv):
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.wall_num = 5 # number of glass walls. floor/left/right/front/back 
-        self.time_step = 0
-
+        self.time_step = 0 
+        self.inner_step = 0 # count action repetation
+ 
         super().__init__(horizon = horizon, headless = headless, render = render, deterministic = deterministic, render_mode = render_mode)
         assert observation_mode in ['cam_img', 'full_state'] 
         assert action_mode in ['direct'] 
@@ -66,6 +67,7 @@ class PourWaterPosControlEnv(FluidEnv):
         (3) use self.init_glass_state to move the new target glass to the ground
         '''
         self.time_step = 0
+        self.inner_step = 0
 
         if not self.deterministic:
             print("reset target cup distance and shape!")
@@ -349,9 +351,11 @@ class PourWaterPosControlEnv(FluidEnv):
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
         if self.record_video:
-            pyflex.step(capture = 1, path = self.video_path + 'render_' + str(self.time_step) + '.tga')
+            pyflex.step(capture = 1, path = self.video_path + 'render_' + str(self.inner_step) + '.tga')
         else:
             pyflex.step() 
+
+        self.inner_step += 1
 
         # get reward and new observation for the agent.
         obs = self._get_obs()
@@ -537,11 +541,6 @@ class PourWaterPosControlEnv(FluidEnv):
         y_lower = glass_states[0][1] - border / 2.
         y_upper = glass_states[0][1] + height + border / 2.
         x, y, z = water[0], water[1], water[2]
-
-        if self.time_step == self.horizon - 1:
-            print(x, y, z)
-            print(x_lower, x_upper, z_lower, z_upper, y_lower, y_upper)
-        # exit()
 
         if x >= x_lower and x <= x_upper and y >= y_lower and y <= y_upper and z >= z_lower and z <= z_upper:
             return 1

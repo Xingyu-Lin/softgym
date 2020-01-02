@@ -604,7 +604,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
             DestroyGpuMesh(iter.second);
         }
 
-        std::cout << "mesh destroyed" << endl;
+        // std::cout << "mesh destroyed" << endl;
 
         for (auto &iter : g_fields) {
             NvFlexDestroyDistanceField(g_flexLib, iter.first);
@@ -630,7 +630,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     // map during initialization
     MapBuffers(g_buffers);
 
-    std::cout << "buffers mapped" << endl;
+    // std::cout << "buffers mapped" << endl;
 
 
     g_buffers->positions.resize(0);
@@ -798,13 +798,13 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
 
     // initialize solver desc
     NvFlexSetSolverDescDefaults(&g_solverDesc);
-    printf("sovler initialized\n");
+    // printf("sovler initialized\n");
 
     // create scene
     StartGpuWork();
-    printf("Gpu started. \n");
+    // printf("Gpu started. \n");
     g_scenes[g_scene]->Initialize(scene_params, thread_idx);
-    std::cout << "scenec initialized" << endl;
+    // std::cout << "scenec initialized" << endl;
     EndGpuWork();
 
     uint32_t numParticles = g_buffers->positions.size();
@@ -884,7 +884,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
         g_buffers->normals[i] = Vec4(SafeNormalize(Vec3(g_buffers->normals[i]), Vec3(0.0f, 1.0f, 0.0f)), 0.0f);
 
 
-    std::cout << "normals initialized" << endl;
+    // std::cout << "normals initialized" << endl;
 
 
     // save mesh positions for skinning
@@ -3353,14 +3353,14 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
     // NvFlexSetRestParticles(g_solver, g_buffers->restPositions.buffer, nullptr);
 
     NvFlexSetActive(g_solver, g_buffers->activeIndices.buffer, nullptr);
-    printf("ok till here\n");
+    // printf("ok till here\n");
     NvFlexSetActiveCount(g_solver, numParticles);
     // NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer, 
     //     g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer, 
     //     g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer, 
     //     g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer, 
     //     g_buffers->rigidTranslations.buffer, g_buffers->rigidOffsets.size() - 1, g_buffers->rigidIndices.size());
-    printf("also ok here\n");
+    // printf("also ok here\n");
 }
 
 py::array_t<float> pyflex_get_restPositions() {
@@ -3689,7 +3689,7 @@ py::array_t<int> pyflex_get_camera_params() {
     return default_camera_param;
 }
 
-py::array_t<int> pyflex_render() {
+py::array_t<int> pyflex_render(int capture, char *path) {
     // TODO: Turn off the GUI menu for rendering
     static double lastTime;
 
@@ -3698,6 +3698,11 @@ py::array_t<int> pyflex_render() {
 
     g_realdt = float(frameBeginTime - lastTime);
     lastTime = frameBeginTime;
+
+    if (capture == 1) {
+        g_capture = true;
+        g_ffmpeg = fopen(path, "wb");
+    }
 
     //-------------------------------------------------------------------
     // Scene Update
@@ -3764,19 +3769,19 @@ py::array_t<int> pyflex_render() {
     }
 
     // Original function for rendering and saving to disk
-//    if (g_capture) {
-//        TgaImage img;
-//        img.m_width = g_screenWidth;
-//        img.m_height = g_screenHeight;
-//        img.m_data = new uint32_t[g_screenWidth*g_screenHeight];
-//
-//        ReadFrame((int*)img.m_data, g_screenWidth, g_screenHeight);
-//        TgaSave(g_ffmpeg, img, false);
-//
-//        // fwrite(img.m_data, sizeof(uint32_t)*g_screenWidth*g_screenHeight, 1, g_ffmpeg);
-//
-//        delete[] img.m_data;
-//    }
+    if (g_capture) {
+        TgaImage img;
+        img.m_width = g_screenWidth;
+        img.m_height = g_screenHeight;
+        img.m_data = new uint32_t[g_screenWidth*g_screenHeight];
+
+        ReadFrame((int*)img.m_data, g_screenWidth, g_screenHeight);
+        TgaSave(g_ffmpeg, img, false);
+
+        // fwrite(img.m_data, sizeof(uint32_t)*g_screenWidth*g_screenHeight, 1, g_ffmpeg);
+
+        delete[] img.m_data;
+    }
 
 //    auto rendered_img = py::array_t<uint32_t>((uint32_t) g_screenWidth*g_screenHeight);
     auto rendered_img = py::array_t<uint8_t>((int) g_screenWidth * g_screenHeight * 4);
@@ -3870,6 +3875,12 @@ py::array_t<int> pyflex_render() {
 
     SDL_EventFunc();
 
+    if (capture == 1) {
+        g_capture = false;
+        fclose(g_ffmpeg);
+        g_ffmpeg = nullptr;
+    }
+
     return rendered_img;
 }
 
@@ -3884,7 +3895,12 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("update_params") = nullptr,
           py::arg("capture") = 0,
           py::arg("path") = nullptr);
-    m.def("render", &pyflex_render);
+    
+    m.def("render", &pyflex_render, 
+          py::arg("capture") = 0,
+          py::arg("path") = nullptr    
+        );
+
     m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
 
     m.def("add_box", &pyflex_add_box, "Add box to the scene");
