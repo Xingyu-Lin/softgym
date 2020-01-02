@@ -116,7 +116,7 @@ SDL_GameController *g_gamecontroller = nullptr;
 
 using namespace std;
 
-int g_screenWidth = 960;
+int g_screenWidth = 720;
 int g_screenHeight = 720;
 int g_msaaSamples = 8;
 

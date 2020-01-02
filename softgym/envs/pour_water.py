@@ -129,8 +129,8 @@ class PourWaterPosControlEnv(FluidEnv):
         x_center = self.x_center # center of the glass floor
         z = self.fluid_params['z'] # lower corner of the water fluid along z-axis.
         self.camera_params = {
-                        'pos': np.array([x_center + 1.3, 0.8 + 1.5, z + 0.5]),
-                        'angle': np.array([0.4 * np.pi, -70/180. * np.pi, 0]),
+                        'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
+                        'angle': np.array([0.45 * np.pi, -65/180. * np.pi, 0]),
                         # 'pos': np.array([x_center -1.3, 0.8, z + 0.5]),
                         # 'angle': np.array([0, 0, -0.5 * np.pi]),
                         'width': self.camera_width,
