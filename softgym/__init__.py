@@ -62,7 +62,10 @@ def register_flex_envs():
         entry_point='softgym.envs.cloth_flatten_multitask:ClothFlattenPointControlGoalConditionedEnv',
         kwargs={
             'observation_mode': 'key_point',
-            'action_mode': 'sphere'
+            'action_mode': 'sphere',
+            'render': True,
+            'headless': True,
+            'horizon': 100
         }
     )
 
@@ -85,7 +88,8 @@ def register_flex_envs():
             'render_mode': 'fluid',
             'deterministic': True,
             'render': True,
-            'headless': True
+            'headless': True,
+            'horizon': 75
         }
     )
 
