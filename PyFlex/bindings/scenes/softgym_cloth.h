@@ -98,8 +98,13 @@ public:
         g_numSubsteps = 2;
 
         // draw options
-        g_drawPoints = render_type == 0 || render_type == 2;
-        g_drawMesh = render_type == 1 || render_type == 2;
+        // printf("in cloth render_type is %d:\n", render_type);
+        // g_drawPoints = render_type == 0 || render_type == 2;
+        // g_drawMesh = render_type == 1 || render_type == 2;
+
+        // TODO: enable render_mode to control the drawing options
+        g_drawPoints = true;
+        g_drawCloth = false;
         g_drawSprings = false;
         g_windFrequency *= 2.0f;
         g_windStrength = 10.0f;
