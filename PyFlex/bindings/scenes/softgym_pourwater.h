@@ -3,6 +3,15 @@ class softgym_PourWater : public Scene
 {
 public:
 
+	float cam_x;
+	float cam_y;
+	float cam_z;
+	float cam_angle_x;
+	float cam_angle_y;
+	float cam_angle_z;
+	int cam_width;
+	int cam_height;
+
 	softgym_PourWater(const char* name) : Scene(name) {}
 
 	char* make_path(char* full_path, std::string path) {
@@ -23,49 +32,57 @@ public:
 
 	void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
 	{
-	    // scene_params:
-	    // x, y, z, dim_x, dim_y, dim_z, box_dis_x, box_dis_y
+	    // scene_params
 
 	    auto ptr = (float *) scene_params.request().ptr;
-	    float px_f = ptr[0];
-	    float py_f = ptr[1];
-	    float pz_f = ptr[2];
-	    float sx_f = ptr[3];
-	    float sy_f = ptr[4];
-	    float sz_f = ptr[5];
 
-		float radius = 0.1f;
+		float radius = ptr[0];
+		float rest_dis_coef = ptr[1];
+		float cohesion = ptr[2];
+		float viscosity = ptr[3];
+		float surfaceTension = ptr[4];
+		float adhesion = ptr[5];
+		float vorticityConfinement = ptr[6];
+		float solidpressure = ptr[7];
+
+	    float x = ptr[8];
+	    float y = ptr[9];
+	    float z = ptr[10];
+	    float dim_x = ptr[11];
+	    float dim_y = ptr[12];
+	    float dim_z = ptr[13];
+		cam_x = ptr[14];
+		cam_y = ptr[15];
+		cam_z = ptr[16];
+		cam_angle_x = ptr[17];
+		cam_angle_y = ptr[18];
+		cam_angle_z = ptr[19];
+		cam_width = int(ptr[20]);
+		cam_height = int(ptr[21]);
+		int render = int(ptr[22]);
+
+		
+		/*
+		The main particle radius is set via NvFlexParams::radius, which is the “interaction radius”. 
+		Particles closer than this distance will be able to affect each other. 
+		*/
+		// float radius = 0.1f;
 
 		g_numSolidParticles = g_buffers->positions.size();
 
-		float restDistance = radius*0.55f;
+		// float restDistance = radius*0.55f;
+		float restDistance = radius * rest_dis_coef;
 
-		// Initialize the fluid block
-		// void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius, Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, float jitter=0.005f)
-		CreateParticleGrid(
-		        Vec3(px_f, py_f, pz_f), sx_f, sy_f, sz_f, restDistance, Vec3(0.0f),
-                1.0f, false, 0.0f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid), 0.005f);
+		// to make gif
+		// g_capture = true;
 
-		// Initialize the rigid block
-		float px_r = ptr[6];    // position x
-		float py_r = ptr[7];	// position y
-		float pz_r = ptr[8];	// position z
-		float sx_r = ptr[9];    // size x
-		float sy_r = ptr[10];   // size y
-		float sz_r = ptr[11];   // size z
-
-		char box_path[100];
-		int group = 1;
-		float m = 0.18f;
-		float s = radius * 0.5f;
-		make_path(box_path, "/data/box.ply");
-
-        // void CreateParticleShape(const Mesh* srcMesh, Vec3 lower, Vec3 scale, float rotation, float spacing, Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, bool skin, float jitter=0.005f, Vec3 skinOffset=0.0f, float skinExpand=0.0f, Vec4 color=Vec4(0.0f), float springStiffness=0.0f)
-        CreateParticleShape(
-                GetFilePathByPlatform(box_path).c_str(), Vec3(px_r, py_r, pz_r),
-                Vec3(sx_r, sy_r, sz_r), 0.0f, s, Vec3(0.0f, 0.0f, 0.0f), m, true, 1.0f,
-                NvFlexMakePhase(group++, 0), false, 0.0f);
-
+		// void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius, 
+		// Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, float jitter=0.005f)
+		// jitter controls the randomness in particle positions.
+		// radius controls the particle radius / rest distance of the particle.
+		// if radius / rest_radius is large, then the fluid is more smoothing, as particles interact with more neighbors.
+		CreateParticleGrid(Vec3(x, y, z), dim_x, dim_y, dim_z, restDistance, 
+			Vec3(0.0f), 1.0f, false, 0.0f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid), 0.005f);
 
 		g_lightDistance *= 0.5f;
 
@@ -76,14 +93,16 @@ public:
 
 		g_params.radius = radius;
 		g_params.dynamicFriction = 0.01f; 
-		g_params.viscosity = 2.0f;
+		g_params.viscosity =  viscosity; //2.0f;
 		g_params.numIterations = 4;
-		g_params.vorticityConfinement = 40.0f;
+		g_params.vorticityConfinement = vorticityConfinement;// 40.0f;
 		g_params.fluidRestDistance = restDistance;
-		g_params.solidPressure = 0.f;
+		g_params.solidPressure = solidpressure; //0.f;
 		g_params.relaxationFactor = 0.0f;
-		g_params.cohesion = 0.02f;
-		g_params.collisionDistance = 0.01f;		
+		g_params.cohesion = cohesion; // 0.02f;
+		g_params.collisionDistance = 0.01f;
+		// g_params.adhesion = adhesion;	
+		// g_params.surfaceTension = surfaceTension;	
 
 		g_maxDiffuseParticles = 0;
 		g_diffuseScale = 0.5f;
@@ -111,11 +130,34 @@ public:
 		
 		g_warmup = false;
 
-		// draw options		
-		g_drawPoints = true;
-		g_drawMesh = false;
-		g_drawEllipsoids = false;
-		g_drawDiffuse = true;
+		// std::cout << "render: " << render << endl;
+		// draw options	
+		if (render == 0) {	// particle mode render 
+			g_drawPoints = true;
+			g_drawMesh = false;
+			g_drawEllipsoids = false;
+			g_drawDiffuse = true;
+		}
+
+		else { //human mode render
+			g_drawDensity = true;
+			g_drawDiffuse = true;
+			g_drawEllipsoids = true;
+			g_drawPoints = false;
+		}
+
+		// g_drawDensity = true;
+		// g_drawDiffuse = true;
+		// g_drawEllipsoids = true;
+		// g_drawPoints = false;
+	}
+
+	virtual void CenterCamera(void)
+	{
+		g_camPos = Vec3(cam_x, cam_y, cam_z);
+		g_camAngle = Vec3(cam_angle_x, cam_angle_y, cam_angle_z);
+		g_screenHeight = cam_height;
+		g_screenWidth = cam_width;
 	}
 
 	bool mDam;

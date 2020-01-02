@@ -79,7 +79,7 @@ def calc_shape_states(x_curr, x_last, box_dis):
 
 
 
-pyflex.init()
+pyflex.init(0, 1)
 
 use_gpu = torch.cuda.is_available()
 

@@ -76,7 +76,7 @@ def calc_shape_states(x_curr, x_last, box_dis):
 
 
 
-pyflex.init()
+pyflex.init(0, 1)
 
 
 def rand_float(lo, hi):

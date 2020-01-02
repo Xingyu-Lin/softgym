@@ -112,7 +112,7 @@ def calc_surface_idx(positions):
     return surface_idx
 
 
-pyflex.init()
+pyflex.init(0, 1)
 
 use_gpu = torch.cuda.is_available()
 

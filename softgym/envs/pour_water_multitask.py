@@ -128,10 +128,12 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         reset to environment to the initial state.
         return the initial observation.
         '''
-        self.set_env_state(self.init_flex_state)
-        if self.state_dict_goal is None: # NOTE: only suits for skewfit algorithm, because we are not actually sampling from this
-            # true underlying env, but only sample from the vae latents. This reduces overhead to sample a goal each time for now.
-            self.state_dict_goal = self.sample_goal()        
+        # NOTE: only suits for skewfit algorithm, because we are not actually sampling from this
+        # true underlying env, but only sample from the vae latents. This reduces overhead to sample a goal each time for now.
+        if self.state_dict_goal is None:
+            self.state_dict_goal = self.sample_goal() 
+
+        PourWaterPosControlEnv.reset(self)       
         return self._get_obs()
     
     def get_env_state(self):
