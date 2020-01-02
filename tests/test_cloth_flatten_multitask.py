@@ -1,8 +1,11 @@
 from softgym.envs.cloth_flatten_multitask import ClothFlattenPointControlGoalConditionedEnv
 import numpy as np
 from matplotlib import pyplot as plt
+import softgym, gym
 
-env = ClothFlattenPointControlGoalConditionedEnv('key_point', 'sphere')
+softgym.register_flex_envs()
+# env = ClothFlattenPointControlGoalConditionedEnv('key_point', 'sphere', render_mode='particle')
+env = gym.make('ClothFlattenSphereControlGoalConditioned-v0')
 
 for i in range(5):
     env.reset()

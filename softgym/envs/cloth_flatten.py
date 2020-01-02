@@ -8,12 +8,12 @@ from softgym.envs.cloth_env import ClothEnv
 
 
 class ClothFlattenPointControlEnv(ClothEnv):
-    def __init__(self, observation_mode, action_mode): #TODO: add render, headless, render_mode
+    def __init__(self, observation_mode, action_mode, horizon=250, render=True, headless=False, render_mode='particle'): #TODO: add render, headless, render_mode
         self.camera_width = 960
         self.camera_height = 720
         config_dir = osp.dirname(osp.abspath(__file__))
         config = open(osp.join(config_dir, "ClothFlattenConfig.yaml"), 'r')
-        super().__init__(config.read())
+        super().__init__(config.read(), horizon=horizon, render=render, headless=headless, render_mode=render_mode)
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
 
@@ -21,7 +21,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.action_mode = action_mode
         self.video_path = "data/videos"
 
-        self.horizon = 250
+        self.horizon = horizon
 
         if observation_mode == 'key_point': # TODO: add sphere position
             self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()*3),
@@ -38,10 +38,12 @@ class ClothFlattenPointControlEnv(ClothEnv):
             space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2)
 
             self.action_space = Box(space_low, space_high, dtype=np.float32)
-        self.time_step = 500
+            
+        self.reset_time_step = 300
         self.init_state = self.get_state()
         self.storage_name = "test_flatten"
-        self.i = 0
+        self.i = 0 # actual step without counting action repetation
+        self.time_step = 0 # step with action repetation
         self.initPos = None
         self.initVel = None
         self.video_height = 240
@@ -63,6 +65,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
 
     def reset(self, dropPoint=1000, xdim=64, ydim=32): # TODO: should return an obs
         self.i = 0
+        self.time_step = 0
         if self.initPos is not None:
             # print("resetting")
             pyflex.set_positions(self.initPos)
@@ -88,7 +91,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         # print("pick point: {}".format(pickpoint))
         particle_pos = pyflex.get_positions()[pickpoint * 4: pickpoint * 4 + 3]
         stopParticle = True
-        for i in range(0, self.time_step):
+        for i in range(0, self.reset_time_step):
             pyflex.step()
             newPos = pyflex.get_positions()
             vels = pyflex.get_velocities()
@@ -116,7 +119,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
         for i in range(0, 100):
             pyflex.step()
         if self.action_mode.startswith('sphere'):
-            super().addSpheres()
+            super().addSpheres(pick_point=pickpoint) # YF: should add sphere near the drop point
         self.initPos = pyflex.get_positions()
         self.initVel = pyflex.get_velocities()
         self.initState = pyflex.get_shape_states()
@@ -235,7 +238,7 @@ class ClothFlattenSphereControlEnv(ClothEnv):
         else:
             raise NotImplementedError
         self.storage_name = "test_flatten_spheres"
-        self.time_step = 500
+        self.reset_time_step = 500
         self.init_state = self.get_state()
         self.initPos = None
         self.initVel = None
@@ -258,7 +261,7 @@ class ClothFlattenSphereControlEnv(ClothEnv):
         print("pick point: {}".format(pickpoint))
         particle_pos = pyflex.get_positions()[pickpoint * 4: pickpoint * 4 + 3]
         stopParticle = True
-        for i in range(0, self.time_step):
+        for i in range(0, self.reset_time_step):
             pyflex.step()
             newPos = pyflex.get_positions()
             vels = pyflex.get_velocities()

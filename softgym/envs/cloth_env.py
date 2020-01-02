@@ -8,15 +8,15 @@ import yaml
 
 class ClothEnv(FlexEnv):
 
-    def __init__(self, configFile, randomized=True, horizon=100, device_id=-1):
+    def __init__(self, configFile, randomized=True, horizon=100, device_id=-1, render = False, headless = False, render_mode = 'particle'):
         self.config = yaml.load(configFile)
         print(yaml.dump(self.config))
         self.initialize_camera()
         self.camera_width = 960
         self.camera_height = 720
-        super().__init__()
+        super().__init__(headless=headless, render=render)
         self.is_randomized = randomized
-        self.horizon = 100
+        self.horizon = horizon
         self.prev_rot = np.array([0.0, 0.0])
         self.init_rot = self.prev_rot
         self.prev_middle = None
@@ -62,10 +62,17 @@ class ClothEnv(FlexEnv):
         #                    self.config['Camera']['zAngle'],
         #                    self.config['Camera']['width'], self.config['Camera']['height']])
 
+        if render_mode == 'particle':
+            render_mode = 0
+        elif render_mode == 'cloth':
+            render_mode = 1
+        elif render_mode == 'mix':
+            render_mode = 2
+
         params = np.array([self.config['ClothPos']['x'], self.config['ClothPos']['y'], self.config['ClothPos']['z'],
                            self.config['ClothSize']['x'], self.config['ClothSize']['y'],
                            self.config['ClothStiff']['stretch'], self.config['ClothStiff']['bend'],
-                           self.config['ClothStiff']['shear'], self.config['RenderMode'], camera_x, camera_y, 
+                           self.config['ClothStiff']['shear'], render_mode, camera_x, camera_y, 
                            camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
 
         self.params = params # YF NOTE: need to save the params for sampling goals
@@ -74,7 +81,20 @@ class ClothEnv(FlexEnv):
         #                  camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
         pyflex.set_scene(9, params, 0)
 
-    def addSpheres(self, radii=0.1, initPos1=[1.5, 0.25, 3.4], initPos2=[1.5, 0.25, 3.6]):
+    def addSpheres(self, radii=0.1, initPos1=[1.5, 0.25, 3.4], initPos2=[1.5, 0.25, 3.6], pick_point = 0):
+        
+        # initial position of the spheres are near the pick point of the cloth
+        random_particle_position = pyflex.get_positions().reshape((-1, 4))[pick_point]
+        initX = random_particle_position[0]
+        initY = 0.5
+        initZ = random_particle_position[2]
+
+        initX += np.random.uniform(0, 0.1)
+        initZ += np.random.uniform(0, 0.1)
+
+        initPos1 = [initX, initY, initZ]
+        initPos2 = [initX, initY, initZ + 0.2]
+
         grip1sphere1pos = initPos1
         grip1sphere2pos = initPos1
         grip2sphere1pos = initPos2

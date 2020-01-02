@@ -8,12 +8,20 @@ from softgym.core.multitask_env import MultitaskEnv
 import numpy as np
 
 class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, MultitaskEnv):
-    def __init__(self, observation_mode, action_mode, horizon = 100, headless = False, render = True, render_mode = None):
+    def __init__(self, observation_mode, action_mode, horizon=100, headless=False, render=True, render_mode='particle'):
         '''
         Wrap cloth flatten to be goal conditioned
         '''
         self.state_dict_goal = None
-        ClothFlattenPointControlEnv.__init__(self, observation_mode = observation_mode, action_mode = action_mode)
+        ClothFlattenPointControlEnv.__init__(
+            self,
+            observation_mode=observation_mode,
+            action_mode=action_mode,
+            horizon=horizon,
+            render=render,
+            headless=headless,
+            render_mode=render_mode
+        )
 
         self.dim_position = 4
         self.dim_velocity = 3
@@ -117,11 +125,11 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
         reset to environment to the initial state.
         return the initial observation.
         '''
+        # if self.state_dict_goal is None: # NOTE: only suits for skewfit algorithm, because we are not actually sampling from this
+        # true underlying env, but only sample from the vae latents. This reduces overhead to sample a goal each time for now.
+        self.state_dict_goal = self.sample_goal()        
         ClothFlattenPointControlEnv.reset(self, dropPoint, xdim, ydim) # TODO: Jake's reset does not return observations
 
-        # if self.state_dict_goal is None: # NOTE: only suits for skewfit algorithm, because we are not actually sampling from this
-            # true underlying env, but only sample from the vae latents. This reduces overhead to sample a goal each time for now.
-        self.state_dict_goal = self.sample_goal()        
         return self._get_obs()
     
     def get_env_state(self):
@@ -151,7 +159,7 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
         # move cloth to target position, wait for it to be stable
         pyflex.set_positions(particle_pos)
         pyflex.set_velocities(particle_vel)
-        steps = 200
+        steps = 20
         for _ in range(steps):
             pyflex.step()
 
@@ -165,7 +173,7 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
             init_dist = self.prev_dist[0]
             init_middle = self.prev_middle[0]
 
-            steps = 200
+            steps = 50
             diff_dist = (init_dist - gripper_distance) / steps
             pos_diff_x = (gripper_x - init_middle[0]) / steps
             pos_diff_y = (gripper_y - init_middle[1]) / steps
@@ -195,8 +203,8 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
         '''
         # TODO: might be different
         self.camera_params = {
-            'pos': np.array([1., 3., 6.5]),
-            'angle': np.array([-5 / 180. * np.pi, -35 / 180. * np.pi, 0.]),
+            'pos': np.array([-0.2, 4., 4]),
+            'angle': np.array([0., -45 / 180. * np.pi, 0.]),
             'width': self.camera_width,
             'height': self.camera_height
         }
