@@ -15,7 +15,7 @@ args = args.parse_args()
 
 if args.policy == 'heuristic':
     env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 75, render = True, headless= False,
-        action_mode = 'direct', deterministic=False, render_mode = 'particle')
+        action_mode = 'direct', deterministic=True, render_mode = 'fluid')
     # softgym.register_flex_envs()
     # env = gym.make('PourWaterPosControl-v0')
     # env.close()

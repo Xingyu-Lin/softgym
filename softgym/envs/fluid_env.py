@@ -94,7 +94,7 @@ class FluidEnv(FlexEnv):
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
         # print("right before set_scene")
-        pyflex.set_scene(6, scene_params, 0)
+        pyflex.set_scene(11, scene_params, 0)
         print("right after pyflex set scene: num particles are: ", pyflex.get_n_particles())
         # print("right after set_scene")
         # print("hahahah")

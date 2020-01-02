@@ -82,7 +82,7 @@ class FlexEnv(gym.Env):
         2) add the self.camera_pos and self.camera_angle to your scene parameters,
             and pass it when initializing your scene.
         3) implement the CenterCamera function in your scene.h file.
-        Pls see a sample usage in pour_water.py and yz_fluidshake.h
+        Pls see a sample usage in pour_water.py and softgym_PourWater.h
 
         if you do not want to set the camera, you can just not implement CenterCamera in your scene.h file, 
         and pass no camera params to your scene.
