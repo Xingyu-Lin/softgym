@@ -23,12 +23,10 @@ class ClothEnv(FlexEnv):
         self.prev_middle = None
         self.prev_dist = 1.0
 
-
         self.init_sticky = None
         self.sticky_idx = None
 
         self.xdim, self.ydim = self.config['ClothSize']['x'], self.config['ClothSize']['y']
-
 
     """
     There's always the same parameters that you can set 
@@ -61,38 +59,37 @@ class ClothEnv(FlexEnv):
 
         pyflex.set_scene(9, params, 0)
 
-    def addSpheres(self, radii=0.1, initPos1=[1.5, 0.25, 3.4], initPos2=[1.5, 0.25, 3.6], pick_point=0):
-
+    def add_spheres(self, sphere_radius=0.1, pick_point=0):
         # initial position of the spheres are near the pick point of the cloth
         random_particle_position = pyflex.get_positions().reshape((-1, 4))[pick_point]
-        initX = random_particle_position[0]
-        initY = 0.5
-        initZ = random_particle_position[2]
+        init_x = random_particle_position[0]
+        init_y = 0.5
+        init_z = random_particle_position[2]
 
-        initX += np.random.uniform(0, 0.1)
-        initZ += np.random.uniform(0, 0.1)
+        init_x += np.random.uniform(0, 0.1)
+        init_z += np.random.uniform(0, 0.1)
 
-        initPos1 = [initX, initY, initZ]
-        initPos2 = [initX, initY, initZ + 0.2]
+        init_pos1 = [init_x, init_y, init_z]
+        init_pos2 = [init_x, init_y, init_z + 0.2]
 
-        grip1sphere1pos = initPos1
-        grip1sphere2pos = initPos1
-        grip2sphere1pos = initPos2
-        grip2sphere2pos = initPos2
+        grip1sphere1pos = init_pos1
+        grip1sphere2pos = init_pos1
+        grip2sphere1pos = init_pos2
+        grip2sphere2pos = init_pos2
         grip1sphere1pos[0] = grip1sphere1pos[0] + 0.25
         grip1sphere2pos[0] = grip1sphere2pos[0] - 0.25
         grip2sphere1pos[0] = grip2sphere1pos[0] + 0.25
         grip2sphere2pos[0] = grip2sphere2pos[0] - 0.25
-        pyflex.add_sphere(radii, grip1sphere1pos, [1, 0, 0, 0])
-        pyflex.add_sphere(radii, grip1sphere2pos, [1, 0, 0, 0])
-        pyflex.add_sphere(radii, grip2sphere1pos, [1, 0, 0, 0])
-        pyflex.add_sphere(radii, grip2sphere2pos, [1, 0, 0, 0])
-        self.prev_middle = np.array([initPos1, initPos2])
+        pyflex.add_sphere(sphere_radius, grip1sphere1pos, [1, 0, 0, 0])
+        pyflex.add_sphere(sphere_radius, grip1sphere2pos, [1, 0, 0, 0])
+        pyflex.add_sphere(sphere_radius, grip2sphere1pos, [1, 0, 0, 0])
+        pyflex.add_sphere(sphere_radius, grip2sphere2pos, [1, 0, 0, 0])
+        self.prev_middle = np.array([init_pos1, init_pos2])
         self.init_mid = self.prev_middle
         # print("init prev_mid: {}".format(self.prev_middle))
         self.prev_dist = np.array([0.0, 0.0])
         self.init_dist = self.prev_dist
-        self.radii = radii
+        self.radii = sphere_radius
 
     def addBlocks(self, radii=0.1, initPos1=[0.75, 0.25, -0.4], initPos2=[-0.75, 0.25, -0.2]):
         grip1sphere1pos = initPos1
@@ -216,19 +213,19 @@ class ClothEnv(FlexEnv):
             offset = np.array([new_dist / 2 * np.cos(new_rot), 0.0, new_dist / 2 * np.sin(new_rot)])
             cur_pos[i * 2][0:3] = cur_middle[i, :] - offset
             cur_pos[i * 2 + 1][0:3] = cur_middle[i, :] + offset
-            #cur_pos[i*2][0] = cur_pos[i*2][0] -0.005
-            #cur_pos[i * 2][2] = cur_pos[i * 2][0] - 0.005
+            # cur_pos[i*2][0] = cur_pos[i*2][0] -0.005
+            # cur_pos[i * 2][2] = cur_pos[i * 2][0] - 0.005
             cur_pos[i * 2][3:6] = last_pos[i * 2][0:3]
             cur_pos[i * 2 + 1][3:6] = last_pos[i * 2 + 1][0:3]
-            rvec1 = R.as_quat(R.from_rotvec(np.array([0, -new_rot+np.pi/2, 0])))
+            rvec1 = R.as_quat(R.from_rotvec(np.array([0, -new_rot + np.pi / 2, 0])))
             rvec2 = R.as_quat(R.from_rotvec(np.array([0, -abs(new_rot), 0])))
 
             print("new rot quat: {}".format(rvec1))
 
             cur_pos[i * 2][6:10] = rvec1
             cur_pos[i * 2 + 1][6:10] = rvec1
-            cur_pos[i * 2][10:14] = last_pos[i*2][6:10]
-            cur_pos[i * 2 + 1][10:14] = last_pos[i*2][6:10]
+            cur_pos[i * 2][10:14] = last_pos[i * 2][6:10]
+            cur_pos[i * 2 + 1][10:14] = last_pos[i * 2][6:10]
 
             self.prev_rot[i] = new_rot
             self.prev_dist[i] = new_dist
@@ -244,32 +241,33 @@ class ClothEnv(FlexEnv):
 
     def forceStep(self, action):
         action = np.reshape(action, [-1, 5])
-        #shapeState = pyflex.get_shape_states()
-        #shapeState = np.reshape(shapeState, [-1, 14])
+        # shapeState = pyflex.get_shape_states()
+        # shapeState = np.reshape(shapeState, [-1, 14])
         print("force fields: {}".format(self.force))
-        for i in range(0,2):
+        for i in range(0, 2):
             self.force[i]['pos'] = self.force[i]['pos'] + action[i][0:3]
             self.force[i]['pos'][1] = max(0.0, self.force[i]['pos'][1])
-            self.force[i]['strength'] = self.force[i]['strength']+action[i][3]
+            self.force[i]['strength'] = self.force[i]['strength'] + action[i][3]
             self.force[i]['radius'] = self.force[i]['radius'] + action[i][4]
-            #if action[i][3] > 0:
+            # if action[i][3] > 0:
             #    self.force[i]['strength'] = 150.0
-            #else:
+            # else:
             #    self.force[i]['strength'] = 0
             pyflex.set_forcefield(self.force[i]['idx'], self.force[i]['pos'], self.force[i]['radius'], -self.force[i]['strength'])
 
-            #if action[i][3] < 1:
+            # if action[i][3] < 1:
             #    print('making sphere {} sticky at {}'.format(i, shapeState[i][0:3]))
             #    shapeState[i][3:6] = shapeState[i][0:3]
-            #shapeState[i][0:3] = self.force[i]['pos']
-            #shapeState[i][0:3] = shapeState[i][0:3]+action[i][0:3]
-            #shapeState[i][1] = max(0, shapeState[i][1])
-        #pyflex.set_shape_states(shapeState)
+            # shapeState[i][0:3] = self.force[i]['pos']
+            # shapeState[i][0:3] = shapeState[i][0:3]+action[i][0:3]
+            # shapeState[i][1] = max(0, shapeState[i][1])
+        # pyflex.set_shape_states(shapeState)
 
     """
     action[0:3] = delta on sticky point pos
     action[3] = stickiness
     """
+
     def sticky_step(self, action):
         action[3] = 0.1
         print("stickiness {}".format(action[3]))
@@ -279,7 +277,7 @@ class ClothEnv(FlexEnv):
             points = np.reshape(np.array(pyflex.get_positions()), [-1, 4])
             points = points[:, 0:3]
             diffs = np.subtract(points, self.prev_sticky)
-            dists = np.sum(np.abs(diffs)**2, axis=1)
+            dists = np.sum(np.abs(diffs) ** 2, axis=1)
             minidx = np.argmin(dists)
             minVal = dists[minidx]
             self.sticky_pos = points[minidx, :]
@@ -288,18 +286,13 @@ class ClothEnv(FlexEnv):
         else:
             points = np.reshape(np.array(pyflex.get_positions()), [-1, 4])
             print("moving point at {}".format(points[self.sticky_idx, 0:3]))
-            self.sticky_pos = self.sticky_pos +action[0:3]
+            self.sticky_pos = self.sticky_pos + action[0:3]
             points[self.sticky_idx, 0:3] = self.sticky_pos
-            #points[self.sticky_idx, 0:3] = points[self.sticky_idx, 0:3] + action[0:3]
+            # points[self.sticky_idx, 0:3] = points[self.sticky_idx, 0:3] + action[0:3]
             print("To {}".format(points[self.sticky_idx, 0:3]))
-
 
             pyflex.set_positions(points)
         self.prev_sticky = self.prev_sticky + action[0:3]
-
-
-
-
 
     def sphere_reset(self):
         self.prev_middle = self.init_mid
@@ -314,9 +307,9 @@ class ClothEnv(FlexEnv):
         print("prev_mid reset: {}".format(self.prev_middle))
 
     def force_reset(self):
-        for i in range(0,2):
+        for i in range(0, 2):
             print("#{}: init force pos: {} current force pos: {} {}".format(i, self.force[i]['pos'], self.init_force[i]['pos'],
-                                                                       self.force[i]['strength']))
+                                                                            self.force[i]['strength']))
             self.force[i]['pos'] = self.init_force[i]['pos']
             self.force[i]['radius'] = self.init_force[i]['radius']
             self.force[i]['strength'] = self.init_force[i]['strength']
