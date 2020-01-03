@@ -15,21 +15,27 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, camera_width=960, camera_height=720):
-        pyflex.init(headless, render)  # TODO check if pyflex needs to be initialized for each instance of the environment
-        self.record_video, self.video_path, self.video_name = False, None, None
+    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720):
         self.camera_width, self.camera_height = camera_width, camera_height
+        pyflex.init(headless, render, camera_width, camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
+        self.record_video, self.video_path, self.video_name = False, None, None
+
         self.set_scene()
-        # print("right after set scene")
         self.set_video_recording_params()
         self.get_pyflex_camera_params()
+        
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
             'video.frames_per_second': int(np.round(1.0 / self.dt))
         }
+
         if device_id == -1 and 'gpu_id' in os.environ:
             device_id = int(os.environ['gpu_id'])
         self.device_id = device_id
+        
+        self.horizon = horizon
+        self.time_step = 0
+
         print("flex env init done!")
 
     @staticmethod
@@ -160,6 +166,10 @@ class FlexEnv(gym.Env):
         for i in range(repeat_time):
             next_state, reward, done, info = self._step(action)
         self.time_step += 1
+
+        done = False
+        if self.time_step == self.horizon:
+            done = True
         return next_state, reward, done, info
 
     def _step(self, action):

@@ -16,8 +16,7 @@ import yaml
 import os.path as osp
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, headless = True, render = True, 
-            horizon = 300, deterministic = False, render_mode = 'particle'):
+    def __init__(self, observation_mode, action_mode, **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -32,10 +31,9 @@ class PourWaterPosControlEnv(FluidEnv):
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.wall_num = 5 # number of glass walls. floor/left/right/front/back 
-        self.time_step = 0 
         self.inner_step = 0 # count action repetation
  
-        super().__init__(horizon = horizon, headless = headless, render = render, deterministic = deterministic, render_mode = render_mode)
+        super().__init__(**kwargs)
         assert observation_mode in ['cam_img', 'full_state'] 
         assert action_mode in ['direct'] 
 
@@ -131,8 +129,6 @@ class PourWaterPosControlEnv(FluidEnv):
         self.camera_params = {
                         'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
                         'angle': np.array([0.45 * np.pi, -65/180. * np.pi, 0]),
-                        # 'pos': np.array([x_center -1.3, 0.8, z + 0.5]),
-                        # 'angle': np.array([0, 0, -0.5 * np.pi]),
                         'width': self.camera_width,
                         'height': self.camera_height
                         }
@@ -361,7 +357,7 @@ class PourWaterPosControlEnv(FluidEnv):
         obs = self._get_obs()
         reward = self.compute_reward(action, obs)
 
-        done = True if self.time_step == self.horizon else False
+        done = True if self.time_step == self.horizon else False # NOTE: done is actually implemented in FlexEnv.
         return obs, reward, done, {}
 
     def create_glass(self, glass_dis_x, glass_dis_z, height, border):

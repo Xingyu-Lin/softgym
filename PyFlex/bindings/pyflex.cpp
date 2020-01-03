@@ -2658,10 +2658,13 @@ char *make_path(char *full_path, std::string path) {
     return full_path;
 }
 
-void pyflex_init(bool headless = false, bool render = true) {
+void pyflex_init(bool headless=false, bool render=true, int camera_width=720, int camera_height=720) {
     // printf("pyflex init: g_headless is: %d\n", g_headless);
     // printf("pyflex init: g_headless is: %d\n", g_render);
     
+    g_screenWidth = camera_width;
+    g_screenHeight = camera_height;
+
     g_headless = headless;
     g_render = render;
     if (g_headless) {

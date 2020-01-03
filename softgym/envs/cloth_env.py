@@ -10,12 +10,12 @@ class ClothEnv(FlexEnv):
 
     def __init__(self, config_file, randomized=True, device_id=-1, render_mode='particle', **kwargs):
         self.config = FlexEnv._load_config(config_file)
+        self.render_mode = render_mode
+        super().__init__(**kwargs)
+
         self.force = [{'idx': None, 'pos': None, 'strength': None, 'radius': None}, {'idx': None, 'pos': None, 'strength': None, 'radius': None}]
         self.init_force = [{'idx': None, 'pos': None, 'strength': None, 'radius': None}, {'idx': None, 'pos': None, 'strength': None, 'radius': None}]
-        self.render_mode = render_mode
-        print(yaml.dump(self.config))
-        self.initialize_camera()
-        super().__init__(**kwargs)
+
         self.is_randomized = randomized
         self.prev_rot = np.array([0.0, 0.0])
         self.init_rot = self.prev_rot
@@ -35,6 +35,7 @@ class ClothEnv(FlexEnv):
     def set_scene(self, initX=0.0, initY=-1.0, initZ=3.0, sizex=64.0, sizey=32.0, stretch=0.9, bend=1.0, shear=0.9,
                   cam_x=6.0, cam_y=8.0, cam_z=18.0, angle_x=0.0, angle_y=-np.deg2rad(20.0), angle_z=0.0,
                   width=960, height=720):
+        self.initialize_camera()
         camera_x, camera_y, camera_z = self.camera_params['pos'][0], \
                                        self.camera_params['pos'][1], \
                                        self.camera_params['pos'][2]
