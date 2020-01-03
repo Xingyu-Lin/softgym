@@ -18,8 +18,7 @@ import os.path as osp
 from softgym.core.multitask_env import MultitaskEnv
 
 class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv):
-    def __init__(self, observation_mode = 'full_state', action_mode = 'direct', render = True, headless = False, 
-            horizon = 300, deterministic = True, render_mode = 'particle'):
+    def __init__(self, observation_mode = 'full_state', action_mode = 'direct', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -33,10 +32,9 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
 
         self.state_dict_goal = None
 
-        PourWaterPosControlEnv.__init__(self, observation_mode = observation_mode, action_mode = action_mode,
-            horizon = horizon, deterministic = deterministic, render_mode = render_mode, render = render, headless=headless)
         assert observation_mode in ['full_state'] 
         assert action_mode in ['direct'] 
+        PourWaterPosControlEnv.__init__(self, observation_mode = observation_mode, action_mode = action_mode, **kwargs)
 
         self.fluid_num = pyflex.get_n_particles()
         self.obs_box = Box(low = -np.inf, high = np.inf, shape = ((self.dim_position + self.dim_velocity) * self.fluid_num + 7 * 2, ), 

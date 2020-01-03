@@ -5,20 +5,16 @@ from softgym.envs.flex_env import FlexEnv
 
 class FluidEnv(FlexEnv):
 
-    def __init__(self, horizon = 300, headless = True, render = True, deterministic = False, render_mode = 'particle'):
-        self.camera_width = 720
-        self.camera_height = 720
+    def __init__(self, deterministic = False, render_mode = 'particle', **kwargs):
         self.dim_shape_state = 14 # dimension of a shape object in Flex
         self.dim_position = 4
         self.dim_velocity = 3
-        self.horizon = horizon
-        self.time_step = 0
         self.debug = False
         self.deterministic = deterministic
         assert render_mode in ['particle', 'fluid']
         self.render_mode = 0 if render_mode == 'particle' else 1
         print(self.render_mode)
-        super().__init__(headless = headless, render = render)
+        super().__init__(**kwargs)
 
 
     def sample_fluid_params(self, fluid_param_dic = None):
