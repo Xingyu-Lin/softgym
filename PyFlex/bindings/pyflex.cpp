@@ -700,7 +700,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     g_drawRopes = true;
     g_drawDensity = false;
     g_ior = 1.0f;
-    g_lightDistance = 2.0f;
+    g_lightDistance = 10.0f;
     g_fogDistance = 0.005f;
 
     g_camSpeed = 0.075f;

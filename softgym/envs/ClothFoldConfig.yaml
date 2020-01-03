@@ -1,7 +1,7 @@
 ClothPos:
-  x: 0.0
-  y: 0.025
-  z: 3.0
+  x: -1.6
+  y: 0.0
+  z: -0.8
 ClothSize:
   x: 64
   y: 32
@@ -11,9 +11,9 @@ ClothStiff:
   shear: 0.9
 RenderMode: 2
 Camera:
-  xPos: 1.7
+  xPos: -0.2
   yPos: 3.0
-  zPos: 8.0
+  zPos: 4.5
   xAngle: 0
   yAngle: -0.5235
   zAngle: 0

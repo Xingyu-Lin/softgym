@@ -8,24 +8,29 @@ from softgym.envs.cloth_env import ClothEnv
 
 
 class ClothFlattenPointControlEnv(ClothEnv):
-    def __init__(self, observation_mode, action_mode, horizon=250, render=True, headless=False, render_mode='particle'): #TODO: add render, headless, render_mode
+    def __init__(self, observation_mode, action_mode, horizon=250, **kwargs):
         self.camera_width = 960
         self.camera_height = 720
         config_dir = osp.dirname(osp.abspath(__file__))
         config = open(osp.join(config_dir, "ClothFlattenConfig.yaml"), 'r')
-        super().__init__(config.read(), horizon=horizon, render=render, headless=headless, render_mode=render_mode)
+        super().__init__(config.read(), **kwargs)
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.video_path = "data/videos"
+        self.prev_reward = 0
 
         self.horizon = horizon
 
         if observation_mode == 'key_point': # TODO: add sphere position
-            self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()*3),
-                                         np.array([np.inf] * pyflex.get_n_particles()*3), dtype=np.float32)
+            if action_mode =='key_point_pos':
+                self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles()*3),
+                                             np.array([np.inf] * pyflex.get_n_particles()*3), dtype=np.float32)
+            elif action_mode=='sphere':
+                self.observation_space = Box(np.array([-np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)),
+                                             np.array([np.inf] * (pyflex.get_n_particles() * 3+ 4 * 3)), dtype=np.float32)
         else:
             raise NotImplementedError
 
@@ -38,7 +43,7 @@ class ClothFlattenPointControlEnv(ClothEnv):
             space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2)
 
             self.action_space = Box(space_low, space_high, dtype=np.float32)
-            
+
         self.reset_time_step = 300
         self.init_state = self.get_state()
         self.storage_name = "test_flatten"
@@ -48,7 +53,6 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.initVel = None
         self.video_height = 240
         self.video_width = 320
-        # self.initialize_camera()
 
     def initialize_camera(self):
         '''
@@ -57,8 +61,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
         I suggest to keep them the same as the ones used in pyflex.cpp.
         '''
         self.camera_params = {
-            'pos': np.array([1.7, 3., 8]),
-            'angle': np.array([0., -30 / 180. * np.pi, 0.]),
+            'pos': np.array([0.5, 3, 2.5]),
+            'angle': np.array([0, -50 / 180. * np.pi, 0.]),
             'width': self.camera_width,
             'height': self.camera_height
         }
@@ -69,11 +73,11 @@ class ClothFlattenPointControlEnv(ClothEnv):
         if self.initPos is not None:
             # print("resetting")
             pyflex.set_positions(self.initPos)
-            pyflex.set_velocities(self.initVel) 
+            pyflex.set_velocities(self.initVel)
             pyflex.set_shape_states(self.initState)
             if self.action_mode == 'sphere':
                 self.sphere_reset()
-            pyflex.step()            
+            pyflex.step()
             return self._get_obs()
 
         pickpoint = random.randint(0, xdim * ydim)
@@ -123,13 +127,17 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.initPos = pyflex.get_positions()
         self.initVel = pyflex.get_velocities()
         self.initState = pyflex.get_shape_states()
+        self.prev_reward = self.compute_reward()
         return self._get_obs()
-        # pyflex.set_scene(9, np.array([]), 0)
-        # pyflex.set_positions(self.initPos)
 
     def _get_obs(self): # NOTE: just rename to _get_obs
         pos = np.array(pyflex.get_positions()).reshape([-1, 4])
-        return pos[:, :3].flatten()
+        if self.action_mode == 'sphere':
+            shapes = pyflex.get_shape_states()
+            shapes = np.reshape(shapes, [-1, 14])
+            return np.concatenate([pos[:, :3].flatten(), shapes[:, 0:3].flatten()])
+        else:
+            return pos[:, :3].flatten()
 
     def set_video_recording_params(self):
         """
@@ -177,10 +185,13 @@ class ClothFlattenPointControlEnv(ClothEnv):
         #print("computing reward")
         obs = self._get_obs()
         reward = self.compute_reward(action, obs)
+        # TODO Xingyu Change the compute_reward function
+        dreward = reward - self.prev_reward
+        self.prev_reward = reward
         #print("returning")
-        return obs, reward, False, {}
+        return obs, dreward, False, {}
 
-    def compute_reward(self, obs = None, action = None): 
+    def compute_reward(self, obs = None, action = None):
         """
         calculate by taking max x,y cood and min x,y coord, create a discritized grid between
         the points
@@ -214,7 +225,9 @@ class ClothFlattenPointControlEnv(ClothEnv):
     def set_scene(self):
         # scene_params = np.array([0, 64, 32])
         # pyflex.set_scene(10, scene_params, 0)
-        super().set_scene(initY=2.0)
+        super().set_scene(initX=0.0, initY=2.0, initZ=3.0, sizex=64.0, sizey=32.0, stretch=0.9, bend=1.0, shear=0.9,
+                  cam_x=6.0, cam_y=8.0, cam_z=18.0, angle_x=0.0, angle_y=-np.deg2rad(20.0), angle_z=0.0,
+                  width=960, height=720)
 
 
 """
@@ -368,14 +381,9 @@ class ClothFlattenSphereControlEnv(ClothEnv):
 """
 
 if __name__ == "__main__":
-    # pyflex.init(False, True)
-
     env = ClothFlattenPointControlEnv('key_point', 'sphere')
-    # des_dir = env.storage_name
-    # os.system('mkdir -p ' + des_dir)
     env.reset(dropPoint=100)
     print("reset, entering loop")
-    # env.video_path = "test_flatten/"
     haveGrasped = False
     for i in range(0, 700):
         if env.prev_middle[0, 1] > 0.11 and not haveGrasped:

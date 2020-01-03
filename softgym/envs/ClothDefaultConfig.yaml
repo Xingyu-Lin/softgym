@@ -3,8 +3,8 @@ ClothPos:
   y: 2.0
   z: 3.0
 ClothSize:
-  x: 64
-  y: 32
+  x: 40
+  y: 20
 ClothStiff:
   stretch: 0.9
   bend: 1.0
