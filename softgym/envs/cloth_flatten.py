@@ -1,14 +1,14 @@
 import numpy as np
 from gym.spaces import Box
 import random
-import os
+import pickle
 import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
 
 
 class ClothFlattenPointControlEnv(ClothEnv):
-    def __init__(self, observation_mode, action_mode, horizon=250, **kwargs):
+    def __init__(self, observation_mode, action_mode, horizon=250, cached_init_state_path=None, **kwargs):
         super().__init__(config_file="ClothFlattenConfig.yaml", **kwargs)
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
@@ -40,15 +40,14 @@ class ClothFlattenPointControlEnv(ClothEnv):
 
             self.action_space = Box(space_low, space_high, dtype=np.float32)
 
-        self.reset_time_step = 300
-        self.init_state = self.get_state()
         self.storage_name = "test_flatten"
-        self.i = 0  # actual step without counting action repetation
-        self.time_step = 0  # step with action repetation
-        self.initPos = None
-        self.initVel = None
         self.video_height = 240
         self.video_width = 320
+
+        self.prev_covered_area = None  # Should not be used until initialized
+        self.cached_init_state = []
+        if cached_init_state_path is not None:
+            self._load_init_state(cached_init_state_path)
 
     def initialize_camera(self):
         '''
@@ -63,63 +62,72 @@ class ClothFlattenPointControlEnv(ClothEnv):
             'height': self.camera_height
         }
 
-    def reset(self, dropPoint=1000):
-        self.i = 0
-        self.time_step = 0
-        if self.initPos is not None:
-            pyflex.set_positions(self.initPos)
-            pyflex.set_velocities(self.initVel)
-            pyflex.set_shape_states(self.initState)
-            if self.action_mode == 'sphere':
-                self.sphere_reset()
-            pyflex.step()
-            return self._get_obs()
+    def generate_init_state(self, num_state=1, save_to_file=False):
+        """ Generate initial states. Note: This will also change the current states! """
+        # TODO Xingyu: Add options for generating initial states with different parameters. Currently only the pickpoint varies.
+        # TODO additionally, can vary the height / number of pick point
+        original_state = self.get_state()
+        num_particle = original_state['particle_pos'].reshape((-1, 4)).shape[0]
+        max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
+        stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
+        init_states = []
+        for _ in range(num_state):
+            pickpoint = random.randint(0, num_particle)
+            curr_pos = pyflex.get_positions()
+            curr_pos[pickpoint * 4 + 3] = 0 # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
+            pickpoint_pos = curr_pos[pickpoint * 4: pickpoint * 4 + 3].copy()  # Pos of the pickup point is fixed to this point
+            pyflex.set_positions(curr_pos)
+            # pos = pyflex.get_shape_states()
+            # pyflex.set_shape_states(pos)
 
-        pickpoint = random.randint(0, self.xdim * self.ydim)
-        if dropPoint is not None:
-            pickpoint = dropPoint
-        firstPos = pyflex.get_positions()
-        firstPos[pickpoint * 4 + 3] = 0
-        # print("{}".format(firstPos[pickpoint * 4: pickpoint * 4 + 3]))
-        pyflex.set_positions(firstPos)
-        pos = pyflex.get_shape_states()
-        pyflex.set_shape_states(pos)
-        # print("pick point: {}".format(pickpoint))
-        particle_pos = pyflex.get_positions()[pickpoint * 4: pickpoint * 4 + 3]
-        stopParticle = True
-        for i in range(0, self.reset_time_step):
-            pyflex.step()
-            newPos = pyflex.get_positions()
-            vels = pyflex.get_velocities()
-            if stopParticle:
-                newPos[pickpoint * 4: pickpoint * 4 + 3] = particle_pos
-                # print("pick pos: {}".format(newPos[pickpoint * 4 + 2]))
-                # newPos[pickpoint * 4 + 3] = 0.0
-                vels[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
-            stopped = True
-            for j in range(pyflex.get_n_particles()):
-                if vels[j] > 0.01:
-                    # print("stopped check at {} with vel {}".format(j, vels[j]))
-                    stopped = False
+            # Pick up the cloth and wait to stablize
+            for _ in range(0, max_wait_step):
+                pyflex.step()
+                curr_pos = pyflex.get_positions()
+                curr_vel = pyflex.get_velocities()
+                if np.alltrue(curr_vel < stable_vel_threshold):
                     break
-            if stopped:
-                newPos[pickpoint * 4 + 3] = 1
-                stopParticle = False
+                curr_pos[pickpoint * 4: pickpoint * 4 + 3] = pickpoint_pos
+                curr_vel[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
+                pyflex.set_positions(curr_pos)
+                pyflex.set_velocities(curr_vel)
 
-            pyflex.set_velocities(vels)
-            pyflex.set_positions(newPos)
-        print("dropping")
-        lastPos = pyflex.get_positions()
-        lastPos[pickpoint * 4 + 3] = 1
-        pyflex.set_positions(lastPos)
-        for i in range(0, 100):
-            pyflex.step()
-        if self.action_mode.startswith('sphere'):
-            super().addSpheres(pick_point=pickpoint)  # YF: should add sphere near the drop point
-        self.initPos = pyflex.get_positions()
-        self.initVel = pyflex.get_velocities()
-        self.initState = pyflex.get_shape_states()
-        self.prev_reward = self.compute_reward()
+            # Drop the cloth and wait to stablize
+            curr_pos = pyflex.get_positions()
+            curr_pos[pickpoint * 4 + 3] = 1
+            pyflex.set_positions(curr_pos)
+            for _ in range(max_wait_step):
+                pyflex.step()
+                curr_vel = pyflex.get_velocities()
+                if np.alltrue(curr_vel < stable_vel_threshold):
+                    break
+            # if self.action_mode.startswith('sphere'):
+            #     super().add_spheres(pick_point=pickpoint)  # YF: should add sphere near the drop point
+            init_states.append(self.get_state())
+            self.set_state(original_state)
+        if save_to_file:
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            with open(osp.join(cur_dir, 'cloth_flatten_init_states.pkl'), 'wb') as handle:
+                pickle.dump(init_states, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        return init_states
+
+    def _load_init_state(self, init_state_path):
+        cur_dir = osp.dirname(osp.abspath(__file__))
+        with open(osp.join(cur_dir, init_state_path), "rb") as handle:
+            self.cached_init_state = pickle.load(handle)
+
+    def reset(self):
+        """ Right now only use one initial state"""
+        if len(self.cached_init_state) == 0:
+            state_dicts = self.generate_init_state(1)
+            self.cached_init_state.extend(state_dicts)
+        cached_id = np.random.randint(len(self.cached_init_state))
+        self.set_state(self.cached_init_state[cached_id])
+        self.prev_covered_area = self._get_current_covered_area()
+
+        # if self.action_mode == 'sphere':
+        #     self.sphere_reset()
+        pyflex.step()
         return self._get_obs()
 
     def _get_obs(self):  # NOTE: just rename to _get_obs
@@ -141,7 +149,6 @@ class ClothFlattenPointControlEnv(ClothEnv):
 
     def _step(self, action):
         # print("stepping")
-        self.i = self.i + 1
         if self.action_mode.startswith('key_point'):
             valid_idxs = np.array([0, 63, 31 * 64, 32 * 64 - 1])
             last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
@@ -168,50 +175,38 @@ class ClothFlattenPointControlEnv(ClothEnv):
         else:
             # print("sphering")
             last_pos = pyflex.get_shape_states()
-            if self.record_video:  # NOTE: just add a flag
-                pyflex.step(capture=1, path=os.path.join(self.video_path, 'render_{}.tga'.format(self.i)))
-            else:
-                pyflex.step()
+            pyflex.step()
             super().sphereStep(action, last_pos)
         # print("computing reward")
         obs = self._get_obs()
-        reward = self.compute_reward(action, obs)
-        # TODO Xingyu Change the compute_reward function
-        dreward = reward - self.prev_reward
-        self.prev_reward = reward
-        # print("returning")
-        return obs, dreward, False, {}
+        reward = self.compute_reward()
+        return obs, reward, False, {}
 
-    def compute_reward(self, obs=None, action=None):
-        """
-        calculate by taking max x,y cood and min x,y coord, create a discritized grid between
-        the points
-        :param pos:
-        :return:
-        """
+    @staticmethod
+    def _get_current_covered_area():
+        """ Calculate the covered area by taking max x,y cood and min x,y coord, create a discritized grid between the points"""
         pos = pyflex.get_positions()
         pos = np.reshape(pos, [-1, 4])
-        minX = np.min(pos[:, 0])
-        minY = np.min(pos[:, 2])
-        maxX = np.max(pos[:, 0])
-        maxY = np.max(pos[:, 2])
-        grid = np.zeros([101, 101])
-        init = np.array([minX, minY])
-        span = np.array([maxX - minX, maxY - minY]) / 100.
+        min_x = np.min(pos[:, 0])
+        min_y = np.min(pos[:, 2])
+        max_x = np.max(pos[:, 0])
+        max_y = np.max(pos[:, 2])
+        grid = np.zeros([101, 101])  # Discretization
+        init = np.array([min_x, min_y])
+        span = np.array([max_x - min_x, max_y - min_y]) / 100.
         pos2d = pos[:, [0, 2]]
         offset = pos2d - init
-        slottedX = (offset[:, 0] // span[0])
-        slottedy = (offset[:, 1] // span[1])
-        grid[slottedy.astype(int), slottedX.astype(int)] = 1
-        """
-        for i in range(len(pos2d)):
-            offset = pos2d[i] - init
-            print("offset: {} span: {}".format(offset, span))
-            slottedX = int(offset[0]/span[0])
-            slottedY = int(offset[1]/span[1])
-            grid[slottedY,slottedX] = 1
-        """
-        return np.sum(np.sum(grid)) * span[0] * span[1]
+        slotted_x = (offset[:, 0] // span[0])
+        slotted_y = (offset[:, 1] // span[1])
+        grid[slotted_y.astype(int), slotted_x.astype(int)] = 1
+        return np.sum(grid) * span[0] * span[1]
+
+    def compute_reward(self):
+        curr_covered_area = self._get_current_covered_area()
+        r = curr_covered_area - self.prev_covered_area
+        self.prev_covered_area = curr_covered_area
+        return r
+
 
 """
 class ClothFlattenSphereControlEnv(ClothEnv):

@@ -94,7 +94,7 @@ class ClothFoldPointControlEnv(ClothEnv):
 
         self.set_colors(colors)
         if self.action_mode == 'sphere':
-            self.addSpheres()
+            self.add_spheres()
         if self.action_mode == 'force':
             self.addForce()
         if self.action_mode == 'sticky':
