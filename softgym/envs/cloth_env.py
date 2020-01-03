@@ -27,14 +27,14 @@ class ClothEnv(FlexEnv):
         self.init_sticky = None
         self.sticky_idx = None
 
+        self.xdim, self.ydim = self.config['ClothSize']['x'], self.config['ClothSize']['y']
+
 
     """
     There's always the same parameters that you can set 
     """
 
-    def set_scene(self, initX=0.0, initY=-1.0, initZ=3.0, sizex=64.0, sizey=32.0, stretch=0.9, bend=1.0, shear=0.9,
-                  cam_x=6.0, cam_y=8.0, cam_z=18.0, angle_x=0.0, angle_y=-np.deg2rad(20.0), angle_z=0.0,
-                  width=960, height=720):
+    def set_scene(self):
         self.initialize_camera()
         camera_x, camera_y, camera_z = self.camera_params['pos'][0], \
                                        self.camera_params['pos'][1], \
@@ -42,8 +42,8 @@ class ClothEnv(FlexEnv):
         camera_ax, camera_ay, camera_az = self.camera_params['angle'][0], \
                                           self.camera_params['angle'][1], \
                                           self.camera_params['angle'][2]
-        print("cloth pos: {} {} {}".format(self.config['ClothPos']['x'], self.config['ClothPos']['y'],
-                                           self.config['ClothPos']['z']))
+        # print("cloth pos: {} {} {}".format(self.config['ClothPos']['x'], self.config['ClothPos']['y'],
+        #                                    self.config['ClothPos']['z']))
 
         if self.render_mode == 'particle':
             render_mode = 1
@@ -59,8 +59,6 @@ class ClothEnv(FlexEnv):
 
         self.params = params  # YF NOTE: need to save the params for sampling goals
 
-        # params = np.array([initX, initY, initZ, sizex, sizey, stretch, bend, shear, render_mode,
-        #                  camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
         pyflex.set_scene(9, params, 0)
 
     def addSpheres(self, radii=0.1, initPos1=[1.5, 0.25, 3.4], initPos2=[1.5, 0.25, 3.6], pick_point=0):

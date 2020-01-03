@@ -80,8 +80,8 @@ public:
                 float sqrDist = LengthSq(Vec3(g_buffers->positions[c1]) - Vec3(g_buffers->positions[c2]));
 
                 if (sqrDist < minSqrDist) {
-                    // CreateSpring(c1, i, stiffness, give);
-                    // CreateSpring(c2, i, stiffness, give);
+//                     CreateSpring(c1, i, stiffness, give);
+//                     CreateSpring(c2, i, stiffness, give);
 
                     minSqrDist = sqrDist;
                 }

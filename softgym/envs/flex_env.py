@@ -43,7 +43,7 @@ class FlexEnv(gym.Env):
         """ Assume that the .yaml config file is under the same directory as the env files """
         config_dir = osp.dirname(osp.abspath(__file__))
         config_stream = open(osp.join(config_dir, config_name), 'r').read()
-        return yaml.load(config_stream)
+        return yaml.load(config_stream, Loader=yaml.FullLoader)
 
     def get_pyflex_camera_params(self):
         """ get the screen width, height, camera position and camera angle. """
