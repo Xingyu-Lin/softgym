@@ -1,0 +1,4 @@
+Envs to do:
+1. pour water sample random goals
+2. cloth flatten env add particle velocity and sphere position into observation
+3. cloth env fixes render mode issue

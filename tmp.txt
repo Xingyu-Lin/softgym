@@ -1,0 +1,112 @@
+Compute Device: GeForce RTX 2080
+
+Pyflex init done!
+buffers mapped
+sovler initialized
+Gpu started. 
+scenec initialized
+normals initialized
+/home/yufei/softgym/softgym/softgym/envs/pour_water.py:204: YAMLLoadWarning: calling yaml.load() without Loader=... is deprecated, as the default Loader is unsafe. Please read https://msg.pyyaml.org/load for full details.
+  config = yaml.load(config)
+1
+{'radius_range': [0.09, 0.11], 'rest_dis_coef_range': [0.4, 0.6], 'cohension_range': [0.015, 0.025], 'viscosity_range': [1.5, 2.5], 'surfaceTension_range': [0.0, 0.1], 'adhesion_range': [0.0, 0.002], 'vorticityConfinement_range': [39.99, 40.01], 'solidPressure_range': [0.0, 0.01], 'radius': 0.1, 'rest_dis_coef': 0.55, 'cohesion': 0.02, 'viscosity': 2.0, 'surfaceTension': 0.0, 'adhesion': 0.0, 'vorticityConfinement': 40, 'solidpressure': 0.0, 'dim_x_range': (4, 6), 'dim_y_range': (16, 20), 'dim_z_range': (4, 6), 'dim_x': 8, 'dim_y': 18, 'dim_z': 8, 'x': -0.21196185199340373, 'y': 0.08532697533223396, 'z': -0.17663487666116978}
+right after pyflex set scene: num particles are:  1152
+pour water inital scene constructed over...
+flex env init done!
+inside CEM, iteration 0
+inside CEM, iteration 1
+inside CEM, iteration 2
+inside CEM, iteration 3
+inside CEM, iteration 4
+inside CEM, iteration 5
+inside CEM, iteration 6
+inside CEM, iteration 7
+inside CEM, iteration 8
+inside CEM, iteration 9
+inside CEM, iteration 10
+inside CEM, iteration 11
+inside CEM, iteration 12
+inside CEM, iteration 13
+inside CEM, iteration 14
+inside CEM, iteration 15
+inside CEM, iteration 16
+inside CEM, iteration 17
+inside CEM, iteration 18
+inside CEM, iteration 19
+cem finished planning!
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.0
+reward: 0.008680555555555556
+reward: 0.052083333333333336
+reward: 0.11024305555555555
+reward: 0.171875
+reward: 0.2361111111111111
+reward: 0.2916666666666667
+reward: 0.3446180555555556
+reward: 0.3810763888888889
+reward: 0.4184027777777778
+reward: 0.4522569444444444
+reward: 0.4895833333333333
+reward: 0.5407986111111112
+reward: 0.5928819444444444
+reward: 0.65625
+reward: 0.7387152777777778
+reward: 0.8333333333333334
+reward: 0.9053819444444444
+reward: 0.9045138888888888
+reward: 0.9001736111111112
+reward: 0.8784722222222222
+reward: 0.875
+reward: 0.8723958333333334
+reward: 0.8532986111111112
+reward: 0.8463541666666666
+reward: 0.84375
+reward: 0.8498263888888888
+reward: 0.8628472222222222
+reward: 0.875
+reward: 0.8854166666666666
+reward: 0.8975694444444444
+reward: 0.9175347222222222
+reward: 0.921875
+reward: 0.9305555555555556
+reward: 0.9461805555555556
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+reward: 0.9487847222222222
+init scene done.

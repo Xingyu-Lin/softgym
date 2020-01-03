@@ -8,24 +8,22 @@ from softgym.envs.cloth_env import ClothEnv
 
 
 class ClothFoldPointControlEnv(ClothEnv):
-    def __init__(self, observation_mode, action_mode, horizon=150):
+    def __init__(self, observation_mode, action_mode, horizon=200):
         self.cloth_xdim = 64
         self.cloth_ydim = 32
         self.camera_width = 960
         self.camera_height = 720
-        self.render_type = 0  # 0: only points, 1: only mesh, 2: points + mesh
         self.action_mode = action_mode
+        self.observation_mode = observation_mode
         config_dir = osp.dirname(osp.abspath(__file__))
         config = open(osp.join(config_dir, "ClothFoldConfig.yaml"), 'r')
 
         super().__init__(config.read())
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['key_point', 'sphere']
-
-        self.observation_mode = observation_mode
+        assert action_mode in ['key_point', 'sphere', 'force', 'sticky', 'block']
 
         self.horizon = horizon
-        self.video_path = "gif_images"
+        # self.video_path = "test_Cloth"
 
         if observation_mode == 'key_point':
             self.observation_space = Box(np.array([-np.inf] * 6), np.array([np.inf] * 6), dtype=np.float32)
@@ -36,11 +34,18 @@ class ClothFoldPointControlEnv(ClothEnv):
         if action_mode == 'key_point':
             self.action_space = Box(np.array([-1.] * 6), np.array([1.] * 6), dtype=np.float32)
             self.action_key_point_idx = self.get_action_key_point_idx()
-        elif action_mode == 'sphere':
-            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1] * 2)
-            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2)
+        elif action_mode == 'sphere' or action_mode == 'block':
+            space_low = np.array([-0.1, -0.1, -0.1, -0.1] * 2)
+            space_high = np.array([0.1, 0.1, 0.1, 0.1] * 2)
             self.action_space = Box(space_low, space_high, dtype=np.float32)
-
+        elif action_mode == 'force':
+            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1]*2)
+            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1]*2)
+            self.action_space = Box(space_low, space_high, dtype=np.float32)
+        elif action_mode == 'sticky':
+            space_low = (np.array([-0.1, -0.1, -0.1, -0.1]))
+            space_high = (np.array([0.1, 0.1, 0.1, 0.1]))
+            self.action_space = Box(space_low, space_high, dtype=np.float32)
         else:
             raise NotImplementedError
 
@@ -62,19 +67,6 @@ class ClothFoldPointControlEnv(ClothEnv):
         idx_p2 = self.cloth_xdim * (self.cloth_ydim - 1)
         return np.array([idx_p1, idx_p2])
 
-    def initialize_camera(self):
-        '''
-        set the camera width, height, position and angle.
-        **Note: width and height is actually the screen width and screen height of FLex.
-        I suggest to keep them the same as the ones used in pyflex.cpp.
-        '''
-        self.camera_params = {
-            'pos': np.array([1.7, 2., 8]),
-            'angle': np.array([0., -30 / 180. * np.pi, 0.]),
-            'width': self.camera_width,
-            'height': self.camera_height
-        }
-
     def set_scene(self):
         '''
         Setup the cloth scene and split particles into two groups for folding
@@ -87,7 +79,7 @@ class ClothFoldPointControlEnv(ClothEnv):
         camera_ax, camera_ay, camera_az = self.camera_params['angle'][0], \
                                           self.camera_params['angle'][1], \
                                           self.camera_params['angle'][2]
-        scene_params = [self.cloth_xdim, self.cloth_ydim, self.render_type]
+        scene_params = [self.cloth_xdim, self.cloth_ydim]
         scene_params.extend(
             [camera_x, camera_y, camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
 
@@ -108,8 +100,14 @@ class ClothFoldPointControlEnv(ClothEnv):
         self.set_colors(colors)
         if self.action_mode == 'sphere':
             self.addSpheres()
+        if self.action_mode == 'force':
+            self.addForce()
+        if self.action_mode == 'sticky':
+            self.addSticky()
+        if self.action_mode == 'block':
+            self.addBlocks()
         # self.set_test_color()
-
+        print("scene set")
     def set_test_color(self):
         '''
         Assign random colors to group a and the same colors for each corresponding particle in group b
@@ -126,14 +124,17 @@ class ClothFoldPointControlEnv(ClothEnv):
     def get_current_observation(self):
         pos = np.array(pyflex.get_positions()).reshape([-1, 4])
         return pos[self.obs_key_point_idx, :3].flatten()
-
+    #def get_sticky(self):
+    #    super().get_sticky()
     def reset(self):
         self.time_step = 0
         self.set_state(self.init_state)
-        if self.action_mode == 'sphere':
+        if self.action_mode == 'sphere' or self.action_mode == 'block':
             self.sphere_reset()
+        if self.action_mode == 'force':
+            self.force_reset()
         # for _ in range(100):
-        #     pyflex.step()
+        #pyflex.step()
         return self.get_current_observation()
 
     def compute_reward(self, pos):
@@ -146,26 +147,36 @@ class ClothFoldPointControlEnv(ClothEnv):
         pos_group_b_init = self.init_pos[self.fold_group_b, :3]
         distance = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
         distance_to_init = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
+
+        #return np.max(pos[:, 1])
         return -distance - distance_to_init
 
     def _step(self, action):
-
         lastPos = pyflex.get_shape_states()
-        if self.video_path is not None:
-            pyflex.step()  # capture=1, path=osp.join(self.video_path, 'render_{}.tga'.format(self.time_step)))
-        else:
-            pyflex.step()
-        if self.action_mode != 'sphere':
+        pyflex.step()
+        self.time_step += 1
+        if self.action_mode == 'key_point':
             action[2] = 0
             action[5] = 0
             action = np.array(action) / 10.
             last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
-            self.time_step += 1
             cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
             action = action.reshape([-1, 3])
             action = np.hstack([action, np.zeros([action.shape[0], 1])])
             cur_pos[self.action_key_point_idx, :] = last_pos[self.action_key_point_idx] + action
             pyflex.set_positions(cur_pos.flatten())
+            reward = self.compute_reward(cur_pos)
+        elif self.action_mode == 'force':
+            self.forceStep(action)
+            cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
+            reward = self.compute_reward(cur_pos)
+        elif self.action_mode == 'sticky':
+            self.sticky_step(action)
+            cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
+            reward = self.compute_reward(cur_pos)
+        elif self.action_mode == 'block':
+            self.boxStep(action, lastPos)
+            cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
             reward = self.compute_reward(cur_pos)
         else:
             self.sphereStep(action, lastPos)

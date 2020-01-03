@@ -42,11 +42,51 @@ def register_flex_envs():
     )
 
     register(
+        id='ClothFoldForceControl-v0',
+        entry_point='softgym.envs.cloth_fold:ClothFoldPointControlEnv',
+        # tags={
+        #     'git-commit-hash': '2d95c75',
+        #     'author': 'murtaza'
+        # },
+        kwargs={
+            'observation_mode': 'key_point',
+            'action_mode': 'force',
+        },
+    )
+
+    register(
+        id='ClothFoldStickyControl-v0',
+        entry_point='softgym.envs.cloth_fold:ClothFoldPointControlEnv',
+        # tags={
+        #     'git-commit-hash': '2d95c75',
+        #     'author': 'murtaza'
+        # },
+        kwargs={
+            'observation_mode': 'key_point',
+            'action_mode': 'sticky',
+        },
+    )
+
+    register(
+        id='ClothFoldBoxControl-v0',
+        entry_point='softgym.envs.cloth_fold:ClothFoldPointControlEnv',
+        # tags={
+        #     'git-commit-hash': '2d95c75',
+        #     'author': 'murtaza'
+        # },
+        kwargs={
+            'observation_mode': 'key_point',
+            'action_mode': 'block',
+        },
+    )
+
+    register(
         id='ClothFlattenPointControl-v0',
         entry_point='softgym.envs.cloth_flatten:ClothFlattenPointControlEnv',
         kwargs={
             'observation_mode': 'key_point',
-            'action_mode': 'key_point_pos'
+            'action_mode': 'key_point_pos',
+
         }
     )
 
@@ -67,8 +107,6 @@ def register_flex_envs():
         kwargs={
             'observation_mode': 'key_point',
             'action_mode': 'sphere',
-            'render': True,
-            'headless': True,
             'horizon': 100
         }
     )
