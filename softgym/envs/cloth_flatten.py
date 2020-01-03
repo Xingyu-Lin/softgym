@@ -35,8 +35,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
             space_high = np.array([3.9, 0.1, 0.1, 0.1] * 2)
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         elif action_mode.startswith('sphere'):
-            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1] * 2)
-            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2)
+            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1] * 2) * 0.1
+            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2)* 0.1
 
             self.action_space = Box(space_low, space_high, dtype=np.float32)
 
