@@ -36,6 +36,8 @@ def register_flex_envs():
         kwargs={
             'observation_mode': 'key_point',
             'action_mode': 'sphere',
+            'render': True,
+            'headless': False
         },
     )
 
@@ -78,7 +80,8 @@ def register_flex_envs():
             'render_mode': 'fluid',
             'deterministic': True,
             'render': True,
-            'headless': False
+            'headless': False,
+            'horizon': 75
         }
     )
 
