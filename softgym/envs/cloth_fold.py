@@ -8,22 +8,17 @@ from softgym.envs.cloth_env import ClothEnv
 
 
 class ClothFoldPointControlEnv(ClothEnv):
-    def __init__(self, observation_mode, action_mode, horizon=200):
+    def __init__(self, observation_mode, action_mode, horizon=200, **kwargs):
         self.cloth_xdim = 64
         self.cloth_ydim = 32
-        self.camera_width = 960
-        self.camera_height = 720
         self.action_mode = action_mode
         self.observation_mode = observation_mode
-        config_dir = osp.dirname(osp.abspath(__file__))
-        config = open(osp.join(config_dir, "ClothFoldConfig.yaml"), 'r')
 
-        super().__init__(config.read())
+        super().__init__(config_file="ClothFoldConfig.yaml", **kwargs)
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point', 'sphere', 'force', 'sticky', 'block']
 
         self.horizon = horizon
-        # self.video_path = "test_Cloth"
 
         if observation_mode == 'key_point':
             self.observation_space = Box(np.array([-np.inf] * 6), np.array([np.inf] * 6), dtype=np.float32)

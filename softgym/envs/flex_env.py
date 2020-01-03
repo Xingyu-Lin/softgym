@@ -1,13 +1,12 @@
 import os
-
+import yaml
 from gym import error, spaces
 from gym.utils import seeding
 import numpy as np
-from os import path
 import gym
 from softgym.utils.make_gif import make_gif
 import cv2
-from matplotlib import pyplot as plt
+import os.path as osp
 
 try:
     import pyflex
@@ -16,11 +15,10 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless = False, render = True):
+    def __init__(self, device_id=-1, headless=False, render=True, camera_width=960, camera_height=720):
         pyflex.init(headless, render)  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.record_video, self.video_path, self.video_name = False, None, None
-
-        # self.initialize_camera()
+        self.camera_width, self.camera_height = camera_width, camera_height
         self.set_scene()
         # print("right after set scene")
         self.set_video_recording_params()
@@ -34,10 +32,15 @@ class FlexEnv(gym.Env):
         self.device_id = device_id
         print("flex env init done!")
 
+    @staticmethod
+    def _load_config(config_name):
+        """ Assume that the .yaml config file is under the same directory as the env files """
+        config_dir = osp.dirname(osp.abspath(__file__))
+        config_stream = open(osp.join(config_dir, config_name), 'r').read()
+        return yaml.load(config_stream)
+
     def get_pyflex_camera_params(self):
-        '''
-        get the screen width, height, camera position and camera angle.
-        '''
+        """ get the screen width, height, camera position and camera angle. """
         self.camera_params = {}
         pyflex_camera_param = pyflex.get_camera_params()
         camera_param = {'width': pyflex_camera_param[0],
@@ -50,7 +53,7 @@ class FlexEnv(gym.Env):
         return self.camera_params[camera_name]['width'], self.camera_params[camera_name]['height']
 
     def set_scene(self):
-        ''' Set up the flex scene'''
+        """ Set up the flex scene """
         raise NotImplementedError
 
     @property
@@ -153,7 +156,7 @@ class FlexEnv(gym.Env):
         self.video_height = None
         self.video_width = None
 
-    def step(self, action, repeat_time = 4):
+    def step(self, action, repeat_time=4):
         for i in range(repeat_time):
             next_state, reward, done, info = self._step(action)
         self.time_step += 1
@@ -162,7 +165,7 @@ class FlexEnv(gym.Env):
     def _step(self, action):
         raise NotImplementedError
 
-    def get_image(self, width = 960, height = 720):
+    def get_image(self, width=960, height=720):
         '''
         use pyflex.render to get a rendered image.
         '''
@@ -176,7 +179,7 @@ class FlexEnv(gym.Env):
         #     print("show image")
         #     plt.imshow(img)
         #     plt.show()
-        img = cv2.resize(img, (width, height)) # add this to align with img env. TODO: this seems to have some problems.
+        img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
         # img = img.reshape((width, height, 3)) # in pytorch format, to algin with imgenv
         # cv2.imshow('ImageEnv2', img)
         # cv2.waitKey(0)
@@ -184,4 +187,3 @@ class FlexEnv(gym.Env):
 
     def close(self):
         pyflex.clean()
-        

@@ -8,15 +8,13 @@ import yaml
 
 class ClothEnv(FlexEnv):
 
-    def __init__(self, configFile, randomized=True, device_id=-1, render_mode='particle', **kwargs):
-        self.config = yaml.load(configFile)
+    def __init__(self, config_file, randomized=True, device_id=-1, render_mode='particle', **kwargs):
+        self.config = FlexEnv._load_config(config_file)
         self.force = [{'idx': None, 'pos': None, 'strength': None, 'radius': None}, {'idx': None, 'pos': None, 'strength': None, 'radius': None}]
         self.init_force = [{'idx': None, 'pos': None, 'strength': None, 'radius': None}, {'idx': None, 'pos': None, 'strength': None, 'radius': None}]
         self.render_mode = render_mode
         print(yaml.dump(self.config))
         self.initialize_camera()
-        self.camera_width = 960
-        self.camera_height = 720
         super().__init__(**kwargs)
         self.is_randomized = randomized
         self.prev_rot = np.array([0.0, 0.0])
@@ -28,6 +26,7 @@ class ClothEnv(FlexEnv):
 
         self.init_sticky = None
         self.sticky_idx = None
+
 
     """
     There's always the same parameters that you can set 

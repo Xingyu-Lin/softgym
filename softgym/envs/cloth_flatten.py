@@ -9,11 +9,7 @@ from softgym.envs.cloth_env import ClothEnv
 
 class ClothFlattenPointControlEnv(ClothEnv):
     def __init__(self, observation_mode, action_mode, horizon=250, **kwargs):
-        self.camera_width = 960
-        self.camera_height = 720
-        config_dir = osp.dirname(osp.abspath(__file__))
-        config = open(osp.join(config_dir, "ClothFlattenConfig.yaml"), 'r')
-        super().__init__(config.read(), **kwargs)
+        super().__init__(config_file="ClothFlattenConfig.yaml", **kwargs)
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
 
