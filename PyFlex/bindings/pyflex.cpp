@@ -3570,7 +3570,7 @@ void pyflex_set_velocities(py::array_t<float> velocities) {
 py::array_t<float> pyflex_get_shape_states() {
     pyflex_MapShapeBuffers(g_buffers);
 
-    // position + velocity + rotation + prev_rotation
+    // position + prev_position + rotation + prev_rotation
     auto states = py::array_t<float>((size_t) g_buffers->shapePositions.size() * (3 + 3 + 4 + 4));
     auto buf = states.request();
     auto ptr = (float *) buf.ptr;

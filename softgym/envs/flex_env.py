@@ -15,7 +15,7 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720):
+    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=4):
         self.camera_width, self.camera_height = camera_width, camera_height
         pyflex.init(headless, render, camera_width, camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.record_video, self.video_path, self.video_name = False, None, None
@@ -35,7 +35,7 @@ class FlexEnv(gym.Env):
         
         self.horizon = horizon
         self.time_step = 0
-
+        self.action_repeat = action_repeat
         print("flex env init done!")
 
     @staticmethod
@@ -162,9 +162,9 @@ class FlexEnv(gym.Env):
         self.video_height = None
         self.video_width = None
 
-    def step(self, action, repeat_time=4):
-        for i in range(repeat_time):
-            next_state, reward, done, info = self._step(action)
+    def step(self, action):
+        # for i in range(self.action_repeat):
+        next_state, reward, done, info = self._step(action)
         self.time_step += 1
 
         done = False

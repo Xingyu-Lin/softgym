@@ -1,6 +1,7 @@
 import abc
 import numpy as np
 from gym.spaces import Box
+from softgym.utils.utils import rotation_2d_around_center, extend_along_center
 import pyflex
 
 
@@ -14,7 +15,7 @@ class ActionToolBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def step(self, action):
-        """ Step funciton to change the action space states """
+        """ Step funciton to change the action space states. Does not call pyflex.step() """
 
 
 class ParallelGripper(ActionToolBase):
@@ -51,8 +52,8 @@ class ParallelGripper(ActionToolBase):
         pos = pyflex.get_shape_states()  # Need to call this to update the shape collision
         pyflex.set_shape_states(pos)
 
-        space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1] * 2) * 0.1  # [dx, dy, dz, dtheta, dh - open/close gripper]
-        space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2) * 0.1
+        space_low = np.array([-0.1, -0.1, -0.1, -0.4, -0.2] * 2) * 0.2  # [dx, dy, dz, dtheta, dh - open/close gripper]
+        space_high = np.array([0.1, 0.1, 0.1, 0.4, 0.2] * 2) * 0.2
         self.action_space = Box(space_low, space_high, dtype=np.float32)
 
     def _get_centered_gripper_pos(self, center):
@@ -64,8 +65,8 @@ class ParallelGripper(ActionToolBase):
         diameter = 2 * self.sphere_radius
         return [center,
                 center + np.array([0., 0., -diameter]),
-                center + np.array([diameter, 0., 0.]),
-                center + np.array([diameter, 0., -diameter])]
+                center + np.array([diameter + 0.2, 0., 0.]),
+                center + np.array([diameter + 0.2, 0., -diameter])]
 
     def get_state(self):
         pass
@@ -81,5 +82,45 @@ class ParallelGripper(ActionToolBase):
         pyflex.set_shape_states(shape_state)
         pyflex.step()
 
+    @staticmethod
+    def _get_current_gripper_pos():
+        cur_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)
+        return cur_pos[:, :3]
+
+    @staticmethod
+    def _set_gripper_pos(gripper_pos):
+        shape_states = np.array(pyflex.get_shape_states()).reshape(-1, 14)
+        shape_states[:, 3:6] = shape_states[:, :3]
+        shape_states[:, :3] = gripper_pos
+        pyflex.set_shape_states(shape_states)
+
     def step(self, action):
-        pass
+        """ action = (translation, rotation, open/close gripper). First do transltation then rotation then gripper """
+        action = np.reshape(action, [-1, 5])
+        curr_gripper_pos = self._get_current_gripper_pos()
+        next_gripper_pos = curr_gripper_pos.copy()
+
+        for i in range(0, 2):
+            action_pos = action[i, 0:3]
+            action_rot = action[i, 3]
+            action_dist = action[i, 4]
+            curr_middle = np.mean(curr_gripper_pos[2 * i:2 * i + 2, :], axis=0)
+            next_middle = curr_middle + action_pos
+            next_gripper_pos[2 * i, :] = rotation_2d_around_center(curr_gripper_pos[2 * i, :], curr_middle, action_rot) + action_pos
+            next_gripper_pos[2 * i + 1, :] = rotation_2d_around_center(curr_gripper_pos[2 * i + 1, :], curr_middle, action_rot) + action_pos
+            next_gripper_pos[2 * i, :] = extend_along_center(next_gripper_pos[2 * i, :], next_middle, action_dist / 2., self.sphere_radius, 2 * self.sphere_radius)
+            next_gripper_pos[2 * i + 1, :] = extend_along_center(next_gripper_pos[2 * i + 1, :], next_middle, action_dist / 2., self.sphere_radius, 2 * self.sphere_radius)
+
+        next_gripper_pos[:, 1] = np.maximum(next_gripper_pos[:, 1], self.sphere_radius)
+        self._set_gripper_pos(next_gripper_pos)
+        # if not self._check_sphere_collision(next_gripper_pos):
+        #     self._set_gripper_pos(next_gripper_pos)
+
+    # def _check_sphere_collision(self, gripper_pos):
+    #     """ Check if different grippers are in collision """
+    #     for i in range(gripper_pos.shape[0]):
+    #         for j in range(i + 1, gripper_pos.shape[0]):
+    #             if np.linalg.norm(gripper_pos[i, :] - gripper_pos[j, :]) < 2 * self.sphere_radius + 1e-2:
+    #                 print('collilsion check failed: ', i, ' ', j)
+    #                 return False
+    #     return False
