@@ -5,10 +5,11 @@ import pickle
 import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
+from softgym.envs.action_space import ParallelGripper
 
 
 class ClothFlattenPointControlEnv(ClothEnv):
-    def __init__(self, observation_mode, action_mode, horizon=250, cached_init_state_path=None, **kwargs):
+    def __init__(self, observation_mode, action_mode, horizon=250, cached_init_state_path='cloth_flatten_init_states.pkl', **kwargs):
         super().__init__(config_file="ClothFlattenConfig.yaml", **kwargs)
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
@@ -20,25 +21,24 @@ class ClothFlattenPointControlEnv(ClothEnv):
 
         self.horizon = horizon
 
-        if observation_mode == 'key_point':  # TODO: add sphere position
-            if action_mode == 'key_point_pos':
-                self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles() * 3),
-                                             np.array([np.inf] * pyflex.get_n_particles() * 3), dtype=np.float32)
-            elif action_mode == 'sphere':
-                self.observation_space = Box(np.array([-np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)),
-                                             np.array([np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)), dtype=np.float32)
-        else:
-            raise NotImplementedError
-
         if action_mode.startswith('key_point'):
             space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
             space_high = np.array([3.9, 0.1, 0.1, 0.1] * 2)
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         elif action_mode.startswith('sphere'):
-            space_low = np.array([-0.1, -0.1, -0.1, -0.1, -0.1] * 2) * 0.1
-            space_high = np.array([0.1, 0.1, 0.1, 0.1, 0.1] * 2) * 0.1
+            self.action_tool = ParallelGripper(gripper_type='sphere', sphere_radius=0.1)
+            self.action_space = self.action_tool.action_space
 
-            self.action_space = Box(space_low, space_high, dtype=np.float32)
+        if observation_mode == 'key_point':  # TODO: add sphere position
+            if action_mode == 'key_point_pos':
+                self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles() * 3),
+                                             np.array([np.inf] * pyflex.get_n_particles() * 3), dtype=np.float32)
+            elif action_mode == 'sphere':
+                # TODO observation space should depend on the action_tool
+                self.observation_space = Box(np.array([-np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)),
+                                             np.array([np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)), dtype=np.float32)
+        else:
+            raise NotImplementedError
 
         self.storage_name = "test_flatten"
         self.video_height = 240
@@ -71,15 +71,22 @@ class ClothFlattenPointControlEnv(ClothEnv):
         max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
         init_states = []
+        center = np.array([0., 0., 0.])
+
+        # for i in range(1):
+        #     curr_pos = pyflex.get_positions()
+        #     pickpoint = 1000
+        #     center += 1
+        #     self.action_tool.reset(center)
+        # for _ in range(1000):
+        #     pyflex.step()
+        # exit()
         for _ in range(num_state):
             pickpoint = random.randint(0, num_particle)
             curr_pos = pyflex.get_positions()
-            curr_pos[pickpoint * 4 + 3] = 0 # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
+            curr_pos[pickpoint * 4 + 3] = 0  # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
             pickpoint_pos = curr_pos[pickpoint * 4: pickpoint * 4 + 3].copy()  # Pos of the pickup point is fixed to this point
             pyflex.set_positions(curr_pos)
-            # pos = pyflex.get_shape_states()
-            # pyflex.set_shape_states(pos)
-
             # Pick up the cloth and wait to stablize
             for _ in range(0, max_wait_step):
                 pyflex.step()
@@ -101,8 +108,11 @@ class ClothFlattenPointControlEnv(ClothEnv):
                 curr_vel = pyflex.get_velocities()
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
-            # if self.action_mode.startswith('sphere'):
-            #     super().add_spheres(pick_point=pickpoint)  # YF: should add sphere near the drop point
+
+            if self.action_mode.startswith('sphere'):
+                curr_pos = pyflex.get_positions()
+                self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
+
             init_states.append(self.get_state())
             self.set_state(original_state)
         if save_to_file:

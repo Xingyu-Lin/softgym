@@ -7,7 +7,6 @@ import yaml
 
 
 class ClothEnv(FlexEnv):
-
     def __init__(self, config_file, randomized=True, device_id=-1, render_mode='particle', **kwargs):
         self.config = FlexEnv._load_config(config_file)
         self.render_mode = render_mode
