@@ -58,37 +58,37 @@ class ClothEnv(FlexEnv):
 
         pyflex.set_scene(9, params, 0)
 
-    def add_spheres(self, sphere_radius=0.1, pick_point=0):
-        # initial position of the spheres are near the pick point of the cloth
-        random_particle_position = pyflex.get_positions().reshape((-1, 4))[pick_point]
-        init_x = random_particle_position[0]
-        init_y = 0.5
-        init_z = random_particle_position[2]
-
-        init_x += np.random.uniform(0, 0.1)
-        init_z += np.random.uniform(0, 0.1)
-
-        init_pos1 = [init_x, init_y, init_z]
-        init_pos2 = [init_x, init_y, init_z + 0.2]
-
-        grip1sphere1pos = init_pos1
-        grip1sphere2pos = init_pos1
-        grip2sphere1pos = init_pos2
-        grip2sphere2pos = init_pos2
-        grip1sphere1pos[0] = grip1sphere1pos[0] + 0.25
-        grip1sphere2pos[0] = grip1sphere2pos[0] - 0.25
-        grip2sphere1pos[0] = grip2sphere1pos[0] + 0.25
-        grip2sphere2pos[0] = grip2sphere2pos[0] - 0.25
-        pyflex.add_sphere(sphere_radius, grip1sphere1pos, [1, 0, 0, 0])
-        pyflex.add_sphere(sphere_radius, grip1sphere2pos, [1, 0, 0, 0])
-        pyflex.add_sphere(sphere_radius, grip2sphere1pos, [1, 0, 0, 0])
-        pyflex.add_sphere(sphere_radius, grip2sphere2pos, [1, 0, 0, 0])
-        self.prev_middle = np.array([init_pos1, init_pos2])
-        self.init_mid = self.prev_middle
-        # print("init prev_mid: {}".format(self.prev_middle))
-        self.prev_dist = np.array([0.0, 0.0])
-        self.init_dist = self.prev_dist
-        self.radii = sphere_radius
+    # def add_spheres(self, sphere_radius=0.1, pick_point=0):
+    #     # initial position of the spheres are near the pick point of the cloth
+    #     random_particle_position = pyflex.get_positions().reshape((-1, 4))[pick_point]
+    #     init_x = random_particle_position[0]
+    #     init_y = 0.5
+    #     init_z = random_particle_position[2]
+    #
+    #     init_x += np.random.uniform(0, 0.1)
+    #     init_z += np.random.uniform(0, 0.1)
+    #
+    #     init_pos1 = [init_x, init_y, init_z]
+    #     init_pos2 = [init_x, init_y, init_z + 0.2]
+    #
+    #     grip1sphere1pos = init_pos1
+    #     grip1sphere2pos = init_pos1
+    #     grip2sphere1pos = init_pos2
+    #     grip2sphere2pos = init_pos2
+    #     grip1sphere1pos[0] = grip1sphere1pos[0] + 0.25
+    #     grip1sphere2pos[0] = grip1sphere2pos[0] - 0.25
+    #     grip2sphere1pos[0] = grip2sphere1pos[0] + 0.25
+    #     grip2sphere2pos[0] = grip2sphere2pos[0] - 0.25
+    #     pyflex.add_sphere(sphere_radius, grip1sphere1pos, [1, 0, 0, 0])
+    #     pyflex.add_sphere(sphere_radius, grip1sphere2pos, [1, 0, 0, 0])
+    #     pyflex.add_sphere(sphere_radius, grip2sphere1pos, [1, 0, 0, 0])
+    #     pyflex.add_sphere(sphere_radius, grip2sphere2pos, [1, 0, 0, 0])
+    #     self.prev_middle = np.array([init_pos1, init_pos2])
+    #     self.init_mid = self.prev_middle
+    #     # print("init prev_mid: {}".format(self.prev_middle))
+    #     self.prev_dist = np.array([0.0, 0.0])
+    #     self.init_dist = self.prev_dist
+    #     self.radii = sphere_radius
 
     def addBlocks(self, radii=0.1, initPos1=[0.75, 0.25, -0.4], initPos2=[-0.75, 0.25, -0.2]):
         grip1sphere1pos = initPos1
@@ -155,41 +155,41 @@ class ClothEnv(FlexEnv):
     sphere manipulation function just in case
     """
 
-    def sphereStep(self, action, last_pos):
-        action = np.reshape(action, [-1, 5])
-        cur_pos = np.array(pyflex.get_shape_states())
-        cur_middle = np.zeros((2, 3))
-        for i in range(0, 2):
-            actionPos = action[i, 0:3]
-            actionRot = action[i, 3]
-            actionDist = action[i, 4]
-
-            new_rot = actionRot + self.prev_rot[i]
-            new_dist = actionDist + self.prev_dist[i]
-            # new_dist = min(new_dist, 0.6)
-            new_dist = max(new_dist, 0)  # 0.11)
-            last_pos = np.reshape(last_pos, [-1, 14])
-            cur_pos = np.reshape(cur_pos, [-1, 14])
-            # cur_middle = cur_pos[0][0:3] +  np.array([self.prev_dist[i]/2 * np.cos(new_rot), 0, self.prev_dist[i]/2 * np.sin(new_rot)])
-            # print("cur middle: {} prev_mid: {}".format(cur_middle, self.prev_middle))
-            cur_middle[i, :] = self.prev_middle[i, :] + actionPos
-            offset = np.array([new_dist / 2 * np.cos(new_rot), 0.0, new_dist / 2 * np.sin(new_rot)])
-            cur_pos[i * 2][0:3] = cur_middle[i, :] - offset
-            cur_pos[i * 2 + 1][0:3] = cur_middle[i, :] + offset
-            cur_pos[i * 2][3:6] = last_pos[i * 2][0:3]
-            cur_pos[i * 2 + 1][3:6] = last_pos[i * 2 + 1][0:3]
-
-            self.prev_rot[i] = new_rot
-            self.prev_dist[i] = new_dist
-        # print("prev dists: {}".format(self.prev_dist))
-        if self.checkSphereCollisions(cur_pos[0][0:3], cur_pos[1][0:3], cur_pos[2][0:3], cur_pos[3][0:3]):
-            pyflex.set_shape_states(cur_pos.flatten())
-            self.prev_middle = cur_middle
-            self.prev_middle[0, 1] = max(self.prev_middle[0, 1], 0.01)
-            self.prev_middle[1, 1] = max(self.prev_middle[1, 1], 0.01)
-        else:
-            self.prev_rot = self.prev_rot - action[:, 3]
-            self.prev_dist = self.prev_dist - action[:, 4]
+    # def sphereStep(self, action, last_pos):
+    #     action = np.reshape(action, [-1, 5])
+    #     cur_pos = np.array(pyflex.get_shape_states())
+    #     cur_middle = np.zeros((2, 3))
+    #     for i in range(0, 2):
+    #         actionPos = action[i, 0:3]
+    #         actionRot = action[i, 3]
+    #         actionDist = action[i, 4]
+    #
+    #         new_rot = actionRot + self.prev_rot[i]
+    #         new_dist = actionDist + self.prev_dist[i]
+    #         # new_dist = min(new_dist, 0.6)
+    #         new_dist = max(new_dist, 0)  # 0.11)
+    #         last_pos = np.reshape(last_pos, [-1, 14])
+    #         cur_pos = np.reshape(cur_pos, [-1, 14])
+    #         # cur_middle = cur_pos[0][0:3] +  np.array([self.prev_dist[i]/2 * np.cos(new_rot), 0, self.prev_dist[i]/2 * np.sin(new_rot)])
+    #         # print("cur middle: {} prev_mid: {}".format(cur_middle, self.prev_middle))
+    #         cur_middle[i, :] = self.prev_middle[i, :] + actionPos
+    #         offset = np.array([new_dist / 2 * np.cos(new_rot), 0.0, new_dist / 2 * np.sin(new_rot)])
+    #         cur_pos[i * 2][0:3] = cur_middle[i, :] - offset
+    #         cur_pos[i * 2 + 1][0:3] = cur_middle[i, :] + offset
+    #         cur_pos[i * 2][3:6] = last_pos[i * 2][0:3]
+    #         cur_pos[i * 2 + 1][3:6] = last_pos[i * 2 + 1][0:3]
+    #
+    #         self.prev_rot[i] = new_rot
+    #         self.prev_dist[i] = new_dist
+    #     # print("prev dists: {}".format(self.prev_dist))
+    #     if self.checkSphereCollisions(cur_pos[0][0:3], cur_pos[1][0:3], cur_pos[2][0:3], cur_pos[3][0:3]):
+    #         pyflex.set_shape_states(cur_pos.flatten())
+    #         self.prev_middle = cur_middle
+    #         self.prev_middle[0, 1] = max(self.prev_middle[0, 1], 0.01)
+    #         self.prev_middle[1, 1] = max(self.prev_middle[1, 1], 0.01)
+    #     else:
+    #         self.prev_rot = self.prev_rot - action[:, 3]
+    #         self.prev_dist = self.prev_dist - action[:, 4]
 
     def boxStep(self, action, last_pos):
         action = np.reshape(action, [-1, 5])
@@ -333,11 +333,3 @@ class ClothEnv(FlexEnv):
         self.prev_rot = state_dict['rot']
         self.force = state_dict['force']
         super().set_state(state_dict)
-
-    def checkSphereCollisions(self, sp1, sp2, sp3, sp4):
-        sp13dist = np.linalg.norm(sp1 - sp3)
-        sp14dist = np.linalg.norm(sp1 - sp4)
-        sp23dist = np.linalg.norm((sp2 - sp3))
-        sp24dist = np.linalg.norm(sp2 - sp4)
-
-        return sp13dist > self.radii and sp14dist > self.radii and sp23dist > self.radii and sp24dist > self.radii

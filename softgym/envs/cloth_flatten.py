@@ -62,26 +62,17 @@ class ClothFlattenPointControlEnv(ClothEnv):
             'height': self.camera_height
         }
 
-    def generate_init_state(self, num_state=1, save_to_file=False):
+    def generate_init_state(self, num_init_state=1, save_to_file=False):
         """ Generate initial states. Note: This will also change the current states! """
         # TODO Xingyu: Add options for generating initial states with different parameters. Currently only the pickpoint varies.
         # TODO additionally, can vary the height / number of pick point
         original_state = self.get_state()
         num_particle = original_state['particle_pos'].reshape((-1, 4)).shape[0]
         max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
+        stable_vel_threshold = 0.03  # Cloth stable when all particles' vel are smaller than this
         init_states = []
-        center = np.array([0., 0., 0.])
 
-        # for i in range(1):
-        #     curr_pos = pyflex.get_positions()
-        #     pickpoint = 1000
-        #     center += 1
-        #     self.action_tool.reset(center)
-        # for _ in range(1000):
-        #     pyflex.step()
-        # exit()
-        for _ in range(num_state):
+        for _ in range(num_init_state):
             pickpoint = random.randint(0, num_particle)
             curr_pos = pyflex.get_positions()
             curr_pos[pickpoint * 4 + 3] = 0  # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
@@ -109,12 +100,13 @@ class ClothFlattenPointControlEnv(ClothEnv):
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
 
-            if self.action_mode.startswith('sphere'):
+            if self.action_mode.startswith('sphere'):  # Add gripper
                 curr_pos = pyflex.get_positions()
                 self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
 
             init_states.append(self.get_state())
             self.set_state(original_state)
+
         if save_to_file:
             cur_dir = osp.dirname(osp.abspath(__file__))
             with open(osp.join(cur_dir, 'cloth_flatten_init_states.pkl'), 'wb') as handle:
@@ -158,11 +150,9 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.video_width = 320
 
     def _step(self, action):
-        # print("stepping")
         if self.action_mode.startswith('key_point'):
             valid_idxs = np.array([0, 63, 31 * 64, 32 * 64 - 1])
             last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
-            des_dir = self.storage_name
             pyflex.step()
 
             cur_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
@@ -183,14 +173,10 @@ class ClothFlattenPointControlEnv(ClothEnv):
             pyflex.set_positions(cur_pos.flatten())
             pyflex.set_velocities(vels.flatten())
         else:
-            # print("sphering")
-            last_pos = pyflex.get_shape_states()
-            pyflex.step()
-            super().sphereStep(action, last_pos)
-        # print("computing reward")
-        obs = self._get_obs()
-        reward = self.compute_reward()
-        return obs, reward, False, {}
+            for _ in range(self.action_repeat):
+                self.action_tool.step(action)
+                pyflex.step()
+        return self._get_obs(), self.compute_reward(), False, {}
 
     @staticmethod
     def _get_current_covered_area():
