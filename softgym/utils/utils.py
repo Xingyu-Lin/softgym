@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 
 
 def rotation_2d_around_center(pt, center, theta):
@@ -23,3 +24,4 @@ def extend_along_center(pt, center, add_dist, min_dist, max_dist):
     pt = pt * (new_dist / curr_dist)
     pt = pt + center
     return pt
+
