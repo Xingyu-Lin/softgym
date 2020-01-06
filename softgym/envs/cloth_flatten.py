@@ -5,14 +5,24 @@ import pickle
 import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
-from softgym.envs.action_space import ParallelGripper
+from softgym.envs.action_space import ParallelGripper, Picker
 
 
 class ClothFlattenPointControlEnv(ClothEnv):
-    def __init__(self, observation_mode, action_mode, horizon=250, cached_init_state_path='cloth_flatten_init_states.pkl', **kwargs):
+    def __init__(self, observation_mode, action_mode, horizon=250, cached_init_state_path='cloth_flatten_init_states.pkl',
+                 num_picker=2, **kwargs):
+        """
+
+        :param observation_mode:
+        :param action_mode:
+        :param horizon:
+        :param cached_init_state_path:
+        :param num_picker: Number of pickers if the aciton_mode is picker
+        :param kwargs:
+        """
         super().__init__(config_file="ClothFlattenConfig.yaml", **kwargs)
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere']
+        assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere', 'picker']
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
@@ -26,7 +36,10 @@ class ClothFlattenPointControlEnv(ClothEnv):
             space_high = np.array([3.9, 0.1, 0.1, 0.1] * 2)
             self.action_space = Box(space_low, space_high, dtype=np.float32)
         elif action_mode.startswith('sphere'):
-            self.action_tool = ParallelGripper(gripper_type='sphere', sphere_radius=0.1)
+            self.action_tool = ParallelGripper(gripper_type='sphere')
+            self.action_space = self.action_tool.action_space
+        elif action_mode == 'picker':
+            self.action_tool = Picker(num_picker)
             self.action_space = self.action_tool.action_space
 
         if observation_mode == 'key_point':  # TODO: add sphere position
@@ -37,6 +50,9 @@ class ClothFlattenPointControlEnv(ClothEnv):
                 # TODO observation space should depend on the action_tool
                 self.observation_space = Box(np.array([-np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)),
                                              np.array([np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)), dtype=np.float32)
+            elif action_mode == 'picker':
+                self.observation_space = Box(np.array([-np.inf] * (pyflex.get_n_particles() * 3 + num_picker * 3)),
+                                             np.array([np.inf] * (pyflex.get_n_particles() * 3 + num_picker * 3)), dtype=np.float32)
         else:
             raise NotImplementedError
 
@@ -127,8 +143,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
         self.set_state(self.cached_init_state[cached_id])
         self.prev_covered_area = self._get_current_covered_area()
 
-        # if self.action_mode == 'sphere':
-        #     self.sphere_reset()
+        if hasattr(self, 'action_tool'):
+            self.action_tool.reset([0, 1, 0])
         pyflex.step()
         return self._get_obs()
 
@@ -174,8 +190,8 @@ class ClothFlattenPointControlEnv(ClothEnv):
             pyflex.set_velocities(vels.flatten())
         else:
             for _ in range(self.action_repeat):
-                self.action_tool.step(action)
                 pyflex.step()
+                self.action_tool.step(action)
         return self._get_obs(), self.compute_reward(), False, {}
 
     @staticmethod
