@@ -3,7 +3,7 @@ import numpy as np
 from gym.spaces import Box
 from softgym.utils.utils import rotation_2d_around_center, extend_along_center
 import pyflex
-import scipy
+import scipy.spatial
 
 
 class ActionToolBase(metaclass=abc.ABCMeta):

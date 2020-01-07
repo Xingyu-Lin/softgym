@@ -33,7 +33,7 @@ def make_gif(video_path, video_name, video_idx_st, video_idx_en, video_height, v
             os.remove(f)
 
 
-def save_numpy_as_gif(array, filename, fps=10, scale=1.0):
+def save_numpy_as_gif(array, filename, fps=20, scale=1.0):
     """Creates a gif given a stack of images using moviepy
     Notes
     -----

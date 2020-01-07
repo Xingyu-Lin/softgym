@@ -1,4 +1,4 @@
-from softgym.envs.cloth_flatten_multitask import ClothFlattenPointControlGoalConditionedEnv
+from softgym.envs.cloth_flatten_multitask import ClothFlattenGoalConditionedEnv
 import numpy as np
 from matplotlib import pyplot as plt
 import softgym, gym

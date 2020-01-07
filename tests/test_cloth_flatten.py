@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import pyflex
-from softgym.envs.cloth_flatten import ClothFlattenPointControlEnv
+from softgym.envs.cloth_flatten import ClothFlattenEnv
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
@@ -21,7 +21,7 @@ elif args.policy == 'cem':
     import copy, pickle
 
     traj_path = args.cem_traj_path
-    env = ClothFlattenPointControlEnv(
+    env = ClothFlattenEnv(
             observation_mode='key_point',
             action_mode='sphere',
             render=True,
