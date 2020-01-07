@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import pyflex
-from softgym.envs.cloth_flatten import ClothFlattenPointControlEnv
+from softgym.envs.cloth_flatten import ClothFlattenEnv
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 
 def test_picker():
     num_picker = 3
-    env = ClothFlattenPointControlEnv(
+    env = ClothFlattenEnv(
         observation_mode='key_point',
         action_mode='picker',
         num_picker=num_picker,
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # test_picker()
 
     num_picker = 3
-    env = ClothFlattenPointControlEnv(
+    env = ClothFlattenEnv(
         observation_mode='key_point',
         action_mode='picker',
         num_picker=num_picker,

@@ -3,17 +3,17 @@ import random
 import os
 import os.path as osp
 import pyflex
-from softgym.envs.cloth_flatten import ClothFlattenPointControlEnv
+from softgym.envs.cloth_flatten import ClothFlattenEnv
 from softgym.core.multitask_env import MultitaskEnv
 import numpy as np
 
-class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, MultitaskEnv):
+class ClothFlattenGoalConditionedEnv(ClothFlattenEnv, MultitaskEnv):
     def __init__(self, observation_mode, action_mode, horizon=100, headless=False, render=True, render_mode='particle'):
         '''
         Wrap cloth flatten to be goal conditioned
         '''
         self.state_dict_goal = None
-        ClothFlattenPointControlEnv.__init__(
+        ClothFlattenEnv.__init__(
             self,
             observation_mode=observation_mode,
             action_mode=action_mode,
@@ -128,7 +128,7 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
         # if self.state_dict_goal is None: # NOTE: only suits for skewfit algorithm, because we are not actually sampling from this
         # true underlying env, but only sample from the vae latents. This reduces overhead to sample a goal each time for now.
         self.state_dict_goal = self.sample_goal()        
-        ClothFlattenPointControlEnv.reset(self, dropPoint, xdim, ydim) # TODO: Jake's reset does not return observations
+        ClothFlattenEnv.reset(self, dropPoint, xdim, ydim) # TODO: Jake's reset does not return observations
 
         return self._get_obs()
     
@@ -213,7 +213,7 @@ class ClothFlattenPointControlGoalConditionedEnv(ClothFlattenPointControlEnv, Mu
         '''
         return the observation based on the current flex state.
         '''
-        obs = ClothFlattenPointControlEnv._get_obs(self)
+        obs = ClothFlattenEnv._get_obs(self)
 
         obs = obs.reshape((1, -1))
         new_obs = dict( # TODO: jake should include gripper position, and cloth particle velocity into the state space.

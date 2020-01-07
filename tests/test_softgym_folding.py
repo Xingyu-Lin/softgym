@@ -1,7 +1,7 @@
 import gym
 import softgym
 import numpy as np
-from softgym.envs.cloth_fold import ClothFoldPointControlEnv
+from softgym.envs.cloth_fold import ClothFoldEnv
 if __name__ == '__main__':
     # env = ClothFoldPointControlEnv(observation_mode='key_point', action_mode='key_point')
     softgym.register_flex_envs()
