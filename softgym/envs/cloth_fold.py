@@ -11,6 +11,7 @@ class ClothFoldEnv(ClothEnv):
         self.fold_group_a = self.fold_group_b = None
         self.init_pos, self.prev_dist = None, None
         super().__init__(config_file="ClothFoldConfig.yaml", **kwargs)
+
         self.cached_init_state = []
 
         if cached_init_state_path.startswith('/'):
@@ -22,6 +23,8 @@ class ClothFoldEnv(ClothEnv):
         if osp.exists(self.cached_init_state_path):
             self._load_init_state()
             print('ClothFoldEnv: {} cached initial states loaded'.format(len(cached_init_state_path)))
+
+        self.action_tool.update_picker_boundary(picker_low=(-1.5, 0.0, -0.8), picker_high=(1.5, 0.7, 1.5))
 
 
 
@@ -38,9 +41,8 @@ class ClothFoldEnv(ClothEnv):
             'height': self.camera_height
         }
 
-    def _load_init_state(self, init_state_path):
-        cur_dir = osp.dirname(osp.abspath(__file__))
-        with open(osp.join(cur_dir, init_state_path), "rb") as handle:
+    def _load_init_state(self):
+        with open(self.cached_init_state_path, "rb") as handle:
             self.cached_init_state = pickle.load(handle)
 
     def generate_init_state(self, num_init_state=1, save_to_file=False):
@@ -60,11 +62,6 @@ class ClothFoldEnv(ClothEnv):
                 curr_vel = pyflex.get_velocities()
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
-
-            if self.action_mode == 'sphere' or self.action_mode == 'picker':
-                curr_pos = pyflex.get_positions()
-                center_point = num_particle // 2
-                self.action_tool.reset(curr_pos[center_point * 4:center_point * 4 + 3] + [0., 0.2, 0.])
 
             init_states.append(self.get_state())
             self.set_state(original_state)
@@ -114,7 +111,7 @@ class ClothFoldEnv(ClothEnv):
         self.set_state(self.cached_init_state[cached_id])
 
         if hasattr(self, 'action_tool'):
-            self.action_tool.reset([0, 1, 0])
+            self.action_tool.reset([-1.2, 0.3, 0.2])
         pyflex.step()
         self.init_pos = pyflex.get_positions().reshape((-1, 4))[:, :3]
         pos_a = self.init_pos[self.fold_group_a, :]
@@ -154,6 +151,7 @@ class ClothFoldEnv(ClothEnv):
             for _ in range(self.action_repeat):
                 pyflex.step()
                 self.action_tool.step(action)
+            pyflex.step()
         pos = pyflex.get_positions()
         reward = self.compute_reward(pos, set_prev_dist=True)
         obs = self._get_obs()
