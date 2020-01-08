@@ -4,7 +4,7 @@ from gym import error, spaces
 from gym.utils import seeding
 import numpy as np
 import gym
-from softgym.utils.make_gif import make_gif
+from softgym.utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp
 
@@ -17,13 +17,14 @@ except ImportError as e:
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=4):
         self.camera_width, self.camera_height = camera_width, camera_height
-        pyflex.init(headless, render, camera_width, camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
+        pyflex.init(headless, render, camera_width,
+                    camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.record_video, self.video_path, self.video_name = False, None, None
 
         self.set_scene()
         # self.set_video_recording_params()
         self.get_pyflex_camera_params()
-        
+
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
             'video.frames_per_second': int(np.round(1.0 / self.dt))
@@ -32,11 +33,11 @@ class FlexEnv(gym.Env):
         if device_id == -1 and 'gpu_id' in os.environ:
             device_id = int(os.environ['gpu_id'])
         self.device_id = device_id
-        
+
         self.horizon = horizon
         self.time_step = 0
         self.action_repeat = action_repeat
-        print("flex env init done!")
+        self.recording = False
 
     @staticmethod
     def _load_config(config_name):
@@ -72,10 +73,6 @@ class FlexEnv(gym.Env):
             img = pyflex.render()
             width, height = self.get_camera_size(camera_name='default_camera')
             img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
-            # import matplotlib.pyplot as plt
-            # plt.figure()
-            # plt.imshow(img[:, :, :4])
-            # plt.show()
             return img
         elif mode == 'human':
             raise NotImplementedError
@@ -124,54 +121,35 @@ class FlexEnv(gym.Env):
     def set_colors(self, colors):
         pyflex.set_groups(colors)
 
-    # TODO Xingyu: use the new function for making videos
-    # def start_record(self, video_path, video_name):
-    #     """
-    #     Set the flags for recording video. In the step function, set the flag and path when calling pyflex_step.
-    #     :param video_path: Directory for saving the images and the final video
-    #     :param video_name: Name of the video, should be *.gif
-    #     :return:
-    #     """
-    #     assert video_name[-4:] == '.gif'
-    #     self.record_video = True
-    #     self.video_path = video_path
-    #     self.video_name = video_name
-    #     self.video_idx_st = 1
-    #     self.video_idx_en = self.horizon
-    #
-    # def end_record(self):
-    #     """
-    #     Stop recording the video and compile all the rendered images into a gif and clean up the images.
-    #     Each environment should set the start and end frame of the recorded video (legacy of pyflex) and also the
-    #         height and width of the rendered video
-    #     TODO: Directly use the render function once it is made faster
-    #
-    #     """
-    #     self.record_video = False
-    #     assert hasattr(self, 'video_idx_st')
-    #     assert hasattr(self, 'video_idx_en')
-    #     assert hasattr(self, 'video_height')
-    #     assert hasattr(self, 'video_width')
-    #     make_gif(self.video_path, self.video_name, self.video_idx_st, self.video_idx_en,
-    #              self.video_height, self.video_width)
-    #
-    # def set_video_recording_params(self):
-    #     """
-    #     Set the following parameters if video recording is needed:
-    #         video_height, video_width
-    #     """
-    #     self.video_height = None
-    #     self.video_width = None
+    def start_record(self):
+        self.video_frames = []
+        self.recording = True
+
+    def end_record(self, video_path, **kwargs):
+        if not self.recording:
+            print('function end_record: Error! Not recording video')
+        self.recording = False
+        save_numpy_as_gif(np.array(self.video_frames), video_path, **kwargs)
+        del self.video_frames
+
+    def reset(self):
+        self._reset()
+        if self.recording:
+            self.video_frames.append(self.render(mode='rgb_array'))
 
     def step(self, action):
-        # for i in range(self.action_repeat):
         next_state, reward, done, info = self._step(action)
+        if self.recording:
+            self.video_frames.append(self.render(mode='rgb_array'))
         self.time_step += 1
 
         done = False
         if self.time_step == self.horizon:
             done = True
         return next_state, reward, done, info
+
+    def _reset(self):
+        raise NotImplementedError
 
     def _step(self, action):
         raise NotImplementedError

@@ -52,7 +52,7 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             raise NotImplementedError
         
-    def reset(self): # TODO: add task variation
+    def _reset(self): # TODO: add task variation
         '''
         reset to environment to the initial state.
         return the initial observation.

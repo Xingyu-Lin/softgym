@@ -121,7 +121,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         dist = np.linalg.norm(achieved_goals - desired_goals, axis=1)
         return -dist   
         
-    def reset(self):
+    def _reset(self):
         '''
         reset to environment to the initial state.
         return the initial observation.
