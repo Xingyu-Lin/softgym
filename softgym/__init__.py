@@ -14,21 +14,6 @@ def register_flex_envs():
     LOGGER.info("Registering all softgym environments")
 
     register(
-        id='PourWaterPosControl-planet-v0',
-        entry_point='softgym.envs.pour_water:PourWaterPosControlEnv',
-        kwargs={
-            'observation_mode': 'cam_img',
-            'action_mode': 'direct',
-            'render_mode': 'fluid',
-            'deterministic': True,
-            'render': True,
-            'headless': False,
-            'horizon': 75,
-            'action_repeat': 32,
-        }
-    )
-
-    register(
         id='PourWaterPosControl-v0',
         entry_point='softgym.envs.pour_water:PourWaterPosControlEnv',
         kwargs={
