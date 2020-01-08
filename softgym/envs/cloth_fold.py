@@ -98,7 +98,7 @@ class ClothFoldEnv(ClothEnv):
         colors[self.fold_group_b[rand_index]] = rand_colors
         self.set_colors(colors)
 
-    def reset(self):
+    def _reset(self):
         """ Right now only use one initial state"""
         if len(self.cached_init_state) == 0:
             state_dicts = self.generate_init_state(1)

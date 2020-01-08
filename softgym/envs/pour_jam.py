@@ -47,7 +47,7 @@ class PourJamPosControlEnv(FluidEnv):
         self.init_flex_state = self.get_state()
         
 
-    def reset(self):
+    def _reset(self):
         '''
         reset to environment to the initial state.
         return the initial observation.

@@ -88,7 +88,7 @@ class ClothFlattenEnv(ClothEnv):
         with open(osp.join(cur_dir, init_state_path), "rb") as handle:
             self.cached_init_state = pickle.load(handle)
 
-    def reset(self):
+    def _reset(self):
         """ Right now only use one initial state"""
         if len(self.cached_init_state) == 0:
             state_dicts = self.generate_init_state(1)
