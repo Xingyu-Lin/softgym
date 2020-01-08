@@ -149,6 +149,9 @@ class Picker(ActionToolBase):
         space_high = np.array([0.1, 0.1, 0.1, 5] * self.num_picker) * 0.2
         self.action_space = Box(space_low, space_high, dtype=np.float32)
 
+    def update_picker_boundary(self, picker_low, picker_high):
+        self.picker_low, self.picker_high = picker_low, picker_high
+
     def _apply_picker_boundary(self, picker_pos):
         clipped_picker_pos = picker_pos.copy()
         for i in range(3):
@@ -227,6 +230,6 @@ class Picker(ActionToolBase):
 
                 if self.picked_particles[i] is not None:
                     # TODO The position of the particle needs to be updated such that it is close to the picker particle
-                    new_particle_pos[self.picked_particles[i], :3] = particle_pos[self.picked_particles[i], :3] + action[i, :3]
+                    new_particle_pos[self.picked_particles[i], :3] = particle_pos[self.picked_particles[i], :3] + new_picker_pos[i, :] - picker_pos[i, :]
                     new_particle_pos[self.picked_particles[i], 3] = 0  # Set the mass to infinity
         self._set_pos(new_picker_pos, new_particle_pos)
