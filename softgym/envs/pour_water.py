@@ -361,13 +361,7 @@ class PourWaterPosControlEnv(FluidEnv):
             pyflex.step()
 
         self.inner_step += 1
-
-        # get reward and new observation for the agent.
-        obs = self._get_obs()
-        reward = self.compute_reward(action, obs)
-
-        done = True if self.time_step == self.horizon else False  # NOTE: done is actually implemented in FlexEnv.
-        return obs, reward, done, {}
+        return
 
     def create_glass(self, glass_dis_x, glass_dis_z, height, border):
         """

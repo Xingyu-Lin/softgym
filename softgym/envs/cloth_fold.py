@@ -120,19 +120,19 @@ class ClothFoldEnv(ClothEnv):
 
         return self._get_obs()
 
-    def compute_reward(self, pos, set_prev_dist=False):
+    def compute_reward(self):
         """
         The particles are splitted into two groups. The reward will be the minus average eculidean distance between each
         particle in group a and the crresponding particle in group b
         :param pos: nx4 matrix (x, y, z, inv_mass)
         """
+        pos = pyflex.get_positions()
         pos = pos.reshape((-1, 4))[:, :3]
         pos_group_a = pos[self.fold_group_a]
         pos_group_b_init = self.init_pos[self.fold_group_b]
         curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b_init, axis=1))
         reward = self.prev_dist - curr_dist
-        if set_prev_dist:
-            self.prev_dist = curr_dist
+        self.prev_dist = curr_dist
         return reward
 
     def _step(self, action):
@@ -148,11 +148,5 @@ class ClothFoldEnv(ClothEnv):
             cur_pos[self.action_key_point_idx, :] = last_pos[self.action_key_point_idx] + action
             pyflex.set_positions(cur_pos.flatten())
         else:
-            for _ in range(self.action_repeat):
-                pyflex.step()
-                self.action_tool.step(action)
             pyflex.step()
-        pos = pyflex.get_positions()
-        reward = self.compute_reward(pos, set_prev_dist=True)
-        obs = self._get_obs()
-        return obs, reward, False, {}
+            self.action_tool.step(action)

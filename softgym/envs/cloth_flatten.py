@@ -134,12 +134,9 @@ class ClothFlattenEnv(ClothEnv):
             pyflex.set_positions(cur_pos.flatten())
             pyflex.set_velocities(vels.flatten())
         else:
-            for _ in range(self.action_repeat):
-                pyflex.step()
-                self.action_tool.step(action)
-        pos = pyflex.get_positions()
-        reward = self.compute_reward(pos)
-        return self._get_obs(), reward, False, {}
+            pyflex.step()
+            self.action_tool.step(action)
+        return
 
     @staticmethod
     def _get_current_covered_area(pos):
@@ -162,7 +159,8 @@ class ClothFlattenEnv(ClothEnv):
         grid[slotted_y.astype(int), slotted_x.astype(int)] = 1
         return np.sum(grid) * span[0] * span[1]
 
-    def compute_reward(self, particle_pos):
+    def compute_reward(self):
+        particle_pos = pyflex.get_positions()
         curr_covered_area = self._get_current_covered_area(particle_pos)
         r = curr_covered_area - self.prev_covered_area
         self.prev_covered_area = curr_covered_area

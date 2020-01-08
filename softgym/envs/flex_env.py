@@ -139,7 +139,12 @@ class FlexEnv(gym.Env):
             self.video_frames.append(self.render(mode='rgb_array'))
 
     def step(self, action):
-        next_state, reward, done, info = self._step(action)
+        for _ in range(self.action_repeat):
+            self._step(action)
+        obs = self._get_obs()
+        reward = self.compute_reward()
+
+
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
         self.time_step += 1
@@ -147,7 +152,13 @@ class FlexEnv(gym.Env):
         done = False
         if self.time_step == self.horizon:
             done = True
-        return next_state, reward, done, info
+        return obs, reward, done, {}
+
+    def compute_reward(self):
+        raise NotImplementedError
+
+    def _get_obs(self):
+        raise NotImplementedError
 
     def _reset(self):
         raise NotImplementedError
