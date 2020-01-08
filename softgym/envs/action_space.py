@@ -122,7 +122,8 @@ class ParallelGripper(ActionToolBase):
 
 
 class Picker(ActionToolBase):
-    def __init__(self, num_picker=1, picker_radius=0.03, init_pos=(0., -0.1, 0.), picker_threshold=0.05):
+    def __init__(self, num_picker=1, picker_radius=0.03, init_pos=(0., -0.1, 0.), picker_threshold=0.05,
+                 picker_low=(-0.5, 0., -0.5), picker_high=(1.5, 0.7, 1.5)):
         """
 
         :param gripper_type:
@@ -135,6 +136,7 @@ class Picker(ActionToolBase):
         self.picker_threshold = picker_threshold
         self.num_picker = num_picker
         self.picked_particles = [None] * self.num_picker
+        self.picker_low, self.picker_high = picker_low, picker_high
 
         init_picker_poses = self._get_centered_picker_pos(init_pos)
         for picker_pos in init_picker_poses:
@@ -146,6 +148,12 @@ class Picker(ActionToolBase):
         space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.2  # [dx, dy, dz, [0, 1]]
         space_high = np.array([0.1, 0.1, 0.1, 5] * self.num_picker) * 0.2
         self.action_space = Box(space_low, space_high, dtype=np.float32)
+
+    def _apply_picker_boundary(self, picker_pos):
+        clipped_picker_pos = picker_pos.copy()
+        for i in range(3):
+            clipped_picker_pos[i] = np.clip(picker_pos[i], self.picker_low[i] + self.picker_radius, self.picker_high[i] - self.picker_radius)
+        return clipped_picker_pos
 
     def _get_centered_picker_pos(self, center):
         r = np.sqrt(self.num_picker - 1) * self.picker_radius * 2.
@@ -188,7 +196,8 @@ class Picker(ActionToolBase):
         3. Update picked particle pos
         """
         action = np.reshape(action, [-1, 4])
-        pick_flag = np.random.random(self.num_picker) < action[:, 3]
+        # pick_flag = np.random.random(self.num_picker) < action[:, 3]
+        pick_flag = action[:, 3] > 0.5
         picker_pos, particle_pos = self._get_pos()
         new_picker_pos, new_particle_pos = picker_pos.copy(), particle_pos.copy()
 
@@ -197,9 +206,10 @@ class Picker(ActionToolBase):
             if not pick_flag[i] and self.picked_particles[i] is not None:
                 new_particle_pos[self.picked_particles[i], 3] = 1.  # Revert the mass
                 self.picked_particles[i] = None
+
         # Pick new particles and update the mass and the positions
         for i in range(self.num_picker):
-            new_picker_pos[i, :] = picker_pos[i, :] + action[i, :3]
+            new_picker_pos[i, :] = self._apply_picker_boundary(picker_pos[i, :] + action[i, :3])
             if pick_flag[i]:
                 if self.picked_particles[i] is None:  # No particle is currently picked and thus need to select a particle to pick
                     dists = scipy.spatial.distance.cdist(picker_pos[i].reshape((-1, 3)), particle_pos[:, :3].reshape((-1, 3)))
