@@ -48,8 +48,11 @@ class PourWaterPosControlEnv(FluidEnv):
             raise NotImplementedError
 
         if action_mode == 'direct':
-            self.action_direct_dim = 3  # control the (x, y) corrdinate of the floor center, and theta its rotation angel.
-            self.action_space = Box(np.array([-0.05] * self.action_direct_dim), np.array([0.05] * self.action_direct_dim), dtype=np.float32)
+            self.action_direct_dim = 3
+            # control the (x, y) corrdinate of the floor center, and theta its rotation angel.
+            action_low = np.array([-0.01, -0.01, -0.01])
+            action_high = np.array([0.01, 0.01, 0.01])
+            self.action_space = Box(action_low, action_high, dtype=np.float32)
         else:
             raise NotImplementedError
 
@@ -135,9 +138,10 @@ class PourWaterPosControlEnv(FluidEnv):
                 'height': self.camera_height
             }
         else:
+            assert self.camera_name =='cam_2d'
             self.camera_params = {
-                'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
-                'angle': np.array([0., -65 / 180. * np.pi, 0]),
+                'pos': np.array([x_center+0.5, .7 , z + 4.]),
+                'angle': np.array([0, 0, 0.]),
                 'width': self.camera_width,
                 'height': self.camera_height
             }
