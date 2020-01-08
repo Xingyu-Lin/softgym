@@ -15,8 +15,9 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=4):
-        self.camera_width, self.camera_height = camera_width, camera_height
+    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=8,
+                 camera_name='default_camera'):
+        self.camera_width, self.camera_height, self.camera_name = camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width,
                     camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.record_video, self.video_path, self.video_name = False, None, None
@@ -153,6 +154,9 @@ class FlexEnv(gym.Env):
 
     def _step(self, action):
         raise NotImplementedError
+
+    def _seed(self):
+        pass
 
     def get_image(self, width=960, height=720):
         '''
