@@ -2,7 +2,7 @@ import copy
 import pickle
 import numpy as np
 import scipy.stats as stats
-
+from tqdm import tqdm
 
 class CEMOptimizer(object):
     def __init__(self, cost_function, solution_dim, max_iters, population_size, num_elites,
@@ -88,7 +88,8 @@ class CEMPolicy(object):
         action_trajs = action_trajs.reshape([-1, self.plan_horizon, self.action_dim])
         n = action_trajs.shape[0]
         costs = []
-        for i in range(n):
+        print('evalute trajectories...')
+        for i in tqdm(range(n)):
             env.set_state(cur_state)
             ret = 0
             for j in range(self.plan_horizon):
