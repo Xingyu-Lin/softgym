@@ -24,7 +24,7 @@ class ClothFlattenEnv(ClothEnv):
             self.cached_init_state_path = osp.join(cur_dir, cached_init_state_path)
         if osp.exists(self.cached_init_state_path):
             self._load_init_state()
-            print('ClothFlattenEnv: {} cached initial states loaded'.format(len(cached_init_state_path)))
+            print('ClothFlattenEnv: {} cached initial states loaded'.format(len(self.cached_init_state)))
 
     def initialize_camera(self):
         '''
