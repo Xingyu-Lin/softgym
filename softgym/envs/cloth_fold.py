@@ -12,8 +12,16 @@ class ClothFoldEnv(ClothEnv):
         self.init_pos, self.prev_dist = None, None
         super().__init__(config_file="ClothFoldConfig.yaml", **kwargs)
         self.cached_init_state = []
-        if cached_init_state_path is not None:
-            self._load_init_state(cached_init_state_path)
+
+        if cached_init_state_path.startswith('/'):
+            self.cached_init_state_path = cached_init_state_path
+        else:
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            self.cached_init_state_path = osp.join(cur_dir, cached_init_state_path)
+
+        if osp.exists(self.cached_init_state_path):
+            self._load_init_state()
+            print('ClothFoldEnv: {} cached initial states loaded'.format(len(cached_init_state_path)))
 
 
 
@@ -62,8 +70,7 @@ class ClothFoldEnv(ClothEnv):
             self.set_state(original_state)
 
         if save_to_file:
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            with open(osp.join(cur_dir, 'cloth_fold_init_states.pkl'), 'wb') as handle:
+            with open(self.cached_init_state_path, 'wb') as handle:
                 pickle.dump(init_states, handle, protocol=pickle.HIGHEST_PROTOCOL)
         return init_states
 

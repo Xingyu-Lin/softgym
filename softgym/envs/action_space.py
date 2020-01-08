@@ -122,7 +122,7 @@ class ParallelGripper(ActionToolBase):
 
 
 class Picker(ActionToolBase):
-    def __init__(self, num_picker=1, picker_radius=0.03, init_pos=(0., 0.5, 0.), picker_threshold=0.05):
+    def __init__(self, num_picker=1, picker_radius=0.03, init_pos=(0., -0.1, 0.), picker_threshold=0.05):
         """
 
         :param gripper_type:

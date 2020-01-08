@@ -16,8 +16,15 @@ class ClothFlattenEnv(ClothEnv):
         super().__init__(config_file="ClothFlattenConfig.yaml", **kwargs)
         self.prev_covered_area = None  # Should not be used until initialized
         self.cached_init_state = []
-        if cached_init_state_path is not None:
-            self._load_init_state(cached_init_state_path)
+
+        if cached_init_state_path.startswith('/'):
+            self.cached_init_state_path = cached_init_state_path
+        else:
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            self.cached_init_state_path = osp.join(cur_dir, cached_init_state_path)
+        if osp.exists(self.cached_init_state_path):
+            self._load_init_state()
+            print('ClothFlattenEnv: {} cached initial states loaded'.format(len(cached_init_state_path)))
 
     def initialize_camera(self):
         '''
@@ -32,17 +39,17 @@ class ClothFlattenEnv(ClothEnv):
             'height': self.camera_height
         }
 
-    def generate_init_state(self, num_init_state=1, save_to_file=False):
+    def generate_init_state(self, num_init_state=1, save_to_file=True):
         """ Generate initial states. Note: This will also change the current states! """
         # TODO Xingyu: Add options for generating initial states with different parameters. Currently only the pickpoint varies.
         # TODO additionally, can vary the height / number of pick point
         original_state = self.get_state()
         num_particle = original_state['particle_pos'].reshape((-1, 4)).shape[0]
         max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.03  # Cloth stable when all particles' vel are smaller than this
+        stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
         init_states = []
 
-        for _ in range(num_init_state):
+        for i in range(num_init_state):
             pickpoint = random.randint(0, num_particle)
             curr_pos = pyflex.get_positions()
             curr_pos[pickpoint * 4 + 3] = 0  # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
@@ -78,14 +85,12 @@ class ClothFlattenEnv(ClothEnv):
             self.set_state(original_state)
 
         if save_to_file:
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            with open(osp.join(cur_dir, 'cloth_flatten_init_states.pkl'), 'wb') as handle:
+            with open(self.cached_init_state_path, 'wb') as handle:
                 pickle.dump(init_states, handle, protocol=pickle.HIGHEST_PROTOCOL)
         return init_states
 
-    def _load_init_state(self, init_state_path):
-        cur_dir = osp.dirname(osp.abspath(__file__))
-        with open(osp.join(cur_dir, init_state_path), "rb") as handle:
+    def _load_init_state(self):
+        with open(self.cached_init_state_path, "rb") as handle:
             self.cached_init_state = pickle.load(handle)
 
     def _reset(self):
