@@ -134,9 +134,10 @@ class FlexEnv(gym.Env):
         del self.video_frames
 
     def reset(self):
-        self._reset()
+        obs = self._reset()
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
+        return obs
 
     def step(self, action):
         for _ in range(self.action_repeat):
