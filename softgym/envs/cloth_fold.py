@@ -26,8 +26,6 @@ class ClothFoldEnv(ClothEnv):
 
         self.action_tool.update_picker_boundary(picker_low=(-1.5, 0.0, -0.8), picker_high=(1.5, 0.7, 1.5))
 
-
-
     def initialize_camera(self):
         '''
         set the camera width, height, ition and angle.
