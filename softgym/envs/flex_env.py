@@ -16,7 +16,7 @@ except ImportError as e:
 
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=8,
-                 camera_name='default_camera'):
+                 camera_name='default_camera', delta_reward=True):
         self.camera_width, self.camera_height, self.camera_name = camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width,
                     camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
@@ -39,6 +39,8 @@ class FlexEnv(gym.Env):
         self.time_step = 0
         self.action_repeat = action_repeat
         self.recording = False
+        self.prev_reward = None
+        self.delta_reward = delta_reward
 
     @staticmethod
     def _load_config(config_name):
@@ -134,6 +136,7 @@ class FlexEnv(gym.Env):
         del self.video_frames
 
     def reset(self):
+        self.prev_reward = 0.
         obs = self._reset()
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
@@ -143,8 +146,7 @@ class FlexEnv(gym.Env):
         for _ in range(self.action_repeat):
             self._step(action)
         obs = self._get_obs()
-        reward = self.compute_reward()
-
+        reward = self.compute_reward(set_prev_reward=True)
 
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
@@ -153,9 +155,11 @@ class FlexEnv(gym.Env):
         done = False
         if self.time_step == self.horizon:
             done = True
+
         return obs, reward, done, {}
 
-    def compute_reward(self):
+    def compute_reward(self, set_prev_reward=False):
+        """ set_prev_reward is used for calculate delta rewards"""
         raise NotImplementedError
 
     def _get_obs(self):
