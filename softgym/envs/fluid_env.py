@@ -57,6 +57,7 @@ class FluidEnv(FlexEnv):
             self.x_center = self.rand_float(-0.2, 0.2) 
         else:
             self.x_center = 0
+            
         self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/1.*fluid_radis 
         self.fluid_params['y'] = fluid_radis/1.5 + 0.05
         self.fluid_params['z'] = 0. - (self.fluid_params['dim_z'])/1.2*fluid_radis 
@@ -88,11 +89,7 @@ class FluidEnv(FlexEnv):
         
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
-        # print("right before set_scene")
         pyflex.set_scene(11, scene_params, 0)
-        print("right after pyflex set scene: num particles are: ", pyflex.get_n_particles())
-        # print("right after set_scene")
-        # print("hahahah")
 
     def rand_float(self, lo, hi):
         return np.random.rand() * (hi - lo) + lo
