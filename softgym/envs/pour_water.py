@@ -282,12 +282,11 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             raise NotImplementedError
 
-    def compute_reward(self, obs=None, action=None):
-        '''
-        the reward is computed as the fraction of water in the poured glass.
-        TODO: do we want to consider the increase of the fraction?
+    def compute_reward(self, obs=None, action=None, set_prev_reward=False):
+        """
+        The reward is computed as the fraction of water in the poured glass.
         NOTE: the obs and action params are made here to be compatiable with the MultiGoal env wrapper.
-        '''
+        """
         state_dic = self.get_state()
         water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
         water_num = len(water_state)
@@ -317,7 +316,11 @@ class PourWaterPosControlEnv(FluidEnv):
 
         # if self.debug:
         # print("water num: ", water_num, "in glass num: ", in_poured_glass)
-        return float(in_poured_glass) / water_num  # + 0.1 * float(in_pouring_glass) / water_num
+        reward = float(in_poured_glass) / water_num  # + 0.1 * float(in_pouring_glass) / water_num
+        if set_prev_reward:
+            delta_reward = reward - self.prev_reward
+            self.prev_reward = reward
+        return delta_reward if self.delta_reward else reward
 
     def compute_in_pouring_glass_water(self):
         state_dic = self.get_state()
@@ -332,8 +335,6 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         action: np.ndarray of dim 1x3, (x, y, theta). (x, y) specifies the floor center coordinate, and theta 
             specifies the rotation.
-        
-        return: gym-like (next_obs, reward, done, info)
         '''
 
         # make action as increasement

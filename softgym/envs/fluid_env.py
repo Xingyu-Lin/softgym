@@ -13,7 +13,6 @@ class FluidEnv(FlexEnv):
         self.deterministic = deterministic
         assert render_mode in ['particle', 'fluid']
         self.render_mode = 0 if render_mode == 'particle' else 1
-        print(self.render_mode)
         super().__init__(**kwargs)
 
 
