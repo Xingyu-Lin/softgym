@@ -35,15 +35,16 @@ if args.policy == 'heuristic':
 
     # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
     # this is for test that we can correctly vary the target glass position and shape
-    for i in range(5):
-        env.reset()
-        print("after reset!")
-        img = env.get_image(960, 720)
-        plt.imshow(img)
-        plt.show()
+    # for i in range(5):
+    #     env.reset()
+    #     print("after reset!")
+    #     img = env.get_image(960, 720)
+    #     plt.imshow(img)
+    #     plt.show()
 
     # below is testing a naive heuristic policy
     print("total timestep: ", timestep)
+    env.reset()
     for i in range(timestep):
         if i < stable_part:
             action = np.array([0, 0, 0])
@@ -74,6 +75,8 @@ if args.policy == 'heuristic':
 
             print("done!")
             break
+
+    env.close()
 
 elif args.policy == 'cem':
     from algorithms.cem import CEMPolicy

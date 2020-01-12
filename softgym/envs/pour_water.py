@@ -12,18 +12,17 @@ import random
 from shapely.geometry import Polygon, LineString
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import yaml
+import yaml, pickle
 import os.path as osp
 
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, **kwargs):
+    def __init__(self, observation_mode, action_mode, cached_init_state_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
         observation_mode: "cam_img" or "full_state"
         action_mode: "direct"
-        horizon: environment horizon
         
         TODO: add more description of the task.
         TODO: allow parameter configuring of the scence.
@@ -33,6 +32,7 @@ class PourWaterPosControlEnv(FluidEnv):
         self.action_mode = action_mode
         self.wall_num = 5  # number of glass walls. floor/left/right/front/back
         self.inner_step = 0  # count action repetation
+        self.cached_init_state = [] # init states stored on disk
 
         super().__init__(**kwargs)
         assert observation_mode in ['cam_img', 'full_state']
@@ -49,32 +49,38 @@ class PourWaterPosControlEnv(FluidEnv):
 
         if action_mode == 'direct':
             self.action_direct_dim = 3
-            # control the (x, y) corrdinate of the floor center, and theta its rotation angel.
+            # control the (x, y) corrdinate of the floor center, and theta its rotation angle.
             action_low = np.array([-0.01, -0.01, -0.01])
             action_high = np.array([0.01, 0.01, 0.01])
             self.action_space = Box(action_low, action_high, dtype=np.float32)
         else:
             raise NotImplementedError
 
-    def _reset(self):  # TODO: add task variation
-        '''
-        reset to environment to the initial state.
-        return the initial observation.
+        if cached_init_state_path.startswith('/'):
+            self.cached_init_state_path = cached_init_state_path
+        else:
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            self.cached_init_state_path = osp.join(cur_dir, cached_init_state_path)
+        if osp.exists(self.cached_init_state_path):
+            self._load_init_state()
+            print('PourWaterEnv: {} cached initial states loaded'.format(len(self.cached_init_state)))
+    
+    def _load_init_state(self):
+        print(self.cached_init_state_path)
+        with open(self.cached_init_state_path, "rb") as handle:
+            self.cached_init_state = pickle.load(handle)
+        
 
-        TODO: thoughts on task variation:
-        * in set_scene, only sets water and control cup (should separate the sampling parameters func for control cup and target cup)
-        * move everything with target cup here. i.e., at each reset,
-        (1) sample different target cup shape and position parameters
-        (2) use self.create_glass to create a new target glass 
-        (3) use self.init_glass_state to move the new target glass to the ground
-        '''
-        self.time_step = 0
-        self.inner_step = 0
+    def generate_init_state(self, num=1):
+        """
+        generate a batch of init states by varing the target cup position and size.
+        """
 
-        if not self.deterministic:
-            print("reset target cup distance and shape!")
+        init_states = []
+        for i in range(num):
+            print("generating {} init state by resetting target cup distance and shape!".format(i + 1))
             pyflex.pop_box(self.wall_num)  # pop out the last target glass
-            self.sample_poured_glass_params(self.config["glass"])
+            self.sample_poured_glass_params() # no configure sent in, sample height, border, distance, dis_x, dis_z
 
             # create poured glass with the newly sampled parameters
             poured_glass = self.create_glass(self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
@@ -86,15 +92,42 @@ class PourWaterPosControlEnv(FluidEnv):
 
             # move poured glass to be at ground
             self.poured_glass_states = self.init_glass_state(self.x_center + self.glass_distance, 0,
-                                                             self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
+                                                                self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
 
             self.set_shape_states(self.glass_states, self.poured_glass_states)
             new_init_state_dic = {}
             new_init_state_dic['shape_pos'] = pyflex.get_shape_states()
             new_init_state_dic['poured_glass_states'] = self.poured_glass_states
-            self.init_flex_state.update(new_init_state_dic)
+            tmp_dict = copy.deepcopy(self.init_flex_state)
+            tmp_dict.update(new_init_state_dic)
+            init_states.append(tmp_dict)
 
         self.set_state(self.init_flex_state)
+        return init_states
+        
+
+    def _reset(self):  # TODO: add task variation
+        '''
+        reset to environment to the initial state.
+        return the initial observation.
+        '''
+
+        self.time_step = 0 ### TODO: maybe move this to the flex_env reset?
+        self.inner_step = 0
+
+        if len(self.cached_init_state) == 0:
+            self.cached_init_state.append(self.init_flex_state) # this is set when the set_scene function is called
+            state_dicts = self.generate_init_state(0) # currently using the default init state generated by set scene
+            self.cached_init_state += state_dicts
+            with open(self.cached_init_state_path, 'wb') as handle:
+                pickle.dump(self.cached_init_state, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        if not self.deterministic:
+            cached_id = np.random.randint(len(self.cached_init_state))
+        else:
+            cached_id = 0
+
+        self.set_state(self.cached_init_state[cached_id])
         return self._get_obs()
 
     def get_state(self):
@@ -146,7 +179,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 'height': self.camera_height
             }
 
-    def sample_poured_glass_params(self, config):
+    def sample_poured_glass_params(self, config=None):
         params = {}
         params['glass_distance_range'] = 0.5, 0.8
         params['poured_border_range'] = 0.015, 0.025
@@ -178,7 +211,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
         self.glass_params.update(params)
 
-    def sample_pouring_glass_params(self, config):
+    def sample_pouring_glass_params(self, config=None):
         params = {}
         params['border_range'] = 0.015, 0.025
         params['height_range'] = 0.5, 0.7
