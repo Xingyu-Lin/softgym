@@ -104,15 +104,16 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         return np.array([self.glass_params['poured_glass_x_center'], self.glass_params['poured_border'], 0, 0,
                          self.glass_params['poured_glass_dis_x'], self.glass_params['poured_glass_dis_z'], self.glass_params['poured_height']])
 
-    def compute_reward(self, action, obs, info=None):
+    def compute_reward(self, action, obs, set_prev_reward=False, info=None):
         '''
         reward is the l2 distance between the goal state and the current state.
         '''
+        # print("obs is", obs)
         r = -np.linalg.norm(
             obs['state_achieved_goal'] - obs['state_desired_goal'])
         return r
 
-    def compute_rewards(self, action, obs, info=None):
+    def compute_rewards(self, action, obs, set_prev_reward=False, info=None):
         '''
         rewards in state space.
         '''
@@ -214,6 +215,8 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         '''
         return the observation based on the current flex state.
         '''
+
+        # print("inside pour water multitask _get_obs")
         particle_pos = pyflex.get_positions().reshape((-1, self.dim_position))
         particle_vel = pyflex.get_velocities().reshape((-1, self.dim_velocity))
         particle_state = np.concatenate((particle_pos, particle_vel), axis=1).reshape((1, -1))
