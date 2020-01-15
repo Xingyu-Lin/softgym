@@ -31,7 +31,8 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         TODO: allow parameter configuring of the scence.
         '''
 
-        self.state_dict_goal = None
+        self.dict_goals = None
+        self.goals = None
 
         assert observation_mode in ['full_state']
         assert action_mode in ['direct']
@@ -57,7 +58,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         currently there is only one goal that can be sampled, where all the water particles are directly set to be in the
         target cup.
         '''
-        assert batch_size == 1, "for a fixed task configuration, we can only sample 1 target goal!"
+        # assert batch_size == 1, "currently we only support sample one goal at a time!"
 
         # make the wate being like a cubic
         fluid_pos = np.ones((self.fluid_num, self.dim_position))
@@ -81,23 +82,27 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
 
         # the full goal state includes the control cup and target cup's state
         # make control cup hang near the target cup and rotates towards the target cup, simulating a real pouring.
-        pouring_glass_x = lower_x - self.glass_params['poured_height']
-        pouring_glass_z = 0.
-        pouring_glass_y = 2.2 * self.glass_params['poured_height']
-        pouring_theta = 0.6 * np.pi
 
-        pouring_glass_goal = np.array([pouring_glass_x, pouring_glass_y, pouring_glass_z, pouring_theta, self.glass_params['glass_dis_x'],
-                                       self.glass_params['glass_dis_z'], self.glass_params['height']])
-        poured_glass_goal = self.get_poured_glass_state()
-        glass_goal = np.concatenate((pouring_glass_goal.reshape(1, -1), poured_glass_goal.reshape(1, -1)), axis=1)
+        goals = np.zeros((batch_size, (self.dim_position + self.dim_velocity) * self.fluid_num + 7 * 2))
+        for idx in range(batch_size):
+            pouring_glass_x = lower_x -  (0.9 + np.random.rand() * 0.2) * self.glass_params['glass_distance']
+            pouring_glass_z = 0.
+            pouring_glass_y = (1.5 + np.random.rand() * 0.4) * self.glass_params['poured_height']
+            pouring_theta = 0.8 + np.random.rand() * 0.4 * np.pi
 
-        goal = np.concatenate((fluid_goal, glass_goal), axis=1)
+            pouring_glass_goal = np.array([pouring_glass_x, pouring_glass_y, pouring_glass_z, pouring_theta, self.glass_params['glass_dis_x'],
+                                        self.glass_params['glass_dis_z'], self.glass_params['height']])
+            poured_glass_goal = self.get_poured_glass_state()
+            glass_goal = np.concatenate((pouring_glass_goal.reshape(1, -1), poured_glass_goal.reshape(1, -1)), axis=1)
 
-        self.state_goal = goal
+            goal = np.concatenate((fluid_goal, glass_goal), axis=1)
+            goals[idx] = goal
+
+        self.goals = goals
 
         return {
-            'desired_goal': goal,
-            'state_desired_goal': goal,
+            'desired_goal': goals,
+            'state_desired_goal': goals,
         }
 
     def get_poured_glass_state(self):
@@ -129,8 +134,15 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         '''
         # NOTE: only suits for skewfit algorithm, because we are not actually sampling from this
         # true underlying env, but only sample from the vae latents. This reduces overhead to sample a goal each time for now.
-        if self.state_dict_goal is None:
-            self.state_dict_goal = self.sample_goal()
+        if self.goals is None:
+            self.dict_goals = self.sample_goals(20)
+
+        goal_idx = np.random.randint(len(self.goals))
+        self.dict_goal = {
+            "desired_goal": self.dict_goals["desired_goal"][goal_idx], 
+            "state_desired_goal": self.dict_goals["state_desired_goal"][goal_idx]
+        } 
+        self.state_goal = self.goals[goal_idx] # the real goal we want, np array
 
         PourWaterPosControlEnv._reset(self)
         return self._get_obs()
@@ -186,13 +198,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         self.state_goal = state_goal
 
     def get_goal(self):
-        # print("get goal is called!")
-        # print("self.state_goal: ", self.state_goal)
-        # return {
-        #     'desired_goal': self.state_goal,
-        #     'state_desired_goal': self.state_goal,
-        # }
-        return self.state_dict_goal
+        return self.dict_goal
 
     def initialize_camera(self, make_multi_world_happy=None):
         '''
