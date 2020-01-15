@@ -20,11 +20,16 @@ if args.policy == 'heuristic':
     print("env make done")
 
     # test that we have sampled a correct goal and that we have implemented the right set_to_goal
+    # also to test we correctly constructed different goals 
+    for i in range(2):
+        env.reset()
+        env.set_to_goal(env.get_goal())
+        img = env.get_image(960, 720)
+        plt.imshow(img)
+        plt.show()
+    
+    # exit()
     env.reset()
-    # env.set_to_goal(env.get_goal())
-    # img = env.get_image(960, 720)
-    # plt.imshow(img)
-    # plt.show()
 
     timestep = env.horizon
     move_part = 15
