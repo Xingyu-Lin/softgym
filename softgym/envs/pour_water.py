@@ -32,8 +32,8 @@ class PourWaterPosControlEnv(FluidEnv):
         self.action_mode = action_mode
         self.wall_num = 5  # number of glass walls. floor/left/right/front/back
         self.inner_step = 0  # count action repetation
-        
-        self.cached_init_state = [] # init states stored on disk
+
+        self.cached_init_state = []  # init states stored on disk
         if cached_init_state_path.startswith('/'):
             self.cached_init_state_path = cached_init_state_path
         else:
@@ -65,13 +65,10 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             raise NotImplementedError
 
-       
-    
     def _load_init_state(self):
         print(self.cached_init_state_path)
         with open(self.cached_init_state_path, "rb") as handle:
             self.cached_init_state = pickle.load(handle)
-        
 
     def generate_init_state(self, num=1):
         """
@@ -82,7 +79,7 @@ class PourWaterPosControlEnv(FluidEnv):
         for i in range(num):
             print("generating {} init state by resetting target cup distance and shape!".format(i + 1))
             pyflex.pop_box(self.wall_num)  # pop out the last target glass
-            self.sample_poured_glass_params() # no configure sent in, sample height, border, distance, dis_x, dis_z
+            self.sample_poured_glass_params()  # no configure sent in, sample height, border, distance, dis_x, dis_z
 
             # create poured glass with the newly sampled parameters
             poured_glass = self.create_glass(self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
@@ -94,7 +91,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
             # move poured glass to be at ground
             self.poured_glass_states = self.init_glass_state(self.x_center + self.glass_distance, 0,
-                                            self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
+                                                             self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
 
             self.set_shape_states(self.glass_states, self.poured_glass_states)
             # pyflex.step()
@@ -104,22 +101,21 @@ class PourWaterPosControlEnv(FluidEnv):
             init_states.append(copy.deepcopy(self.get_state()))
 
         return init_states
-        
 
-    def _reset(self): 
+    def _reset(self):
         '''
         reset to environment to the initial state.
         return the initial observation.
         '''
 
-        self.time_step = 0 ### TODO: maybe move this to the flex_env reset?
+        self.time_step = 0  ### TODO: maybe move this to the flex_env reset?
         self.inner_step = 0
 
         self.init_flex_state = copy.deepcopy(self.get_state())
 
         if len(self.cached_init_state) == 0:
-            self.cached_init_state.append(self.init_flex_state) # this is set when the set_scene function is called
-            state_dicts = self.generate_init_state(10) 
+            self.cached_init_state.append(self.init_flex_state)  # this is set when the set_scene function is called
+            state_dicts = self.generate_init_state(10)
             self.cached_init_state += state_dicts
             with open(self.cached_init_state_path, 'wb') as handle:
                 pickle.dump(self.cached_init_state, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -127,8 +123,8 @@ class PourWaterPosControlEnv(FluidEnv):
         if not self.deterministic:
             cached_id = np.random.randint(len(self.cached_init_state))
         else:
-            cached_id = 0 # currently using the config file specified init state
-
+            cached_id = 0  # currently using the config file specified init state
+        print('Pour water env: reset to cached state with id ', cached_id)
         self.set_state(self.cached_init_state[cached_id])
         return self._get_obs()
 
@@ -164,9 +160,9 @@ class PourWaterPosControlEnv(FluidEnv):
             center = poured_glass[i][1]
             quat = poured_glass[i][2]
             pyflex.add_box(halfEdge, center, quat)
-        
+
         _ = self.init_glass_state(self.x_center + self.glass_distance, 0,
-                                self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
+                                  self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
 
         pyflex.set_shape_states(state_dic["shape_pos"])
         pyflex.set_positions(state_dic["particle_pos"])
@@ -194,9 +190,9 @@ class PourWaterPosControlEnv(FluidEnv):
                 'height': self.camera_height
             }
         else:
-            assert self.camera_name =='cam_2d'
+            assert self.camera_name == 'cam_2d'
             self.camera_params = {
-                'pos': np.array([x_center+0.5, .7 , z + 4.]),
+                'pos': np.array([x_center + 0.5, .7, z + 4.]),
                 'angle': np.array([0, 0, 0.]),
                 'width': self.camera_width,
                 'height': self.camera_height
@@ -212,7 +208,7 @@ class PourWaterPosControlEnv(FluidEnv):
                                                    params['glass_distance_range'][1])  # distance between the pouring glass and the poured glass
         params['poured_border'] = self.rand_float(params['poured_border_range'][0], params['poured_border_range'][1])
         params['poured_height'] = self.rand_float(params['poured_height_range'][0], params['poured_height_range'][1])
-        
+
         if self.deterministic and config is not None:
             for k in config:
                 params[k] = config[k]
@@ -242,7 +238,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
         params['border'] = self.rand_float(params['border_range'][0], params['border_range'][1])  # the thickness of the glass wall.
         params['height'] = self.rand_float(params['height_range'][0], params['height_range'][1])  # the height of the glass.
-        
+
         if self.deterministic and config is not None:
             for k in config:
                 params[k] = config[k]
@@ -314,7 +310,7 @@ class PourWaterPosControlEnv(FluidEnv):
         self.glass_rotation = 0
 
         # if no cached init state is loaded, give some time for water to stablize 
-        if len(self.cached_init_state) == 0: 
+        if len(self.cached_init_state) == 0:
             print("stablize water!")
             for i in range(150):
                 pyflex.step()
