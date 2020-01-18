@@ -14,7 +14,7 @@ args = args.parse_args()
 
 if args.policy == 'heuristic':
     env = PourWaterPosControlEnv(observation_mode='cam_img', horizon=75, render=True, headless=False,
-                                 action_mode='direct', deterministic=True, render_mode='fluid', camera_name='cam_2d')
+                                 action_mode='direct', deterministic=False, render_mode='fluid')
     # softgym.register_flex_envs()
     # env = gym.make('PourWaterPosControl-v0')
     # env.close()
@@ -30,7 +30,7 @@ if args.policy == 'heuristic':
     v = 0.13
     y = 0
     dt = 0.1
-    x = env.glass_floor_centerx
+    x = 0
     total_rotate = 0.28 * np.pi
 
     # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
@@ -44,37 +44,38 @@ if args.policy == 'heuristic':
 
     # below is testing a naive heuristic policy
     print("total timestep: ", timestep)
-    env.reset()
-    for i in range(timestep):
-        if i < stable_part:
-            action = np.array([0, 0, 0])
+    for _ in range(10):
+        env.reset()
+        for i in range(5):
+            if i < stable_part:
+                action = np.array([0, 0, 0])
 
-        elif stable_part <= i < move_part + stable_part:
-            y = v * dt
-            action = np.array([0, y, 0.])
+            elif stable_part <= i < move_part + stable_part:
+                y = v * dt
+                action = np.array([0, y, 0.])
 
-        elif i > move_part + stable_part and i < timestep - 30:
-            theta = 1 / float(timestep - move_part - stable_part) * total_rotate
-            action = np.array([0, 0, theta])
+            elif i > move_part + stable_part and i < timestep - 30:
+                theta = 1 / float(timestep - move_part - stable_part) * total_rotate
+                action = np.array([0, 0, theta])
 
-        else:
-            action = np.array([0, 0, 0])
+            else:
+                action = np.array([0, 0, 0])
 
-        obs, reward, done, _ = env.step(action)
+            obs, reward, done, _ = env.step(action)
 
-        # if i  == 250:
-        # from matplotlib import pyplot as plt
-        # import cv2
-        # img = env.get_image(48, 48)
-        # cv2.imshow('test_img', img)
-        # cv2.waitKey(0)
+            # if i  == 250:
+            # from matplotlib import pyplot as plt
+            # import cv2
+            # img = env.get_image(48, 48)
+            # cv2.imshow('test_img', img)
+            # cv2.waitKey(0)
 
-        print("step {} reward {}".format(i, reward))
-        if done:
-            # env.end_record()
+            print("step {} reward {}".format(i, reward))
+            if done:
+                # env.end_record()
 
-            print("done!")
-            break
+                print("done!")
+                break
 
     env.close()
 

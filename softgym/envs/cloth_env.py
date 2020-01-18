@@ -119,3 +119,6 @@ class ClothEnv(FlexEnv):
     #
     # def set_state(self, state_dict):
     #     super().set_state(state_dict)
+
+    def _get_info(self):
+        return {}

@@ -686,7 +686,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     g_windStrength = 1.0f;
 
     g_blur = 1.0f;
-    g_fluidColor = Vec4(0.1f, 0.4f, 0.8f, 1.0f);
+    g_fluidColor = Vec4(0.1f, 0.4f, 0.8f, 1.0f); // we can change fluid color here
     g_meshColor = Vec3(0.9f, 0.9f, 0.9f);
     g_drawEllipsoids = false;
     g_drawPoints = true;
@@ -3630,6 +3630,21 @@ void pyflex_set_shape_states(py::array_t<float> states) {
 
     pyflex_UnmapShapeBuffers(g_buffers);
 }
+
+// void pyflex_add_fluid_particle_grid(py::array_t<float> params) {
+//     auto buf = params.request();
+//     auto ptr = (float*) buf.ptr;
+
+//     Vec3 lower = Vec3(ptr[0], ptr[1], ptr[2]); 
+//     int dimx = int(ptr[3]);
+//     int dimy = int(ptr[4]);
+//     int dimz = int(ptr[5]);
+//     float radius = ptr[6];
+//     Vec3 velocity = Vec3(0.0); // Vec3(ptr[7], ptr[8], ptr[9]);
+//     float invMass = ptr[10];
+//     float rigidStiffness = ptr[12];
+//     int phase, float jitter=0.005f
+// }
 
 py::array_t<float> pyflex_get_sceneParams() {
     if (g_scene == 5) {

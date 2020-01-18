@@ -172,6 +172,7 @@ class FlexEnv(gym.Env):
         self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
 
         self.prev_reward = 0.
+        self.time_step = 0 
         obs = self._reset()
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
@@ -182,6 +183,7 @@ class FlexEnv(gym.Env):
             self._step(action)
         obs = self._get_obs()
         reward = self.compute_reward(action, obs, set_prev_reward=True)
+        info = self._get_info()
 
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
@@ -191,13 +193,16 @@ class FlexEnv(gym.Env):
         if self.time_step == self.horizon:
             done = True
 
-        return obs, reward, done, {}
+        return obs, reward, done, info
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ set_prev_reward is used for calculate delta rewards"""
         raise NotImplementedError
 
     def _get_obs(self):
+        raise NotImplementedError
+
+    def _get_info(self):
         raise NotImplementedError
 
     def _reset(self):
@@ -212,13 +217,15 @@ class FlexEnv(gym.Env):
     def get_image(self, width=960, height=720):
         '''
         use pyflex.render to get a rendered image.
+        this is in support for the multitask env.
         '''
-        raise DeprecationWarning
-        img = pyflex.render()
-        img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
-        img = img.astype(np.uint8)
-        img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
-        return img
+        # raise DeprecationWarning
+        # img = pyflex.render()
+        # img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
+        # img = img.astype(np.uint8)
+        # img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
+        # return img
+        return self.render(mode='rgb_array')
 
     def close(self):
         pyflex.clean()
