@@ -89,7 +89,7 @@ void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius, 
 				if (rigid)
 					g_buffers->rigidIndices.push_back(int(g_buffers->positions.size()));
 
-				Vec3 position = lower + Vec3(float(x), float(y), float(z))*radius + RandomUnitVector()*jitter;
+				Vec3 position = lower + Vec3(float(x), float(y), float(z))*radius; //+ RandomUnitVector()*jitter;
 
 				g_buffers->positions.push_back(Vec4(position.x, position.y, position.z, invMass));
 				g_buffers->velocities.push_back(velocity);

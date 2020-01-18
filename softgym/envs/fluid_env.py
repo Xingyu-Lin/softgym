@@ -6,72 +6,40 @@ from softgym.envs.flex_env import FlexEnv
 
 class FluidEnv(FlexEnv):
 
-    def __init__(self, deterministic=False, render_mode='particle', **kwargs):
+    def __init__(self, render_mode='particle', **kwargs):
         self.dim_shape_state = 14  # dimension of a shape object in Flex
         self.dim_position = 4
         self.dim_velocity = 3
         self.debug = False
-        self.deterministic = deterministic
         assert render_mode in ['particle', 'fluid']
         self.render_mode = 0 if render_mode == 'particle' else 1
         super().__init__(**kwargs)
 
-    def sample_fluid_params(self, fluid_param_dic=None):
+    def sample_fluid_params(self, fluid_param_dic):
         '''
         sample params for the fluid.
         '''
-        params = {}
-        params['radius_range'] = [0.09, 0.11]  # 1.0
-        params['rest_dis_coef_range'] = [0.4, 0.6]  # 0.55
-        params['cohension_range'] = [0.015, 0.025]  # large, like mud. // 0.02f;
-        params['viscosity_range'] = [1.5, 2.5]  # //2.0f;
-        params['surfaceTension_range'] = [0., 0.1]  # 0.0
-        params['adhesion_range'] = [0., 0.002]  # how fluid adhead to shape. do not set to too large! # 0.0
-        params['vorticityConfinement_range'] = [39.99, 40.01]  # // 40.0f;
-        params['solidPressure_range'] = [0., 0.01]  # //0.f;
-
-        params['radius'] = self.rand_float(params['radius_range'][0], params['radius_range'][1])
-        params['rest_dis_coef'] = self.rand_float(params['rest_dis_coef_range'][0], params['rest_dis_coef_range'][1])
-        params['cohesion'] = self.rand_float(params['cohension_range'][0], params['cohension_range'][1])
-        params['viscosity'] = self.rand_float(params['viscosity_range'][0], params['viscosity_range'][1])
-        params['surfaceTension'] = self.rand_float(params['surfaceTension_range'][0], params['surfaceTension_range'][1])
-        params['adhesion'] = self.rand_float(params['adhesion_range'][0], params['adhesion_range'][1])
-        params['vorticityConfinement'] = self.rand_float(params['vorticityConfinement_range'][0], params['vorticityConfinement_range'][1])
-        params['solidpressure'] = self.rand_float(params['solidPressure_range'][0], params['solidPressure_range'][1])
-
-        self.fluid_params = params
-
-        # num of particles in x,y,z-axis
-        self.fluid_params['dim_x_range'] = 4, 6
-        self.fluid_params['dim_y_range'] = 16, 20
-        self.fluid_params['dim_z_range'] = 4, 6
-
-        self.fluid_params['dim_x'] = self.rand_int(self.fluid_params['dim_x_range'][0], self.fluid_params['dim_x_range'][1])
-        self.fluid_params['dim_y'] = self.rand_int(self.fluid_params['dim_y_range'][0], self.fluid_params['dim_y_range'][1])
-        self.fluid_params['dim_z'] = self.rand_int(self.fluid_params['dim_z_range'][0], self.fluid_params['dim_z_range'][1])
+        params = fluid_param_dic
+        self.fluid_params = fluid_param_dic
 
         # center of the glass floor. lower corner of the water fluid grid along x,y,z-axis. 
         fluid_radis = params['radius'] * params['rest_dis_coef']
-        if not self.deterministic:
-            self.x_center = self.rand_float(-0.2, 0.2)
-        else:
-            self.x_center = 0
+        self.x_center = 0 
+            
+        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-3)/1.*fluid_radis  + 0.1
+        self.fluid_params['y'] = fluid_radis/2 + 0.05
+        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z'] - 2)*fluid_radis / 1.5
 
-        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x'] - 1) / 1. * fluid_radis
-        self.fluid_params['y'] = fluid_radis / 1.5 + 0.05
-        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z']) / 1.2 * fluid_radis
+        print(self.fluid_params['x'])
+        print(self.fluid_params['y'])
+        print(self.fluid_params['z'])
 
-        # overwrite the parameters speicified by user
-        if self.deterministic:
-            for k in fluid_param_dic:
-                self.fluid_params[k] = fluid_param_dic[k]
-
-        return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'],
-                         params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'],
-                         self.fluid_params['x'], self.fluid_params['y'], self.fluid_params['z'],
-                         self.fluid_params['dim_x'], self.fluid_params['dim_y'], self.fluid_params['dim_z']])
-
-    def set_scene(self, fluid_param_dic=None):
+        return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'], 
+            params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'], 
+            self.fluid_params['x'], self.fluid_params['y'], self.fluid_params['z'], 
+            self.fluid_params['dim_x'], self.fluid_params['dim_y'], self.fluid_params['dim_z']])
+            
+    def set_scene(self, fluid_param_dic, states=None):
         '''
         child envs can pass in specific fluid params through fluid param dic.
         '''
@@ -80,11 +48,13 @@ class FluidEnv(FlexEnv):
 
         # set camera parameters. 
         self.initialize_camera()
-        camera_params = np.array([*self.camera_params['pos'], *self.camera_params['angle'], self.camera_width, self.camera_height, self.render_mode])
+        camera_params = np.array([*self.camera_params[self.camera_name]['pos'], 
+            *self.camera_params[self.camera_name]['angle'], self.camera_width, self.camera_height, self.render_mode])
 
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
         pyflex.set_scene(11, scene_params, 0)
+        self.particle_num = pyflex.get_n_particles()
 
     def rand_float(self, lo, hi):
         return np.random.rand() * (hi - lo) + lo
@@ -115,3 +85,8 @@ class FluidEnv(FlexEnv):
         """
         self.video_height = 240
         self.video_width = 320
+
+    def _get_info(self):
+        return {}
+
+
