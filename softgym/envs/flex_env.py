@@ -20,7 +20,6 @@ except ImportError as e:
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720,
                  action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True):
-
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
         self.record_video, self.video_path, self.video_name = False, None, None
@@ -42,10 +41,9 @@ class FlexEnv(gym.Env):
         self.delta_reward = delta_reward
         self.deterministic = deterministic
         self.current_config = None
-        self.cached_states_path = None
+        self.cached_states_path, self.cached_configs, self.cached_init_states
 
-    @staticmethod
-    def get_cached_configs_and_states(cached_states_path):
+    def get_cached_configs_and_states(self, cached_states_path):
         """
         If the path exists, load from it. Should be a list of (config, states)
         :param cached_states_path:
@@ -54,10 +52,12 @@ class FlexEnv(gym.Env):
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
             cached_states_path = osp.join(cur_dir, cached_states_path)
+        if not osp.exits(cached_states_path):
+            return False
         with open(cached_states_path, "rb") as handle:
-            cached_configs, cached_init_states = pickle.load(handle)
-        logger.info('{} config and state pairs loaded from {}'.format(len(cached_init_states), cached_states_path))
-        return cached_configs, cached_init_states
+            self.cached_configs, self.cached_init_states = pickle.load(handle)
+        logger.info('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), self.cached_states_path))
+        return True
 
     def get_default_config(self):
         """ Generate the default config of the environment scenes"""
@@ -89,7 +89,7 @@ class FlexEnv(gym.Env):
         pyflex.set_camera_params(
             np.array([*camera_param['pos'], *camera_param['angle'], camera_param['width'], camera_param['height']]))
 
-    def set_scene(self, config, states):
+    def set_scene(self, config, states=None):
         """ Set up the flex scene """
         raise NotImplementedError
 
@@ -167,10 +167,9 @@ class FlexEnv(gym.Env):
         del self.video_frames
 
     def reset(self):
-        configs, states = self.get_cached_configs_and_states(self.cached_states_path)
-        config_id = np.random.randint(len(configs)) if not self.deterministic else 0
-        self.current_config = configs[config_id]
-        self.set_scene(configs[config_id], states[config_id])
+        config_id = np.random.randint(len(self.cached_configs)) if not self.deterministic else 0
+        self.current_config = self.cached_configs[config_id]
+        self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
 
         self.prev_reward = 0.
         self.time_step = 0 
