@@ -244,3 +244,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         )
 
         return new_obs
+
+    def _get_info(self):
+        reward = PourWaterPosControlEnv.compute_reward(self,set_prev_reward=True)
+        return dict(real_task_reward=reward)
