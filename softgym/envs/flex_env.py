@@ -17,14 +17,13 @@ except ImportError as e:
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=8,
                  camera_name='default_camera', delta_reward=True):
-        self.camera_width, self.camera_height, self.camera_name = camera_width, camera_height, camera_name
+        self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width,
                     camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
         self.record_video, self.video_path, self.video_name = False, None, None
 
         self.set_scene()
-        # self.set_video_recording_params()
-        self.get_pyflex_camera_params()
+        self.get_pyflex_default_camera_params()
 
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
@@ -49,7 +48,7 @@ class FlexEnv(gym.Env):
         config_stream = open(osp.join(config_dir, config_name), 'r').read()
         return yaml.load(config_stream, Loader=yaml.FullLoader)
 
-    def get_pyflex_camera_params(self):
+    def get_pyflex_default_camera_params(self):
         """ get the screen width, height, camera position and camera angle. """
         self.camera_params = {}
         pyflex_camera_param = pyflex.get_camera_params()
@@ -61,6 +60,19 @@ class FlexEnv(gym.Env):
 
     def get_camera_size(self, camera_name='default_camera'):
         return self.camera_params[camera_name]['width'], self.camera_params[camera_name]['height']
+
+    def update_camera(self, camera_name, camera_param=None):
+        """
+        :param camera_name: The camera_name to switch to
+        :param camera_param: None if only switching cameras. Otherwise, should be a dictionary
+        :return:
+        """
+        if camera_param is not None:
+            self.camera_params[camera_name] = camera_param
+        else:
+            camera_param = self.camera_params[camera_name]
+        pyflex.set_camera_params(
+            np.array([*camera_param['pos'], *camera_param['angle'], camera_param['width'], camera_param['height']]))
 
     def set_scene(self):
         """ Set up the flex scene """
@@ -103,13 +115,16 @@ class FlexEnv(gym.Env):
         vel = pyflex.get_velocities()
         shape_pos = pyflex.get_shape_states()
         phase = pyflex.get_phases()
-        return {'particle_pos': pos, 'particle_vel': vel, 'shape_pos': shape_pos, 'phase': phase}
+        camera_params = self.camera_params
+
+        return {'particle_pos': pos, 'particle_vel': vel, 'shape_pos': shape_pos, 'phase': phase, 'camera_params': camera_params}
 
     def set_state(self, state_dict):
         pyflex.set_positions(state_dict['particle_pos'])
         pyflex.set_velocities(state_dict['particle_vel'])
         pyflex.set_shape_states(state_dict['shape_pos'])
         pyflex.set_phases(state_dict['phase'])
+        self.camera_params = state_dict['camera_params']
 
     def close(self):
         pyflex.clean()
@@ -178,20 +193,11 @@ class FlexEnv(gym.Env):
         '''
         use pyflex.render to get a rendered image.
         '''
+        raise DeprecationWarning
         img = pyflex.render()
         img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
         img = img.astype(np.uint8)
-        # img = img[:,:,::-1]
-        # cv2.imshow('ImageEnv', img)
-        # cv2.waitKey(0)
-        # if self.time_step  == 200:
-        #     print("show image")
-        #     plt.imshow(img)
-        #     plt.show()
         img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
-        # img = img.reshape((width, height, 3)) # in pytorch format, to algin with imgenv
-        # cv2.imshow('ImageEnv2', img)
-        # cv2.waitKey(0)
         return img
 
     def close(self):

@@ -83,12 +83,6 @@ class ClothEnv(FlexEnv):
 
     def set_scene(self):
         self.initialize_camera()
-        camera_x, camera_y, camera_z = self.camera_params['pos'][0], \
-                                       self.camera_params['pos'][1], \
-                                       self.camera_params['pos'][2]
-        camera_ax, camera_ay, camera_az = self.camera_params['angle'][0], \
-                                          self.camera_params['angle'][1], \
-                                          self.camera_params['angle'][2]
 
         if self.render_mode == 'particle':
             render_mode = 1
@@ -96,11 +90,12 @@ class ClothEnv(FlexEnv):
             render_mode = 2
         elif self.render_mode == 'both':
             render_mode = 3
+        camera_params = self.camera_params[self.camera_name]
         params = np.array([self.config['ClothPos']['x'], self.config['ClothPos']['y'], self.config['ClothPos']['z'],
                            self.config['ClothSize']['x'], self.config['ClothSize']['y'],
                            self.config['ClothStiff']['stretch'], self.config['ClothStiff']['bend'],
-                           self.config['ClothStiff']['shear'], render_mode, camera_x, camera_y,
-                           camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
+                           self.config['ClothStiff']['shear'], render_mode, *camera_params['pos'][:], *camera_params['angle'][:],
+                           camera_params['width'], camera_params['height']])
 
         self.params = params  # YF NOTE: need to save the params for sampling goals
 
