@@ -1,4 +1,5 @@
 import os
+import copy
 import yaml
 from gym import error, spaces
 from gym.utils import seeding
@@ -7,6 +8,8 @@ import gym
 from softgym.utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp
+from chester import logger
+import pickle
 
 try:
     import pyflex
@@ -15,16 +18,12 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=8,
-                 camera_name='default_camera', delta_reward=True):
-        self.camera_width, self.camera_height, self.camera_name = camera_width, camera_height, camera_name
-        pyflex.init(headless, render, camera_width,
-                    camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
-        self.record_video, self.video_path, self.video_name = False, None, None
+    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720,
+                 action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True):
 
-        self.set_scene()
-        # self.set_video_recording_params()
-        self.get_pyflex_camera_params()
+        self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
+        pyflex.init(headless, render, camera_width, camera_height)
+        self.record_video, self.video_path, self.video_name = False, None, None
 
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
@@ -41,28 +40,56 @@ class FlexEnv(gym.Env):
         self.recording = False
         self.prev_reward = None
         self.delta_reward = delta_reward
+        self.deterministic = deterministic
+        self.current_config = None
+        self.cached_states_path = None
 
     @staticmethod
-    def _load_config(config_name):
-        """ Assume that the .yaml config file is under the same directory as the env files """
-        config_dir = osp.dirname(osp.abspath(__file__))
-        config_stream = open(osp.join(config_dir, config_name), 'r').read()
-        return yaml.load(config_stream, Loader=yaml.FullLoader)
+    def get_cached_configs_and_states(cached_states_path):
+        """
+        If the path exists, load from it. Should be a list of (config, states)
+        :param cached_states_path:
+        :return:
+        """
+        if not cached_states_path.startswith('/'):
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            cached_states_path = osp.join(cur_dir, cached_states_path)
+        with open(cached_states_path, "rb") as handle:
+            cached_configs, cached_init_states = pickle.load(handle)
+        logger.info('{} config and state pairs loaded from {}'.format(len(cached_init_states), cached_states_path))
+        return cached_configs, cached_init_states
 
-    def get_pyflex_camera_params(self):
-        """ get the screen width, height, camera position and camera angle. """
-        self.camera_params = {}
-        pyflex_camera_param = pyflex.get_camera_params()
-        camera_param = {'width': pyflex_camera_param[0],
-                        'height': pyflex_camera_param[1],
-                        'pos': np.array([pyflex_camera_param[2], pyflex_camera_param[3], pyflex_camera_param[4]]),
-                        'angle': np.array([pyflex_camera_param[5], pyflex_camera_param[6], pyflex_camera_param[7]])}
-        self.camera_params['default_camera'] = camera_param
+    def get_default_config(self):
+        """ Generate the default config of the environment scenes"""
+        raise NotImplementedError
+
+    def generate_env_variation(self, num_variations, save_to_file=False, **kwargs):
+        """
+        Generate a list of configs and states
+        :return:
+        """
+        raise NotImplementedError
+
+    def get_current_config(self):
+        return self.current_config
 
     def get_camera_size(self, camera_name='default_camera'):
         return self.camera_params[camera_name]['width'], self.camera_params[camera_name]['height']
 
-    def set_scene(self):
+    def update_camera(self, camera_name, camera_param=None):
+        """
+        :param camera_name: The camera_name to switch to
+        :param camera_param: None if only switching cameras. Otherwise, should be a dictionary
+        :return:
+        """
+        if camera_param is not None:
+            self.camera_params[camera_name] = camera_param
+        else:
+            camera_param = self.camera_params[camera_name]
+        pyflex.set_camera_params(
+            np.array([*camera_param['pos'], *camera_param['angle'], camera_param['width'], camera_param['height']]))
+
+    def set_scene(self, config, states):
         """ Set up the flex scene """
         raise NotImplementedError
 
@@ -81,7 +108,7 @@ class FlexEnv(gym.Env):
             raise NotImplementedError
 
     def initialize_camera(self):
-        '''
+        """
         This function sets the postion and angel of the camera
         camera_pos: np.ndarray (3x1). (x,y,z) coordinate of the camera
         camera_angle: np.ndarray (3x1). (x,y,z) angle of the camera (in degree).
@@ -95,7 +122,7 @@ class FlexEnv(gym.Env):
 
         if you do not want to set the camera, you can just not implement CenterCamera in your scene.h file, 
         and pass no camera params to your scene.
-        '''
+        """
         raise NotImplementedError
 
     def get_state(self):
@@ -103,13 +130,17 @@ class FlexEnv(gym.Env):
         vel = pyflex.get_velocities()
         shape_pos = pyflex.get_shape_states()
         phase = pyflex.get_phases()
-        return {'particle_pos': pos, 'particle_vel': vel, 'shape_pos': shape_pos, 'phase': phase}
+        camera_params = copy.deepcopy(self.camera_params)
+
+        return {'particle_pos': pos, 'particle_vel': vel, 'shape_pos': shape_pos, 'phase': phase, 'camera_params': camera_params}
 
     def set_state(self, state_dict):
         pyflex.set_positions(state_dict['particle_pos'])
         pyflex.set_velocities(state_dict['particle_vel'])
         pyflex.set_shape_states(state_dict['shape_pos'])
         pyflex.set_phases(state_dict['phase'])
+        self.camera_params = state_dict['camera_params']
+        self.update_camera(self.camera_name)
 
     def close(self):
         pyflex.clean()
@@ -136,6 +167,11 @@ class FlexEnv(gym.Env):
         del self.video_frames
 
     def reset(self):
+        configs, states = self.get_cached_configs_and_states(self.cached_states_path)
+        config_id = np.random.randint(len(configs)) if not self.deterministic else 0
+        self.current_config = configs[config_id]
+        self.set_scene(configs[config_id], states[config_id])
+
         self.prev_reward = 0.
         self.time_step = 0 
         obs = self._reset()
@@ -183,20 +219,11 @@ class FlexEnv(gym.Env):
         '''
         use pyflex.render to get a rendered image.
         '''
+        raise DeprecationWarning
         img = pyflex.render()
         img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
         img = img.astype(np.uint8)
-        # img = img[:,:,::-1]
-        # cv2.imshow('ImageEnv', img)
-        # cv2.waitKey(0)
-        # if self.time_step  == 200:
-        #     print("show image")
-        #     plt.imshow(img)
-        #     plt.show()
         img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
-        # img = img.reshape((width, height, 3)) # in pytorch format, to algin with imgenv
-        # cv2.imshow('ImageEnv2', img)
-        # cv2.waitKey(0)
         return img
 
     def close(self):
