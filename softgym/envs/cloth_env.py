@@ -103,7 +103,7 @@ class ClothEnv(FlexEnv):
                            camera_z, camera_ax, camera_ay, camera_az, self.camera_width, self.camera_height])
 
         self.params = params  # YF NOTE: need to save the params for sampling goals
-
+    
         pyflex.set_scene(9, params, 0)
 
     def get_state(self):
@@ -113,3 +113,6 @@ class ClothEnv(FlexEnv):
 
     def set_state(self, state_dict):
         super().set_state(state_dict)
+
+    def _get_info(self):
+        return {}
