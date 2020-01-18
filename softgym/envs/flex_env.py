@@ -18,8 +18,9 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=8,
-                 camera_name='default_camera', delta_reward=True):
+    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720,
+                 action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True):
+
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
         self.record_video, self.video_path, self.video_name = False, None, None
@@ -39,7 +40,9 @@ class FlexEnv(gym.Env):
         self.recording = False
         self.prev_reward = None
         self.delta_reward = delta_reward
-        self.current_config = self.get_default_config()
+        self.deterministic = deterministic
+        self.current_config = None
+        self.cached_states_path = None
 
     @staticmethod
     def get_cached_configs_and_states(cached_states_path):
@@ -60,11 +63,12 @@ class FlexEnv(gym.Env):
         """ Generate the default config of the environment scenes"""
         raise NotImplementedError
 
-    def generate_env_variation(self, num_variations, path_to_cached_file=None, **kwargs):
+    def generate_env_variation(self, num_variations, save_to_file=False, **kwargs):
         """
         Generate a list of configs and states
         :return:
         """
+        raise NotImplementedError
 
     def get_current_config(self):
         return self.current_config
@@ -163,8 +167,8 @@ class FlexEnv(gym.Env):
         del self.video_frames
 
     def reset(self):
-        configs, states = self.get_cached_configs_and_states()
-        config_id = np.random.randint(len(configs))
+        configs, states = self.get_cached_configs_and_states(self.cached_states_path)
+        config_id = np.random.randint(len(configs)) if not self.deterministic else 0
         self.current_config = configs[config_id]
         self.set_scene(configs[config_id], states[config_id])
 
