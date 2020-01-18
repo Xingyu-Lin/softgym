@@ -3,18 +3,16 @@ from gym.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
 from softgym.envs.action_space import ParallelGripper, Picker
+from copy import deepcopy
 
 
 class ClothEnv(FlexEnv):
-    def __init__(self, config_file, observation_mode, action_mode, num_picker=2, horizon=250, randomized=True, render_mode='particle', **kwargs):
-        self.config = FlexEnv._load_config(config_file)
-        self.cloth_xdim, self.cloth_ydim = self.config['ClothSize']['x'], self.config['ClothSize']['y']
+    def __init__(self, observation_mode, action_mode, num_picker=2, horizon=250, render_mode='particle', **kwargs):
         self.render_mode = render_mode
         super().__init__(**kwargs)
 
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere', 'picker']
-
         self.observation_mode = observation_mode
         self.action_mode = action_mode
 
@@ -31,20 +29,35 @@ class ClothEnv(FlexEnv):
             self.action_tool = Picker(num_picker)
             self.action_space = self.action_tool.action_space
 
-        if observation_mode == 'key_point':  # TODO: add sphere position
+        if observation_mode == 'key_point':  # TODO: Keypoint is fiexed to be 2 now
             if action_mode == 'key_point_pos':
-                self.observation_space = Box(np.array([-np.inf] * pyflex.get_n_particles() * 3),
-                                             np.array([np.inf] * pyflex.get_n_particles() * 3), dtype=np.float32)
+                self.observation_space = Box(np.array([-np.inf] * 2 * 3),
+                                             np.array([np.inf] * 2 * 3), dtype=np.float32)
             elif action_mode == 'sphere':
                 # TODO observation space should depend on the action_tool
-                self.observation_space = Box(np.array([-np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)),
-                                             np.array([np.inf] * (pyflex.get_n_particles() * 3 + 4 * 3)), dtype=np.float32)
+                self.observation_space = Box(np.array([-np.inf] * (2 * 3 + 4 * 3)),
+                                             np.array([np.inf] * (2 * 3 + 4 * 3)), dtype=np.float32)
             elif action_mode == 'picker':
-                self.observation_space = Box(np.array([-np.inf] * (pyflex.get_n_particles() * 3 + num_picker * 3)),
-                                             np.array([np.inf] * (pyflex.get_n_particles() * 3 + num_picker * 3)), dtype=np.float32)
+                self.observation_space = Box(np.array([-np.inf] * (2 * 3 + num_picker * 3)),
+                                             np.array([np.inf] * (2 * 3 + num_picker * 3)), dtype=np.float32)
             self.obs_key_point_idx = self._get_obs_key_point_idx()
         else:
             raise NotImplementedError
+
+    def get_default_config(self):
+        """ Set the default config of the environment and load it to self.config """
+        config = {
+            'ClothPos': [-1.6, 2.0, -0.8],
+            'ClothSize': [64, 32],
+            'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear
+            'camera_name': 'default_camera',
+            'camera_params': {'default_camera':
+                                  {'pos': np.array([0., 4., 0.]),
+                                   'angle': np.array([0, -70 / 180. * np.pi, 0.]),
+                                   'width': self.camera_width,
+                                   'height': self.camera_height}}
+        }
+        return config
 
     def _get_obs(self):  # NOTE: just rename to _get_obs
         particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
@@ -69,45 +82,43 @@ class ClothEnv(FlexEnv):
 
     def _get_obs_key_point_idx(self):
         idx_p1 = 0
-        idx_p2 = self.cloth_xdim * (self.cloth_ydim - 1)
+        idx_p2 = self.current_config['ClothSize'][0] * (self.current_config['ClothSize'][1] - 1)
         return np.array([idx_p1, idx_p2])
 
     def _get_action_key_point_idx(self):
         idx_p1 = 0
-        idx_p2 = self.cloth_xdim * (self.cloth_ydim - 1)
+        idx_p2 = self.current_config['ClothSize'][0] * (self.current_config['ClothSize'][1] - 1)
         return np.array([idx_p1, idx_p2])
 
     """
     There's always the same parameters that you can set 
     """
 
-    def set_scene(self):
+    def set_scene(self, config, state=None):
         self.initialize_camera()
-
         if self.render_mode == 'particle':
             render_mode = 1
         elif self.render_mode == 'cloth':
             render_mode = 2
         elif self.render_mode == 'both':
             render_mode = 3
-        camera_params = self.camera_params[self.camera_name]
-        params = np.array([self.config['ClothPos']['x'], self.config['ClothPos']['y'], self.config['ClothPos']['z'],
-                           self.config['ClothSize']['x'], self.config['ClothSize']['y'],
-                           self.config['ClothStiff']['stretch'], self.config['ClothStiff']['bend'],
-                           self.config['ClothStiff']['shear'], render_mode, *camera_params['pos'][:], *camera_params['angle'][:],
-                           camera_params['width'], camera_params['height']])
+        camera_params = config['camera_params'][config['camera_name']]
+        params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
+                           *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height']])
 
         self.params = params  # YF NOTE: need to save the params for sampling goals
-    
         pyflex.set_scene(9, params, 0)
+        if state is not None:
+            self.set_state(state)
+        self.current_config = deepcopy(config)
 
-    def get_state(self):
-        # TODO: Xingyu: fix this before running CEM
-        cur_state = super().get_state()
-        return cur_state
-
-    def set_state(self, state_dict):
-        super().set_state(state_dict)
+    # def get_state(self):
+    #     # TODO: Xingyu: fix this before running CEM
+    #     cur_state = super().get_state()
+    #     return cur_state
+    #
+    # def set_state(self, state_dict):
+    #     super().set_state(state_dict)
 
     def _get_info(self):
         return {}

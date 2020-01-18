@@ -5,26 +5,30 @@ import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
 import copy
+from copy import deepcopy
+
 
 class ClothFlattenEnv(ClothEnv):
-    def __init__(self, cached_init_state_path='cloth_flatten_init_states.pkl', **kwargs):
+    def __init__(self, cached_states_path='cloth_flatten_init_states.pkl', num_variations = 2, **kwargs):
         """
-        :param cached_init_state_path:
+        :param cached_states_path:
         :param num_picker: Number of pickers if the aciton_mode is picker
         :param kwargs:
         """
-        super().__init__(config_file="ClothFlattenConfig.yaml", **kwargs)
-        self.prev_covered_area = None  # Should not be used until initialized
-        self.cached_init_state = []
 
-        if cached_init_state_path.startswith('/'):
-            self.cached_init_state_path = cached_init_state_path
-        else:
+        super().__init__(**kwargs)
+        self.prev_covered_area = None  # Should not be used until initialized
+        self.num_variations = num_variations
+        if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_init_state_path = osp.join(cur_dir, cached_init_state_path)
-        if osp.exists(self.cached_init_state_path):
-            self._load_init_state()
-            print('ClothFlattenEnv: {} cached initial states loaded'.format(len(self.cached_init_state)))
+            self.cached_states_path = osp.join(cur_dir, cached_states_path)
+        else:
+            self.cached_states_path = cached_states_path
+        success = self.get_cached_configs_and_states(cached_states_path)
+        if not success or not self.use_cached_states:
+            self.generate_env_variation(num_variations, save_to_file=True)
+            success = self.get_cached_configs_and_states(cached_states_path)
+            assert success
 
     def initialize_camera(self):
         """
@@ -40,21 +44,34 @@ class ClothFlattenEnv(ClothEnv):
             'height': self.camera_height
         }
 
-    def generate_init_state(self, num_init_state=1, save_to_file=True):
+    def _sample_cloth_size(self):
+        return np.random.randint(32), np.random.randint(64)
+
+    def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
         # TODO Xingyu: Add options for generating initial states with different parameters. Currently only the pickpoint varies.
         # TODO additionally, can vary the height / number of pick point
-        original_state = self.get_state()
-        num_particle = original_state['particle_pos'].reshape((-1, 4)).shape[0]
+        # original_state = self.get_state()
         max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
-        init_states = []
+        generated_configs, generated_states = [], []
+        default_config = self.get_default_config()
+        for i in range(num_variations):
+            config = deepcopy(default_config)
+            if vary_cloth_size:
+                cloth_dimx, cloth_dimy = self._sample_cloth_size()
+                config['ClothSize'] = [cloth_dimx, cloth_dimy]
+                self.set_scene(config)
+                self.action_tool.reset([0., -1., 0.])
+            else:
+                cloth_dimx, cloth_dimy = config['ClothSize']
 
-        for i in range(num_init_state):
-            pickpoint = random.randint(0, num_particle)
+            num_particle = cloth_dimx * cloth_dimy
+            pickpoint = random.randint(0, num_particle-1)
             curr_pos = pyflex.get_positions()
             curr_pos[pickpoint * 4 + 3] = 0  # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
             pickpoint_pos = curr_pos[pickpoint * 4: pickpoint * 4 + 3].copy()  # Pos of the pickup point is fixed to this point
+            pickpoint_pos[1] += np.random.random(1) * 0.5
             pyflex.set_positions(curr_pos)
 
             # Pick up the cloth and wait to stablize
@@ -84,34 +101,31 @@ class ClothFlattenEnv(ClothEnv):
             camera_param['pos'][0] = float(cx)
             camera_param['pos'][2] = float(cy) + 1.5
             self.update_camera(self.camera_name, camera_param)
+            config['camera_params'] = deepcopy(self.camera_params)
 
             if self.action_mode == 'sphere' or self.action_mode == 'picker':
                 curr_pos = pyflex.get_positions()
                 self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
-            init_states.append(self.get_state())
-            self.set_state(original_state)
+            generated_configs.append(deepcopy(config))
+            print('config {}: {}'.format(i, config['camera_params']))
+            generated_states.append(deepcopy(self.get_state()))
+            # self.set_state(original_state)
 
         if save_to_file:
-            with open(self.cached_init_state_path, 'wb') as handle:
-                pickle.dump(init_states, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        return init_states
-
-    def _load_init_state(self):
-        with open(self.cached_init_state_path, "rb") as handle:
-            self.cached_init_state = pickle.load(handle)
+            with open(self.cached_states_path, 'wb') as handle:
+                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
+        return generated_configs, generated_states
 
     def _reset(self):
         """ Right now only use one initial state"""
-        if len(self.cached_init_state) == 0:
-            state_dicts = self.generate_init_state(1)
-            self.cached_init_state.extend(state_dicts)
-        cached_id = np.random.randint(len(self.cached_init_state))
-        self.set_state(self.cached_init_state[cached_id])
+        # if len(self.cached_init_state) == 0:
+        #     state_dicts = self.generate_init_state(1)
+        #     self.cached_init_state.extend(state_dicts)
+        # cached_id = np.random.randint(len(self.cached_init_state))
+        # self.set_state(self.cached_init_state[cached_id])
         self.prev_covered_area = self._get_current_covered_area(pyflex.get_positions())
-
         if hasattr(self, 'action_tool'):
             self.action_tool.reset([0, 1, 0])
-        pyflex.step()
         return self._get_obs()
 
     def _step(self, action):
