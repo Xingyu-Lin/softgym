@@ -137,6 +137,7 @@ class FlexEnv(gym.Env):
 
     def reset(self):
         self.prev_reward = 0.
+        self.time_step = 0 
         obs = self._reset()
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
@@ -147,6 +148,7 @@ class FlexEnv(gym.Env):
             self._step(action)
         obs = self._get_obs()
         reward = self.compute_reward(action, obs, set_prev_reward=True)
+        info = self._get_info()
 
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
@@ -156,13 +158,16 @@ class FlexEnv(gym.Env):
         if self.time_step == self.horizon:
             done = True
 
-        return obs, reward, done, {}
+        return obs, reward, done, info
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ set_prev_reward is used for calculate delta rewards"""
         raise NotImplementedError
 
     def _get_obs(self):
+        raise NotImplementedError
+
+    def _get_info(self):
         raise NotImplementedError
 
     def _reset(self):

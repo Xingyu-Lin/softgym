@@ -51,21 +51,23 @@ class FluidEnv(FlexEnv):
         self.fluid_params['dim_y'] = self.rand_int(self.fluid_params['dim_y_range'][0], self.fluid_params['dim_y_range'][1])
         self.fluid_params['dim_z'] = self.rand_int(self.fluid_params['dim_z_range'][0], self.fluid_params['dim_z_range'][1])
         
+        for k in fluid_param_dic:
+            self.fluid_params[k] = fluid_param_dic[k]
+
         # center of the glass floor. lower corner of the water fluid grid along x,y,z-axis. 
         fluid_radis = params['radius'] * params['rest_dis_coef']
-        if not self.deterministic:
-            self.x_center = self.rand_float(-0.2, 0.2) 
-        else:
-            self.x_center = 0
+        self.x_center = 0 
             
-        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-1)/1.*fluid_radis 
-        self.fluid_params['y'] = fluid_radis/1.5 + 0.05
-        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z'])/1.2*fluid_radis 
+        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-3)/1.*fluid_radis  + 0.1
+        self.fluid_params['y'] = fluid_radis/2 + 0.05
+        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z'] - 2)*fluid_radis / 1.5
+
+        print(self.fluid_params['x'])
+        print(self.fluid_params['y'])
+        print(self.fluid_params['z'])
 
         # overwrite the parameters speicified by user
-        if self.deterministic:
-            for k in fluid_param_dic:
-                self.fluid_params[k] = fluid_param_dic[k]
+        # if self.deterministic or fl:
         
         return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'], 
             params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'], 
@@ -90,6 +92,7 @@ class FluidEnv(FlexEnv):
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
         pyflex.set_scene(11, scene_params, 0)
+        self.particle_num = pyflex.get_n_particles()
 
     def rand_float(self, lo, hi):
         return np.random.rand() * (hi - lo) + lo
@@ -121,6 +124,7 @@ class FluidEnv(FlexEnv):
         self.video_height = 240
         self.video_width = 320
 
-    
+    def _get_info(self):
+        return {}
 
 

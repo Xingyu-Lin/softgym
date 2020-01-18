@@ -5,6 +5,9 @@ from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditioned
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
+from multiworld.core.image_env import ImageEnv
+from rlkit.envs.vae_wrapper import VAEWrappedEnv
+
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--policy", type = str, default = 'heuristic', help = 'heuristic or cem')
@@ -15,18 +18,67 @@ args = args.parse_args()
 
 if args.policy == 'heuristic':
     env = PourWaterPosControlGoalConditionedEnv(observation_mode = 'full_state', horizon = 75, 
-        action_mode = 'direct', deterministic=True, render_mode = 'fluid', render = True, headless= False)
+        action_mode = 'direct', deterministic=True, render_mode = 'fluid', render = True, headless= True)
     softgym.register_flex_envs()
     print("env make done")
 
+    imsize = 128
+    env = ImageEnv(
+            env,
+            imsize=imsize,
+            transpose=True,
+            normalize=True,
+        )
+
+    from rlkit.torch.vae.conv_vae import imsize48_default_architecture, imsize84_default_architecture, imsize128_default_architecture
+    vae_kwargs=dict(
+                input_channels=3,
+                architecture=imsize128_default_architecture,
+                decoder_distribution='gaussian_identity_variance',
+            )
+
+    from rlkit.pythonplusplus import identity
+    from rlkit.torch.vae.conv_vae import (
+        ConvVAE,
+    )
+    vae = ConvVAE(
+        4,
+        decoder_output_activation=identity,
+        imsize=128,
+        **vae_kwargs
+    )
+
+    env = VAEWrappedEnv(
+                env,
+                vae,
+                imsize=env.imsize,
+                decode_goals=False,
+                render_goals=False,
+                render_rollouts=False,
+                )
+            
+
+    obs = env.reset()
+    goal_img = obs['image_desired_goal'].reshape(-1, imsize, imsize).transpose()
+    img_obs = obs['image_observation'].reshape(-1, imsize, imsize).transpose()
+
+    from matplotlib import pyplot as plt
+    fig = plt.figure(figsize=(10, 5))
+    ax1 = fig.add_subplot(1,2,1)
+    ax1.imshow(goal_img)
+    ax2 = fig.add_subplot(1,2,2)
+    ax2.imshow(img_obs)
+    plt.savefig('./debug.png')
+    exit()
+
     # test that we have sampled a correct goal and that we have implemented the right set_to_goal
     # also to test we correctly constructed different goals 
-    for i in range(2):
-        env.reset()
-        env.set_to_goal(env.get_goal())
-        img = env.get_image(960, 720)
-        plt.imshow(img)
-        plt.show()
+    # for i in range(2):
+    #     env.reset()
+    #     env.set_to_goal(env.get_goal())
+    #     img = env.get_image(960, 720)
+    #     plt.imshow(img)
+    #     plt.show()
     
     # exit()
     env.reset()
