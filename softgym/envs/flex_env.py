@@ -8,6 +8,8 @@ import gym
 from softgym.utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp
+from chester import logger
+import pickle
 
 try:
     import pyflex
@@ -19,12 +21,8 @@ class FlexEnv(gym.Env):
     def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, action_repeat=8,
                  camera_name='default_camera', delta_reward=True):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
-        pyflex.init(headless, render, camera_width,
-                    camera_height)  # TODO check if pyflex needs to be initialized for each instance of the environment
+        pyflex.init(headless, render, camera_width, camera_height)
         self.record_video, self.video_path, self.video_name = False, None, None
-
-        self.set_scene()
-        # self.get_pyflex_default_camera_params()
 
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
@@ -41,23 +39,35 @@ class FlexEnv(gym.Env):
         self.recording = False
         self.prev_reward = None
         self.delta_reward = delta_reward
+        self.current_config = self.get_default_config()
 
     @staticmethod
-    def _load_config(config_name):
-        """ Assume that the .yaml config file is under the same directory as the env files """
-        config_dir = osp.dirname(osp.abspath(__file__))
-        config_stream = open(osp.join(config_dir, config_name), 'r').read()
-        return yaml.load(config_stream, Loader=yaml.FullLoader)
+    def get_cached_configs_and_states(cached_states_path):
+        """
+        If the path exists, load from it. Should be a list of (config, states)
+        :param cached_states_path:
+        :return:
+        """
+        if not cached_states_path.startswith('/'):
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            cached_states_path = osp.join(cur_dir, cached_states_path)
+        with open(cached_states_path, "rb") as handle:
+            cached_configs, cached_init_states = pickle.load(handle)
+        logger.info('{} config and state pairs loaded from {}'.format(len(cached_init_states), cached_states_path))
+        return cached_configs, cached_init_states
 
-    def get_pyflex_default_camera_params(self):
-        """ get the screen width, height, camera position and camera angle. """
-        self.camera_params = {}
-        pyflex_camera_param = pyflex.get_camera_params()
-        camera_param = {'width': pyflex_camera_param[0],
-                        'height': pyflex_camera_param[1],
-                        'pos': np.array([pyflex_camera_param[2], pyflex_camera_param[3], pyflex_camera_param[4]]),
-                        'angle': np.array([pyflex_camera_param[5], pyflex_camera_param[6], pyflex_camera_param[7]])}
-        self.camera_params['default_camera'] = camera_param
+    def get_default_config(self):
+        """ Generate the default config of the environment scenes"""
+        raise NotImplementedError
+
+    def generate_env_variation(self, num_variations, path_to_cached_file=None, **kwargs):
+        """
+        Generate a list of configs and states
+        :return:
+        """
+
+    def get_current_config(self):
+        return self.current_config
 
     def get_camera_size(self, camera_name='default_camera'):
         return self.camera_params[camera_name]['width'], self.camera_params[camera_name]['height']
@@ -75,7 +85,7 @@ class FlexEnv(gym.Env):
         pyflex.set_camera_params(
             np.array([*camera_param['pos'], *camera_param['angle'], camera_param['width'], camera_param['height']]))
 
-    def set_scene(self):
+    def set_scene(self, config, states):
         """ Set up the flex scene """
         raise NotImplementedError
 
@@ -153,6 +163,11 @@ class FlexEnv(gym.Env):
         del self.video_frames
 
     def reset(self):
+        configs, states = self.get_cached_configs_and_states()
+        config_id = np.random.randint(len(configs))
+        self.current_config = configs[config_id]
+        self.set_scene(configs[config_id], states[config_id])
+
         self.prev_reward = 0.
         obs = self._reset()
         if self.recording:
