@@ -1,4 +1,5 @@
 import os
+import copy
 import yaml
 from gym import error, spaces
 from gym.utils import seeding
@@ -23,7 +24,7 @@ class FlexEnv(gym.Env):
         self.record_video, self.video_path, self.video_name = False, None, None
 
         self.set_scene()
-        self.get_pyflex_default_camera_params()
+        # self.get_pyflex_default_camera_params()
 
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
@@ -93,7 +94,7 @@ class FlexEnv(gym.Env):
             raise NotImplementedError
 
     def initialize_camera(self):
-        '''
+        """
         This function sets the postion and angel of the camera
         camera_pos: np.ndarray (3x1). (x,y,z) coordinate of the camera
         camera_angle: np.ndarray (3x1). (x,y,z) angle of the camera (in degree).
@@ -107,7 +108,7 @@ class FlexEnv(gym.Env):
 
         if you do not want to set the camera, you can just not implement CenterCamera in your scene.h file, 
         and pass no camera params to your scene.
-        '''
+        """
         raise NotImplementedError
 
     def get_state(self):
@@ -115,7 +116,7 @@ class FlexEnv(gym.Env):
         vel = pyflex.get_velocities()
         shape_pos = pyflex.get_shape_states()
         phase = pyflex.get_phases()
-        camera_params = self.camera_params
+        camera_params = copy.deepcopy(self.camera_params)
 
         return {'particle_pos': pos, 'particle_vel': vel, 'shape_pos': shape_pos, 'phase': phase, 'camera_params': camera_params}
 
@@ -125,6 +126,7 @@ class FlexEnv(gym.Env):
         pyflex.set_shape_states(state_dict['shape_pos'])
         pyflex.set_phases(state_dict['phase'])
         self.camera_params = state_dict['camera_params']
+        self.update_camera(self.camera_name)
 
     def close(self):
         pyflex.clean()

@@ -37,11 +37,11 @@ def test_picker():
 
 
 def test_random(env, N=5):
-    N = 5
+    N = 10
     for i in range(N):
         print('episode {}'.format(i))
         env.reset()
-        for _ in range(env.horizon):
+        for _ in range(10):
             action = env.action_space.sample()
             env.step(action)
 
@@ -58,5 +58,6 @@ if __name__ == '__main__':
         horizon=75,
         action_repeat=8,
         render_mode='cloth')
-
+    env.generate_init_state(20, save_to_file=True)
+    # exit()
     test_random(env)
