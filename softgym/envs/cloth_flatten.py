@@ -4,7 +4,7 @@ import pickle
 import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
-
+import copy
 
 class ClothFlattenEnv(ClothEnv):
     def __init__(self, cached_init_state_path='cloth_flatten_init_states.pkl', **kwargs):
@@ -34,8 +34,8 @@ class ClothFlattenEnv(ClothEnv):
         """
         self.camera_name = 'default_camera'
         self.camera_params['default_camera'] = {
-            'pos': np.array([0.5, 3, 2.5]),
-            'angle': np.array([0, -50 / 180. * np.pi, 0.]),
+            'pos': np.array([0., 4., 0.]),
+            'angle': np.array([0, -70 / 180. * np.pi, 0.]),
             'width': self.camera_width,
             'height': self.camera_height
         }
@@ -56,6 +56,7 @@ class ClothFlattenEnv(ClothEnv):
             curr_pos[pickpoint * 4 + 3] = 0  # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
             pickpoint_pos = curr_pos[pickpoint * 4: pickpoint * 4 + 3].copy()  # Pos of the pickup point is fixed to this point
             pyflex.set_positions(curr_pos)
+
             # Pick up the cloth and wait to stablize
             for _ in range(0, max_wait_step):
                 pyflex.step()
@@ -77,13 +78,16 @@ class ClothFlattenEnv(ClothEnv):
                 curr_vel = pyflex.get_velocities()
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
-            # camera_param = self.camera_params[self.camera_name]
-            # center_point =
+            curr_pos = pyflex.get_positions()
+            camera_param = copy.copy(self.camera_params[self.camera_name])
+            cx, cy = self._get_center_point(curr_pos)
+            camera_param['pos'][0] = float(cx)
+            camera_param['pos'][2] = float(cy) + 1.5
+            self.update_camera(self.camera_name, camera_param)
 
             if self.action_mode == 'sphere' or self.action_mode == 'picker':
                 curr_pos = pyflex.get_positions()
                 self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
-
             init_states.append(self.get_state())
             self.set_state(original_state)
 

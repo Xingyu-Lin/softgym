@@ -32,11 +32,13 @@ class ClothFoldEnv(ClothEnv):
         **Note: width and height is actually the screen width and screen height of FLex.
         I suggest to keep them the same as the ones used in pyflex.cpp.
         '''
+        self.camera_name = 'default_camera'
         self.camera_params = {
-            'pos': np.array([0., 3, 3.5]),
-            'angle': np.array([0, -45 / 180. * np.pi, 0.]),
-            'width': self.camera_width,
-            'height': self.camera_height
+            'default_camera':
+                {'pos': np.array([0., 3, 3.5]),
+                 'angle': np.array([0, -45 / 180. * np.pi, 0.]),
+                 'width': self.camera_width,
+                 'height': self.camera_height}
         }
 
     def _load_init_state(self):
