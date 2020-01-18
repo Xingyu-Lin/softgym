@@ -1,6 +1,5 @@
 import os
 import copy
-import yaml
 from gym import error, spaces
 from gym.utils import seeding
 import numpy as np
@@ -41,7 +40,7 @@ class FlexEnv(gym.Env):
         self.delta_reward = delta_reward
         self.deterministic = deterministic
         self.current_config = None
-        self.cached_states_path, self.cached_configs, self.cached_init_states
+        self.cached_configs, self.cached_init_states = None, None
 
     def get_cached_configs_and_states(self, cached_states_path):
         """
@@ -52,11 +51,11 @@ class FlexEnv(gym.Env):
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
             cached_states_path = osp.join(cur_dir, cached_states_path)
-        if not osp.exits(cached_states_path):
+        if not osp.exists(cached_states_path):
             return False
         with open(cached_states_path, "rb") as handle:
             self.cached_configs, self.cached_init_states = pickle.load(handle)
-        logger.info('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), self.cached_states_path))
+        logger.info('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
         return True
 
     def get_default_config(self):
