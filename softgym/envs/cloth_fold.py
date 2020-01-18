@@ -10,19 +10,7 @@ class ClothFoldEnv(ClothEnv):
     def __init__(self, cached_init_state_path='cloth_fold_init_states.pkl', **kwargs):
         self.fold_group_a = self.fold_group_b = None
         self.init_pos, self.prev_dist = None, None
-        super().__init__(config_file="ClothFoldConfig.yaml", **kwargs)
-
-        self.cached_init_state = []
-
-        if cached_init_state_path.startswith('/'):
-            self.cached_init_state_path = cached_init_state_path
-        else:
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_init_state_path = osp.join(cur_dir, cached_init_state_path)
-
-        if osp.exists(self.cached_init_state_path):
-            self._load_init_state()
-            print('ClothFoldEnv: {} cached initial states loaded'.format(len(cached_init_state_path)))
+        super().__init__( **kwargs)
 
         self.action_tool.update_picker_boundary(picker_low=(-1.5, 0.0, -0.8), picker_high=(1.5, 0.7, 1.5))
 
@@ -41,9 +29,7 @@ class ClothFoldEnv(ClothEnv):
                  'height': self.camera_height}
         }
 
-    def _load_init_state(self):
-        with open(self.cached_init_state_path, "rb") as handle:
-            self.cached_init_state = pickle.load(handle)
+
 
     def generate_init_state(self, num_init_state=1, save_to_file=False):
         """ Generate initial states. Note: This will also change the current states! """
