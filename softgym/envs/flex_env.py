@@ -216,13 +216,15 @@ class FlexEnv(gym.Env):
     def get_image(self, width=960, height=720):
         '''
         use pyflex.render to get a rendered image.
+        this is in support for the multitask env.
         '''
-        raise DeprecationWarning
-        img = pyflex.render()
-        img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
-        img = img.astype(np.uint8)
-        img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
-        return img
+        # raise DeprecationWarning
+        # img = pyflex.render()
+        # img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
+        # img = img.astype(np.uint8)
+        # img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
+        # return img
+        return self.render(mode='rgb_array')
 
     def close(self):
         pyflex.clean()
