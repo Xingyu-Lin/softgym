@@ -48,7 +48,7 @@ def test_random(env, N=5):
 
 if __name__ == '__main__':
     # test_picker()
-    num_picker = 3
+    num_picker = 200
     env = ClothFlattenEnv(
         observation_mode='key_point',
         action_mode='picker',
@@ -57,7 +57,9 @@ if __name__ == '__main__':
         headless=False,
         horizon=75,
         action_repeat=8,
-        render_mode='cloth')
-    env.generate_init_state(20, save_to_file=True)
+        render_mode='cloth',
+        num_variations=200,
+        use_cached_states=True,
+        deterministic=False)
     # exit()
     test_random(env)
