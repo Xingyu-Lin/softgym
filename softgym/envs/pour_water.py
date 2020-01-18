@@ -182,21 +182,16 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         x_center = self.x_center  # center of the glass floor
         z = self.fluid_params['z']  # lower corner of the water fluid along z-axis.
-        if self.camera_name == 'default_camera':
-            self.camera_params = {
-                'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
-                'angle': np.array([0.45 * np.pi, -65 / 180. * np.pi, 0]),
-                'width': self.camera_width,
-                'height': self.camera_height
-            }
-        else:
-            assert self.camera_name == 'cam_2d'
-            self.camera_params = {
-                'pos': np.array([x_center + 0.5, .7, z + 4.]),
-                'angle': np.array([0, 0, 0.]),
-                'width': self.camera_width,
-                'height': self.camera_height
-            }
+        self.camera_params = {
+            'default_camera': {'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
+                               'angle': np.array([0.45 * np.pi, -65 / 180. * np.pi, 0]),
+                               'width': self.camera_width,
+                               'height': self.camera_height},
+            'cam_2d': {'pos': np.array([x_center + 0.5, .7, z + 4.]),
+                       'angle': np.array([0, 0, 0.]),
+                       'width': self.camera_width,
+                       'height': self.camera_height}
+        }
 
     def sample_poured_glass_params(self, config=None):
         params = {}

@@ -118,7 +118,7 @@ class ClothFoldEnv(ClothEnv):
 
         return self._get_obs()
 
-    def compute_reward(self):
+    def compute_reward(self, action=None, obs=None, set_prev_reward=True):
         """
         The particles are splitted into two groups. The reward will be the minus average eculidean distance between each
         particle in group a and the crresponding particle in group b

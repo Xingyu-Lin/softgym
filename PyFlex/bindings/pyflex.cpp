@@ -3692,6 +3692,19 @@ py::array_t<int> pyflex_get_camera_params() {
     return default_camera_param;
 }
 
+void pyflex_set_camera_params(py::array_t<float> update_camera_param) {
+    auto camera_param_ptr = (float *) update_camera_param.request().ptr;
+    if (g_render){
+        g_camPos.x = camera_param_ptr[0];
+        g_camPos.y = camera_param_ptr[1];
+        g_camPos.z = camera_param_ptr[2];
+        g_camAngle.x =  camera_param_ptr[3];
+        g_camAngle.y =  camera_param_ptr[4];
+        g_camAngle.z =  camera_param_ptr[5];
+        g_screenWidth = camera_param_ptr[6];
+        g_screenHeight = camera_param_ptr[7];}
+}
+
 py::array_t<int> pyflex_render(int capture, char *path) {
     // TODO: Turn off the GUI menu for rendering
     static double lastTime;
@@ -3905,6 +3918,7 @@ PYBIND11_MODULE(pyflex, m) {
         );
 
     m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
+    m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
 
     m.def("add_box", &pyflex_add_box, "Add box to the scene");
     m.def("add_sphere", &pyflex_add_sphere, "Add sphere to the scene");

@@ -27,12 +27,13 @@ class ClothFlattenEnv(ClothEnv):
             print('ClothFlattenEnv: {} cached initial states loaded'.format(len(self.cached_init_state)))
 
     def initialize_camera(self):
-        '''
+        """
         set the camera width, height, ition and angle.
         **Note: width and height is actually the screen width and screen height of FLex.
         I suggest to keep them the same as the ones used in pyflex.cpp.
-        '''
-        self.camera_params = {
+        """
+        self.camera_name = 'default_camera'
+        self.camera_params['default_camera'] = {
             'pos': np.array([0.5, 3, 2.5]),
             'angle': np.array([0, -50 / 180. * np.pi, 0.]),
             'width': self.camera_width,
@@ -76,6 +77,8 @@ class ClothFlattenEnv(ClothEnv):
                 curr_vel = pyflex.get_velocities()
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
+            # camera_param = self.camera_params[self.camera_name]
+            # center_point =
 
             if self.action_mode == 'sphere' or self.action_mode == 'picker':
                 curr_pos = pyflex.get_positions()
@@ -159,7 +162,15 @@ class ClothFlattenEnv(ClothEnv):
         grid[slotted_y.astype(int), slotted_x.astype(int)] = 1
         return np.sum(grid) * span[0] * span[1]
 
-    def compute_reward(self):
+    def _get_center_point(self, pos):
+        pos = np.reshape(pos, [-1, 4])
+        min_x = np.min(pos[:, 0])
+        min_y = np.min(pos[:, 2])
+        max_x = np.max(pos[:, 0])
+        max_y = np.max(pos[:, 2])
+        return 0.5 * (min_x + max_x), 0.5 * (min_y + max_y)
+
+    def compute_reward(self, action=None, obs=None, set_prev_reward=True):
         particle_pos = pyflex.get_positions()
         curr_covered_area = self._get_current_covered_area(particle_pos)
         r = curr_covered_area - self.prev_covered_area
