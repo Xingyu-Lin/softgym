@@ -18,7 +18,7 @@ except ImportError as e:
 
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720,
-                 action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True):
+                 action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True, use_cached_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
         self.record_video, self.video_path, self.video_name = False, None, None
@@ -39,7 +39,8 @@ class FlexEnv(gym.Env):
         self.prev_reward = None
         self.delta_reward = delta_reward
         self.deterministic = deterministic
-        self.current_config = None
+        self.use_cached_states = use_cached_states
+        self.current_config = self.get_default_config()
         self.cached_configs, self.cached_init_states = None, None
 
     def get_cached_configs_and_states(self, cached_states_path):
@@ -88,7 +89,7 @@ class FlexEnv(gym.Env):
         pyflex.set_camera_params(
             np.array([*camera_param['pos'], *camera_param['angle'], camera_param['width'], camera_param['height']]))
 
-    def set_scene(self, config, states=None):
+    def set_scene(self, config, state=None):
         """ Set up the flex scene """
         raise NotImplementedError
 
@@ -138,7 +139,7 @@ class FlexEnv(gym.Env):
         pyflex.set_velocities(state_dict['particle_vel'])
         pyflex.set_shape_states(state_dict['shape_pos'])
         pyflex.set_phases(state_dict['phase'])
-        self.camera_params = state_dict['camera_params']
+        self.camera_params = copy.deepcopy(state_dict['camera_params'])
         self.update_camera(self.camera_name)
 
     def close(self):
