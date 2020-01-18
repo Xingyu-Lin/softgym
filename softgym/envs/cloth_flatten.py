@@ -125,7 +125,9 @@ class ClothFlattenEnv(ClothEnv):
         # self.set_state(self.cached_init_state[cached_id])
         self.prev_covered_area = self._get_current_covered_area(pyflex.get_positions())
         if hasattr(self, 'action_tool'):
-            self.action_tool.reset([0, 1, 0])
+            curr_pos = pyflex.get_positions()
+            cx, cy = self._get_center_point(curr_pos)
+            self.action_tool.reset([cx, 0.5, cy])
         return self._get_obs()
 
     def _step(self, action):
