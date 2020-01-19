@@ -96,8 +96,6 @@ class ClothEnv(FlexEnv):
     """
 
     def set_scene(self, config, state=None):
-        print("self.camera_params: ", self.camera_params)
-        self.initialize_camera()
         if self.render_mode == 'particle':
             render_mode = 1
         elif self.render_mode == 'cloth':

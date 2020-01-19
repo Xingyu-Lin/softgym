@@ -70,6 +70,7 @@ class ClothFlattenEnv(ClothEnv):
             self.action_tool.reset([0., -1., 0.])
 
 
+
             num_particle = cloth_dimx * cloth_dimy
             pickpoint = random.randint(0, num_particle-1)
             curr_pos = pyflex.get_positions()
