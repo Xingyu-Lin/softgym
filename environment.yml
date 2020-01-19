@@ -15,4 +15,5 @@ dependencies:
   - matplotlib
   - joblib
   - Pillow=6.1
-  - plotly
+  - plotly=2.0
+

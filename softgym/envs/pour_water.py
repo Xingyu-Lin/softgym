@@ -89,7 +89,7 @@ class PourWaterPosControlEnv(FluidEnv):
         return config
 
     def generate_env_variation(self, config, num_variations = 5, save_path=None, **kwargs):
-        water_volumns = [[8, 18, 8], [7, 25, 7], [6, 10, 6]] 
+        water_volumns = [[8, 18, 8], [7, 25, 7], [5, 10, 5]] 
         glass_height = [0.6, 0.55, 0.5]
 
         self.cached_configs = []
@@ -115,7 +115,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 self.cached_init_states.append(init_state)
 
         combined = [self.cached_configs, self.cached_init_states]
-        with open(save_path, 'wb') as handle:
+        with open(save_path + '.pkl', 'wb') as handle:
             pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         
@@ -237,7 +237,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
         if params is None:
             params = {}
-            params['glass_distance_range'] = 0.6, 0.9
+            params['glass_distance_range'] = 0.65, 1.0
             params['poured_border_range'] = 0.015, 0.025
             params['poured_height_range'] = 0.5, 0.7
 
@@ -251,8 +251,8 @@ class PourWaterPosControlEnv(FluidEnv):
         self.poured_height = params['poured_height']
 
         fluid_radis = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
-        self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.15  # glass floor length
-        self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.15  # glass width
+        self.poured_glass_dis_x = self.fluid_params['dim_x'] * fluid_radis + 0.07  # glass floor length
+        self.poured_glass_dis_z = self.fluid_params['dim_z'] * fluid_radis + 0.07  # glass width
 
         params['poured_glass_dis_x'] = self.poured_glass_dis_x
         params['poured_glass_dis_z'] = self.poured_glass_dis_z

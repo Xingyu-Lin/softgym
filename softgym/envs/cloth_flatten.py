@@ -29,8 +29,9 @@ class ClothFlattenEnv(ClothEnv):
             self.generate_env_variation(num_variations, save_to_file=True)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
+        
 
-    def initialize_camera(self):
+    def initialize_camera(self, make_multitask_happy=None):
         """
         set the camera width, height, ition and angle.
         **Note: width and height is actually the screen width and screen height of FLex.
@@ -56,8 +57,10 @@ class ClothFlattenEnv(ClothEnv):
         stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
         default_config = self.get_default_config()
+        
         for i in range(num_variations):
             config = deepcopy(default_config)
+            self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
             if vary_cloth_size:
                 cloth_dimx, cloth_dimy = self._sample_cloth_size()
                 config['ClothSize'] = [cloth_dimx, cloth_dimy]
@@ -65,6 +68,8 @@ class ClothFlattenEnv(ClothEnv):
                 cloth_dimx, cloth_dimy = config['ClothSize']
             self.set_scene(config)
             self.action_tool.reset([0., -1., 0.])
+
+
 
             num_particle = cloth_dimx * cloth_dimy
             pickpoint = random.randint(0, num_particle-1)
@@ -96,15 +101,10 @@ class ClothFlattenEnv(ClothEnv):
                 curr_vel = pyflex.get_velocities()
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
-            curr_pos = pyflex.get_positions()
-            camera_param = copy.copy(self.camera_params[self.camera_name])
-            cx, cy = self._get_center_point(curr_pos)
-            camera_param['pos'][0] = float(cx)
-            camera_param['pos'][2] = float(cy) + 1.5
-            self.update_camera(self.camera_name, camera_param)
-            config['camera_params'] = deepcopy(self.camera_params)
+            
+            self._center_object()
 
-            if self.action_mode == 'sphere' or self.action_mode == 'picker':
+            if self.action_mode == 'sphere' or self.action_mode.startswith('picker'):
                 curr_pos = pyflex.get_positions()
                 self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
             generated_configs.append(deepcopy(config))
@@ -124,11 +124,13 @@ class ClothFlattenEnv(ClothEnv):
         #     self.cached_init_state.extend(state_dicts)
         # cached_id = np.random.randint(len(self.cached_init_state))
         # self.set_state(self.cached_init_state[cached_id])
+
         self.prev_covered_area = self._get_current_covered_area(pyflex.get_positions())
         if hasattr(self, 'action_tool'):
             curr_pos = pyflex.get_positions()
             cx, cy = self._get_center_point(curr_pos)
             self.action_tool.reset([cx, 0.5, cy])
+
         return self._get_obs()
 
     def _step(self, action):
@@ -159,8 +161,8 @@ class ClothFlattenEnv(ClothEnv):
             pyflex.set_positions(cur_pos.flatten())
             pyflex.set_velocities(vels.flatten())
         else:
-            pyflex.step()
             self.action_tool.step(action)
+            pyflex.step()
         return
 
     @staticmethod
