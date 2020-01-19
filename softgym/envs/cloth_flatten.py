@@ -30,7 +30,7 @@ class ClothFlattenEnv(ClothEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
-    def initialize_camera(self):
+    def initialize_camera(self, make_multitask_happy=None):
         """
         set the camera width, height, ition and angle.
         **Note: width and height is actually the screen width and screen height of FLex.
