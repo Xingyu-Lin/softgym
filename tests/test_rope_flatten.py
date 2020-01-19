@@ -25,11 +25,11 @@ if __name__ == '__main__':
         action_mode='picker',
         num_picker=num_picker,
         render=True,
-        headless=True,
+        headless=False,
         horizon=75,
         action_repeat=8,
         render_mode='cloth',
-        num_variations=50,
-        use_cached_states=False,
+        num_variations=2,
+        use_cached_states=True,
         deterministic=False)
     test_random(env)

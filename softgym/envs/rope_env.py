@@ -33,7 +33,12 @@ class RopeEnv(FlexEnv):
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
         config = {
-            'RopeLength': 10,
+            'ClusterSpacing': 1.5,
+            'ClusterRadius': 0.,
+            'ClusterStiffness': 0.55,
+            'DynamicFriction': 3.0,
+            'ParticleFriction': 0.25,
+            'ParticleInvMass': 0.01,
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
                                   {'pos': np.array([0., 7., 3.]),
@@ -42,9 +47,6 @@ class RopeEnv(FlexEnv):
                                    'height': self.camera_height}}
         }
         return config
-
-    def initialize_camera(self):
-        pass
 
     def _reset(self):
         pass
@@ -82,18 +84,15 @@ class RopeEnv(FlexEnv):
     """
 
     def set_scene(self, config, state=None):
-        self.initialize_camera()
         if self.render_mode == 'particle':
             render_mode = 1
-        elif self.render_mode == 'cloth':
+        else:
             render_mode = 2
-        elif self.render_mode == 'both':
-            render_mode = 3
-        camera_params = config['camera_params'][config['camera_name']]
-        # params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
-        #                    *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height']])
-        # self.params = params  # YF NOTE: need to save the params for sampling goals
-        pyflex.set_scene(12, [], 0)
+        params = np.array(
+            [config['ClusterSpacing'], config['ClusterRadius'], config['ClusterStiffness'], config['DynamicFriction'], config['ParticleFriction']])
+        pyflex.set_scene(12, params, 0)
+        self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
+
         if state is not None:
             self.set_state(state)
         self.current_config = deepcopy(config)
