@@ -48,7 +48,7 @@ def test_random(env, N=5):
 
 if __name__ == '__main__':
     # test_picker()
-    num_picker = 200
+    num_picker = 4
     env = ClothFlattenEnv(
         observation_mode='key_point',
         action_mode='picker',

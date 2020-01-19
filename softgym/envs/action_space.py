@@ -69,6 +69,7 @@ class ParallelGripper(ActionToolBase):
                 center + np.array([diameter + 0.2, 0., -diameter])]
 
     def reset(self, center):
+
         shape_state = np.array(pyflex.get_shape_states()).reshape(-1, 14)
         centered_gripper_pos = self._get_centered_gripper_pos(center)
         for (i, centered_gripper_pos) in enumerate(centered_gripper_pos):
@@ -136,7 +137,7 @@ class Picker(ActionToolBase):
         self.picker_threshold = picker_threshold
         self.num_picker = num_picker
         self.picked_particles = [None] * self.num_picker
-        self.picker_low, self.picker_high = picker_low, picker_high
+        self.picker_low, self.picker_high = list(picker_low), list(picker_high)
         self.init_pos = init_pos
 
         space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.2  # [dx, dy, dz, [0, 1]]
@@ -163,7 +164,11 @@ class Picker(ActionToolBase):
         return np.array(pos)
 
     def reset(self, center):
-        init_picker_poses = self._get_centered_picker_pos(self.init_pos)
+        for i in (0, 2):
+            offset = center[i] - (self.picker_high[i] + self.picker_low[i]) / 2.
+            self.picker_low[i] += offset
+            self.picker_high[i] += offset
+        init_picker_poses = self._get_centered_picker_pos(center)
 
         for picker_pos in init_picker_poses:
             pyflex.add_sphere(self.picker_radius, picker_pos, [1, 0, 0, 0])
@@ -231,6 +236,7 @@ class Picker(ActionToolBase):
 
                 if self.picked_particles[i] is not None:
                     # TODO The position of the particle needs to be updated such that it is close to the picker particle
-                    new_particle_pos[self.picked_particles[i], :3] = particle_pos[self.picked_particles[i], :3] + new_picker_pos[i, :] - picker_pos[i, :]
+                    new_particle_pos[self.picked_particles[i], :3] = particle_pos[self.picked_particles[i], :3] + new_picker_pos[i, :] - picker_pos[i,
+                                                                                                                                         :]
                     new_particle_pos[self.picked_particles[i], 3] = 0  # Set the mass to infinity
         self._set_pos(new_picker_pos, new_particle_pos)
