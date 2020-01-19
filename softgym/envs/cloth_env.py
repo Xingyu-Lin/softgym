@@ -2,21 +2,19 @@ import numpy as np
 from gym.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
-from softgym.envs.action_space import ParallelGripper, Picker
+from softgym.envs.action_space import ParallelGripper, Picker, PickerPickPlace
 from copy import deepcopy
 
 
 class ClothEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, horizon=250, render_mode='particle', **kwargs):
+    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', **kwargs):
         self.render_mode = render_mode
         super().__init__(**kwargs)
 
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere', 'picker']
+        assert action_mode in ['key_point_pos', 'key_point_vel', 'sphere', 'picker', 'pickerpickplace']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
-
-        self.horizon = horizon
 
         if action_mode.startswith('key_point'):
             space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
@@ -26,7 +24,10 @@ class ClothEnv(FlexEnv):
             self.action_tool = ParallelGripper(gripper_type='sphere')
             self.action_space = self.action_tool.action_space
         elif action_mode == 'picker':
-            self.action_tool = Picker(num_picker)
+            self.action_tool = Picker(num_picker, particle_radius=0.05) # TODO: should make radius a controllable parameter 
+            self.action_space = self.action_tool.action_space
+        elif action_mode == 'pickerpickplace':
+            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=0.05) # TODO: should make radius a controllable parameter 
             self.action_space = self.action_tool.action_space
 
         if observation_mode == 'key_point':  # TODO: Keypoint is fiexed to be 2 now
@@ -52,7 +53,7 @@ class ClothEnv(FlexEnv):
             'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([0., 4., 0.]),
+                                  {'pos': np.array([0, 4., 1]),
                                    'angle': np.array([0, -70 / 180. * np.pi, 0.]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}
@@ -95,6 +96,7 @@ class ClothEnv(FlexEnv):
     """
 
     def set_scene(self, config, state=None):
+        print("self.camera_params: ", self.camera_params)
         self.initialize_camera()
         if self.render_mode == 'particle':
             render_mode = 1

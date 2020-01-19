@@ -7,9 +7,6 @@ from softgym.envs.flex_env import FlexEnv
 class FluidEnv(FlexEnv):
 
     def __init__(self, render_mode='particle', **kwargs):
-        self.dim_shape_state = 14  # dimension of a shape object in Flex
-        self.dim_position = 4
-        self.dim_velocity = 3
         self.debug = False
         assert render_mode in ['particle', 'fluid']
         self.render_mode = 0 if render_mode == 'particle' else 1
@@ -54,7 +51,6 @@ class FluidEnv(FlexEnv):
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
         pyflex.set_scene(11, scene_params, 0)
-        self.particle_num = pyflex.get_n_particles()
 
     def rand_float(self, lo, hi):
         return np.random.rand() * (hi - lo) + lo

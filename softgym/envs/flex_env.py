@@ -56,6 +56,8 @@ class FlexEnv(gym.Env):
         pos[:, [0, 2]] -= np.mean(pos[:, [0, 2]], axis=0, keepdims=True)
         pyflex.set_positions(pos.flatten())
         pyflex.step()
+        import time
+        time.sleep(5)
 
     def get_cached_configs_and_states(self, cached_states_path):
         """
