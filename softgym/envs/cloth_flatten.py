@@ -61,10 +61,10 @@ class ClothFlattenEnv(ClothEnv):
             if vary_cloth_size:
                 cloth_dimx, cloth_dimy = self._sample_cloth_size()
                 config['ClothSize'] = [cloth_dimx, cloth_dimy]
-                self.set_scene(config)
-                self.action_tool.reset([0., -1., 0.])
             else:
                 cloth_dimx, cloth_dimy = config['ClothSize']
+            self.set_scene(config)
+            self.action_tool.reset([0., -1., 0.])
 
             num_particle = cloth_dimx * cloth_dimy
             pickpoint = random.randint(0, num_particle-1)
