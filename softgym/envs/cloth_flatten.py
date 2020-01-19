@@ -69,6 +69,7 @@ class ClothFlattenEnv(ClothEnv):
             num_particle = cloth_dimx * cloth_dimy
             pickpoint = random.randint(0, num_particle-1)
             curr_pos = pyflex.get_positions()
+            original_inv_mass = curr_pos[pickpoint * 4 + 3]
             curr_pos[pickpoint * 4 + 3] = 0  # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
             pickpoint_pos = curr_pos[pickpoint * 4: pickpoint * 4 + 3].copy()  # Pos of the pickup point is fixed to this point
             pickpoint_pos[1] += np.random.random(1) * 0.5
@@ -88,7 +89,7 @@ class ClothFlattenEnv(ClothEnv):
 
             # Drop the cloth and wait to stablize
             curr_pos = pyflex.get_positions()
-            curr_pos[pickpoint * 4 + 3] = 1
+            curr_pos[pickpoint * 4 + 3] = original_inv_mass
             pyflex.set_positions(curr_pos)
             for _ in range(max_wait_step):
                 pyflex.step()
@@ -135,6 +136,7 @@ class ClothFlattenEnv(ClothEnv):
             # TODO ad action_repeat
             print('Need to add action repeat')
             raise NotImplementedError
+            raise DeprecationWarning
             valid_idxs = np.array([0, 63, 31 * 64, 32 * 64 - 1])
             last_pos = np.array(pyflex.get_positions()).reshape([-1, 4])
             pyflex.step()

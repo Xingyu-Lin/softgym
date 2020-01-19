@@ -182,6 +182,7 @@ class Picker(ActionToolBase):
             shape_state[i] = np.hstack([centered_picker_pos, centered_picker_pos, [1, 0, 0, 0], [1, 0, 0, 0]])
         pyflex.set_shape_states(shape_state)
         pyflex.step()
+        self.particle_inv_mass = pyflex.get_positions().reshape(-1, 4)[:, 3]
 
     @staticmethod
     def _get_pos():
@@ -213,7 +214,7 @@ class Picker(ActionToolBase):
         # Un-pick the particles
         for i in range(self.num_picker):
             if not pick_flag[i] and self.picked_particles[i] is not None:
-                new_particle_pos[self.picked_particles[i], 3] = 1.  # Revert the mass
+                new_particle_pos[self.picked_particles[i], 3] = self.particle_inv_mass[self.picked_particles[i]]  # Revert the mass
                 self.picked_particles[i] = None
 
         # Pick new particles and update the mass and the positions
