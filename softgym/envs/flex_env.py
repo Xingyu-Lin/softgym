@@ -7,7 +7,6 @@ import gym
 from softgym.utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp
-from chester import logger
 import pickle
 
 try:
@@ -61,7 +60,7 @@ class FlexEnv(gym.Env):
             return False
         with open(cached_states_path, "rb") as handle:
             self.cached_configs, self.cached_init_states = pickle.load(handle)
-        logger.info('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
+        print('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
         return True
 
     def get_default_config(self):
