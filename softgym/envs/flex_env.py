@@ -43,6 +43,11 @@ class FlexEnv(gym.Env):
         self.current_config = self.get_default_config()
         self.cached_configs, self.cached_init_states = None, None
 
+        self.dim_position = 4
+        self.dim_velocity = 3
+        self.dim_shape_state = 14
+        self.particle_num = 0
+
     def get_cached_configs_and_states(self, cached_states_path):
         """
         If the path exists, load from it. Should be a list of (config, states)
@@ -169,8 +174,10 @@ class FlexEnv(gym.Env):
     def reset(self):
         config_id = np.random.randint(len(self.cached_configs)) if not self.deterministic else 0
         self.current_config = self.cached_configs[config_id]
+        self.current_config_idx = config_id
         self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
 
+        self.particle_num = pyflex.get_n_particles()
         self.prev_reward = 0.
         self.time_step = 0 
         obs = self._reset()
@@ -225,7 +232,7 @@ class FlexEnv(gym.Env):
         # img = img.astype(np.uint8)
         # img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
         # return img
-        return self.render(mode='rgb_array')
-
-    def close(self):
-        pyflex.clean()
+        img = self.render(mode='rgb_array')
+        img = img.astype(np.uint8)
+        img = cv2.resize(img, (width, height))
+        return img
