@@ -61,10 +61,10 @@ public:
 		cam_height = int(ptr[21]);
 		int render = int(ptr[22]);
 
-		
+
 		/*
-		The main particle radius is set via NvFlexParams::radius, which is the “interaction radius”. 
-		Particles closer than this distance will be able to affect each other. 
+		The main particle radius is set via NvFlexParams::radius, which is the “interaction radius”.
+		Particles closer than this distance will be able to affect each other.
 		*/
 		// float radius = 0.1f;
 
@@ -76,12 +76,12 @@ public:
 		// to make gif
 		// g_capture = true;
 
-		// void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius, 
+		// void CreateParticleGrid(Vec3 lower, int dimx, int dimy, int dimz, float radius,
 		// Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, float jitter=0.005f)
 		// jitter controls the randomness in particle positions.
 		// radius controls the particle radius / rest distance of the particle.
 		// if radius / rest_radius is large, then the fluid is more smoothing, as particles interact with more neighbors.
-		CreateParticleGrid(Vec3(x, y, z), dim_x, dim_y, dim_z, restDistance, 
+		CreateParticleGrid(Vec3(x, y, z), dim_x, dim_y, dim_z, restDistance,
 			Vec3(0.0f), 1.0f, false, 0.0f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseFluid), 0.005f);
 
 		g_lightDistance *= 0.5f;
@@ -92,7 +92,7 @@ public:
 		g_numSubsteps = 2;
 
 		g_params.radius = radius;
-		g_params.dynamicFriction = 0.01f; 
+		g_params.dynamicFriction = 0.01f;
 		g_params.viscosity =  viscosity; //2.0f;
 		g_params.numIterations = 4;
 		g_params.vorticityConfinement = vorticityConfinement;// 40.0f;
@@ -101,8 +101,8 @@ public:
 		g_params.relaxationFactor = 0.0f;
 		g_params.cohesion = cohesion; // 0.02f;
 		g_params.collisionDistance = 0.01f;
-		// g_params.adhesion = adhesion;	
-		// g_params.surfaceTension = surfaceTension;	
+		// g_params.adhesion = adhesion;
+		// g_params.surfaceTension = surfaceTension;
 
 		g_maxDiffuseParticles = 0;
 		g_diffuseScale = 0.5f;
@@ -127,12 +127,12 @@ public:
 		g_waveFloorTilt = 0.0f;
 		g_waveFrequency = 1.5f;
 		g_waveAmplitude = 2.0f;
-		
+
 		g_warmup = false;
 
 		// std::cout << "render: " << render << endl;
-		// draw options	
-		if (render == 0) {	// particle mode render 
+		// draw options
+		if (render == 0) {	// particle mode render
 			g_drawPoints = true;
 			g_drawMesh = false;
 			g_drawEllipsoids = false;

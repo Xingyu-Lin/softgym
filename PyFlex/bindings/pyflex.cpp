@@ -1,8 +1,3 @@
-//
-// Created by yunzhu on 6/10/18.
-//
-
-
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
@@ -586,10 +581,11 @@ inline float sqr(float x) { return x * x; }
 #include "scenes.h"
 #include "benchmark.h"
 
+#include <iostream>
+using namespace std;
 
 void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, int thread_idx = 0) {
     RandInit();
-
     if (g_solver) {
         if (g_buffers)
             DestroyBuffers(g_buffers);
@@ -803,8 +799,8 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
     // create scene
     StartGpuWork();
     // printf("Gpu started. \n");
+//    cout<<thread_idx<<endl;
     g_scenes[g_scene]->Initialize(scene_params, thread_idx);
-    // std::cout << "scenec initialized" << endl;
     EndGpuWork();
 
     uint32_t numParticles = g_buffers->positions.size();
@@ -2688,6 +2684,14 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     g_scenes.push_back(new softgym_FlattenCloth("Softgym Flatten Cloth"));
     g_scenes.push_back(new softgym_PourWater("Softgym Pour Water"));
 
+    softgym_SoftBody::Instance rope(make_path(rope_path, "/data/rope.obj"));
+	rope.mScale = Vec3(50.0f);
+	rope.mClusterSpacing = 1.5f;
+	rope.mClusterRadius = 0.0f;
+	rope.mClusterStiffness = 0.55f;
+	softgym_SoftBody* softRopeSceneNew = new softgym_SoftBody("Soft Rope");
+	softRopeSceneNew->AddInstance(rope);
+    g_scenes.push_back(softRopeSceneNew);
     /*
     // opening scene
     g_scenes.push_back(new PotPourri("Pot Pourri"));

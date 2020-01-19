@@ -1,11 +1,8 @@
-#include <iostream>
-using namespace std;
-
-class SoftBody : public Scene
+class softgym_SoftBody : public Scene
 {
 
 public:
-	SoftBody(const char* name) :
+	softgym_SoftBody(const char* name) :
 		Scene(name),
 		mRadius(0.1f),
 		mRelaxationFactor(1.0f),
@@ -131,6 +128,7 @@ public:
 
 	virtual void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
 	{
+
 		float radius = mRadius;
 
 		// no fluids or sdf based collision
@@ -158,11 +156,11 @@ public:
 
 		mRenderingInstances.resize(0);
 
-		// build soft bodies 
+		// build soft bodies
 		for (int i = 0; i < int(mInstances.size()); i++)
 			CreateSoftBody(mInstances[i], mRenderingInstances.size());
 
-		if (mPlinth) 
+		if (mPlinth)
 			AddPlinth();
 
 		// fix any particles below the ground plane in place
@@ -281,7 +279,7 @@ public:
 				}
 			}
 		}
-		else 
+		else
 		{
 			if (asset->shapePlasticThresholds && asset->shapePlasticCreeps)
 			{
@@ -306,7 +304,7 @@ public:
 			}
 		}
 
-		// add link data to the solver 
+		// add link data to the solver
 		for (int i = 0; i < asset->numSprings; ++i)
 		{
 			g_buffers->springIndices.push_back(asset->springIndices[i * 2 + 0]);
@@ -321,7 +319,7 @@ public:
 		mRenderingInstances.push_back(renderingInstance);
 	}
 
-	virtual void Draw(int pass)
+	 void Draw(int pass)
 	{
 		if (!g_drawMesh)
 			return;

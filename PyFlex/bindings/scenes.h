@@ -62,6 +62,7 @@ public:
 #include "scenes/softgym_flatten.h"
 #include "scenes/softgym_cloth.h"
 #include "scenes/softgym_pourwater.h"
+#include "scenes/softgym_softbody.h"
 
 #include "scenes/yz_bunnybath.h"
 #include "scenes/yz_boxbath.h"
