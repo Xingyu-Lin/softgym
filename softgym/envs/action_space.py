@@ -4,6 +4,7 @@ from gym.spaces import Box
 from softgym.utils.utils import rotation_2d_around_center, extend_along_center
 import pyflex
 import scipy.spatial
+import time
 
 
 class ActionToolBase(metaclass=abc.ABCMeta):
@@ -123,8 +124,8 @@ class ParallelGripper(ActionToolBase):
 
 
 class Picker(ActionToolBase):
-    def __init__(self, num_picker=1, picker_radius=0.03, init_pos=(0., -0.1, 0.), picker_threshold=0.05,
-                 picker_low=(-0.5, 0., -0.5), picker_high=(1.5, 0.7, 1.5)):
+    def __init__(self, num_picker=1, picker_radius=0.03, init_pos=(0., -0.1, 0.), picker_threshold=0.05, particle_radius=0.05,
+                 picker_low=(-0.5, 0., -0.5), picker_high=(1.5, 0.7, 1.5), **kwargs):
         """
 
         :param gripper_type:
@@ -139,6 +140,7 @@ class Picker(ActionToolBase):
         self.picked_particles = [None] * self.num_picker
         self.picker_low, self.picker_high = list(picker_low), list(picker_high)
         self.init_pos = init_pos
+        self.particle_radius = particle_radius
 
         space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.2  # [dx, dy, dz, [0, 1]]
         space_high = np.array([0.1, 0.1, 0.1, 5] * self.num_picker) * 0.2
@@ -223,7 +225,7 @@ class Picker(ActionToolBase):
                 if self.picked_particles[i] is None:  # No particle is currently picked and thus need to select a particle to pick
                     dists = scipy.spatial.distance.cdist(picker_pos[i].reshape((-1, 3)), particle_pos[:, :3].reshape((-1, 3)))
                     idx_dists = np.hstack([np.arange(particle_pos.shape[0]).reshape((-1, 1)), dists.reshape((-1, 1))])
-                    mask = dists.flatten() <= self.picker_threshold + self.picker_radius  # TODO add the particle radius here too.
+                    mask = dists.flatten() <= self.picker_threshold + self.picker_radius + self.particle_radius  
                     idx_dists = idx_dists[mask, :].reshape((-1, 2))
                     if idx_dists.shape[0] > 0:
                         pick_id, pick_dist = None, None
@@ -240,3 +242,47 @@ class Picker(ActionToolBase):
                                                                                                                                          :]
                     new_particle_pos[self.picked_particles[i], 3] = 0  # Set the mass to infinity
         self._set_pos(new_picker_pos, new_particle_pos)
+
+class PickerPickPlace(Picker):
+    def __init__(self, num_picker, **kwargs):
+        super().__init__(num_picker=num_picker, **kwargs)
+        self.delta_move = np.array([0.02] * 3)
+
+
+    def step(self, action):
+        init_pos = action[:, :3]
+        end_pos = action[:, 3:6]
+
+        last_dist = np.zeros_like(init_pos)  
+        while 1:
+            picker_pos, _ = self._get_pos()
+            dist = init_pos - picker_pos
+            if np.sum(np.abs(dist)) < 1e-5 or (dist == last_dist).all():
+                break
+            
+            move = np.clip(dist, a_min=-0.01, a_max=0.01)
+            action = np.zeros((self.num_picker, 4))
+            action[:, :3] = move
+            action[:, -1] = 0
+            super().step(action)
+            pyflex.step()
+            last_dist = dist
+        
+        last_dist = np.zeros_like(init_pos)  
+        while 1:
+            picker_pos, _ = self._get_pos()
+            dist = end_pos - picker_pos
+            if np.sum(np.abs(dist)) < 1e-5 or (dist == last_dist).all():
+                break
+            
+            move = np.clip(dist, a_min=-0.01, a_max=0.01)
+            action = np.zeros((self.num_picker, 4))
+            action[:, :3] = move
+            action[:, -1] = 1
+            super().step(action)
+            pyflex.step()
+            last_dist = dist
+        
+
+
+
