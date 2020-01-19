@@ -175,10 +175,13 @@ class FlexEnv(gym.Env):
         self.current_config = self.cached_configs[config_id]
         self.current_config_idx = config_id
         self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
+<<<<<<< HEAD
 
         self.particle_num = pyflex.get_n_particles()
+=======
+>>>>>>> e9e5ef37b219bea22903bc30b5003f04318cac8e
         self.prev_reward = 0.
-        self.time_step = 0 
+        self.time_step = 0
         obs = self._reset()
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
@@ -219,6 +222,12 @@ class FlexEnv(gym.Env):
 
     def _seed(self):
         pass
+
+    def _center_object(self):
+        """ Center the object to be at the origin"""
+        pos = pyflex.get_positions().reshape(-1, 4)
+        pos[:, [0, 2]] -= np.mean(pos[:, [0, 2]], axis=0, keepdims=True)
+        pyflex.set_positions(pos.flatten())
 
     def get_image(self, width=960, height=720):
         '''
