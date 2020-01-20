@@ -45,6 +45,9 @@ class ClothEnv(FlexEnv):
         else:
             raise NotImplementedError
 
+    def _sample_cloth_size(self):
+        return np.random.randint(32), np.random.randint(64)
+
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
         config = {
