@@ -31,36 +31,6 @@ class RopeFlattenEnv(RopeEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
-    @staticmethod
-    def _random_pick_and_place(pick_num=10):
-        """ Random pick a particle up and the drop it for pick_num times"""
-        curr_pos = pyflex.get_positions().reshape(-1, 4)
-        num_particles = curr_pos.shape[0]
-        for i in range(pick_num):
-            pick_id = np.random.randint(num_particles)
-            pick_dir = np.random.random(3) * 2 - 1
-            pick_dir[1] = (pick_dir[1] + 1)
-            pick_dir *= 0.4
-            original_inv_mass = curr_pos[pick_id, 3]
-            curr_pos[pick_id, 3] = 0
-            for _ in range(40):
-                curr_pos = pyflex.get_positions().reshape(-1, 4)
-                curr_pos[pick_id, :3] += pick_dir
-                pyflex.set_positions(curr_pos.flatten())
-                pyflex.step()
-            curr_pos[pick_id, 3] = original_inv_mass
-            # Wait to stabalize
-            for _ in range(100):
-                pyflex.step()
-                curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < 0.01):
-                    break
-        for _ in range(500):
-            pyflex.step()
-            curr_vel = pyflex.get_velocities()
-            if np.alltrue(curr_vel < 0.01):
-                break
-
     def generate_env_variation(self, num_variations=1, save_to_file=False, **kwargs):
         """ Generate initial states. Note: This will also change the current states! """
         generated_configs, generated_states = [], []

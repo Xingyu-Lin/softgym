@@ -119,12 +119,6 @@ class ClothFlattenEnv(ClothEnv):
 
     def _reset(self):
         """ Right now only use one initial state"""
-        # if len(self.cached_init_state) == 0:
-        #     state_dicts = self.generate_init_state(1)
-        #     self.cached_init_state.extend(state_dicts)
-        # cached_id = np.random.randint(len(self.cached_init_state))
-        # self.set_state(self.cached_init_state[cached_id])
-
         self.prev_covered_area = self._get_current_covered_area(pyflex.get_positions())
         if hasattr(self, 'action_tool'):
             curr_pos = pyflex.get_positions()
