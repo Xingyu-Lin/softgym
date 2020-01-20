@@ -2,6 +2,7 @@ import gym
 import numpy as np
 import pyflex
 from softgym.envs.cloth_flatten import ClothFlattenEnv
+from softgym.envs.cloth_fold import ClothFoldEnv
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
@@ -49,7 +50,19 @@ def test_random(env, N=5):
 if __name__ == '__main__':
     # test_picker()
     num_picker = 4
-    env = ClothFlattenEnv(
+    # env = ClothFlattenEnv(
+    #     observation_mode='key_point',
+    #     action_mode='picker',
+    #     num_picker=num_picker,
+    #     render=True,
+    #     headless=False,
+    #     horizon=75,
+    #     action_repeat=8,
+    #     render_mode='cloth',
+    #     num_variations=200,
+    #     use_cached_states=True,
+    #     deterministic=False)
+    env = ClothFoldEnv(
         observation_mode='key_point',
         action_mode='picker',
         num_picker=num_picker,
@@ -57,9 +70,10 @@ if __name__ == '__main__':
         headless=False,
         horizon=75,
         action_repeat=8,
-        render_mode='cloth',
-        num_variations=200,
+        render_mode='particle',
+        num_variations=50,
         use_cached_states=True,
         deterministic=False)
+
     # exit()
     test_random(env)
