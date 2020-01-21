@@ -97,13 +97,13 @@ public:
 
         g_numSubsteps = 2;
 
-        cout<<"render_type: "<<  render_type<<endl;
+//        cout<<"render_type: "<<  render_type<<endl;
         g_drawPoints = render_type & 1;
         g_drawCloth = (render_type & 2) >>1;
         g_drawSprings = false;
         g_windFrequency *= 2.0f;
         g_windStrength = 10.0f;
-        cout << "finish init" << endl;
+//        cout << "finish init" << endl;
     }
 
     virtual void CenterCamera(void)
