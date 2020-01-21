@@ -38,10 +38,10 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         assert action_mode in ['direct']
         PourWaterPosControlEnv.__init__(self, observation_mode=observation_mode, action_mode=action_mode, **kwargs)
 
-        self.fluid_num = pyflex.get_n_particles()
-        self.obs_box = Box(low=-np.inf, high=np.inf, shape=((self.dim_position + self.dim_velocity) * self.fluid_num + 7 * 2,),
+        ### this is currently incorrect using 2, should change to max_particle_num
+        self.obs_box = Box(low=-np.inf, high=np.inf, shape=((self.dim_position + self.dim_velocity) * 2 + 7 * 2,),
                            dtype=np.float32)  # the last 12 dim: 6 for each cup, x, y, z, theta, width, length, height
-        self.goal_box = Box(low=-2, high=2, shape=((self.dim_position + self.dim_velocity) * self.fluid_num + 7 * 2,),
+        self.goal_box = Box(low=-2, high=2, shape=((self.dim_position + self.dim_velocity) * 2 + 7 * 2,),
                             dtype=np.float32)  # make water particles being in some range
 
         self.observation_space = Dict([
@@ -61,8 +61,8 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         # assert batch_size == 1, "currently we only support sample one goal at a time!"
 
         # make the wate being like a cubic
-        fluid_pos = np.ones((self.fluid_num, self.dim_position))
-        fluid_vel = np.zeros((self.fluid_num, self.dim_velocity))
+        fluid_pos = np.ones((self.particle_num, self.dim_position))
+        fluid_vel = np.zeros((self.particle_num, self.dim_velocity))
 
         # lower = np.random.uniform(self.goal_box.low, self.goal_box.high, size = (1, self.dim_position))
 
@@ -83,7 +83,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         # the full goal state includes the control cup and target cup's state
         # make control cup hang near the target cup and rotates towards the target cup, simulating a real pouring.
 
-        goals = np.zeros((batch_size, (self.dim_position + self.dim_velocity) * self.fluid_num + 7 * 2))
+        goals = np.zeros((batch_size, (self.dim_position + self.dim_velocity) * self.particle_num + 7 * 2))
         for idx in range(batch_size):
             pouring_glass_x = lower_x -  (0.9 + np.random.rand() * 0.2) * self.glass_params['glass_distance']
             pouring_glass_z = 0.
@@ -167,10 +167,10 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         needed by image env to sample goals.
         '''
         state_goal = goal['state_desired_goal']
-        particle_pos = state_goal[:self.fluid_num * self.dim_position]
-        particle_vel = state_goal[self.fluid_num * self.dim_position: (self.dim_position + self.dim_velocity) * self.fluid_num]
+        particle_pos = state_goal[:self.particle_num * self.dim_position]
+        particle_vel = state_goal[self.particle_num * self.dim_position: (self.dim_position + self.dim_velocity) * self.particle_num]
 
-        tmp = (self.dim_position + self.dim_velocity) * self.fluid_num
+        tmp = (self.dim_position + self.dim_velocity) * self.particle_num
         control_cup_x, control_cup_y, control_cup_z, control_cup_theta = \
             state_goal[tmp], state_goal[tmp + 1], state_goal[tmp + 2], state_goal[tmp + 3]
 
@@ -209,12 +209,14 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         x_center = self.x_center  # center of the glass floor
         z = self.fluid_params['z']  # lower corner of the water fluid along z-axis.
         self.camera_params = {
-            'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
-            'angle': np.array([0.45 * np.pi, -65 / 180. * np.pi, 0]),
-            # 'pos': np.array([x_center -1.3, 0.8, z + 0.5]),
-            # 'angle': np.array([0, 0, -0.5 * np.pi]),
-            'width': self.camera_width,
-            'height': self.camera_height
+            'default_camera': {'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
+                            'angle': np.array([0.45 * np.pi, -65 / 180. * np.pi, 0]),
+                            'width': self.camera_width,
+                            'height': self.camera_height},
+            'cam_2d': {'pos': np.array([x_center + 0.5, .7, z + 4.]),
+                    'angle': np.array([0, 0, 0.]),
+                    'width': self.camera_width,
+                    'height': self.camera_height}
         }
 
     def _get_obs(self):
