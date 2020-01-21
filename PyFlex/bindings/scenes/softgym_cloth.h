@@ -23,7 +23,7 @@ public:
     // render_type, cam_X, cam_y, cam_z, angle_x, angle_y, angle_z, width, height
 	void Initialize(py::array_t<float> scene_params, int thread_idx=0)
 	{
-	    cout << "initing" << endl;
+//	    cout << "initing" << endl;
         auto ptr = (float *) scene_params.request().ptr;
 	    float initX = ptr[0];
 	    float initY = ptr[1];
@@ -97,13 +97,13 @@ public:
 
         g_numSubsteps = 2;
 
-        cout<<"render_type: "<<  render_type<<endl;
+//        cout<<"render_type: "<<  render_type<<endl;
         g_drawPoints = render_type & 1;
         g_drawCloth = (render_type & 2) >>1;
         g_drawSprings = false;
         g_windFrequency *= 2.0f;
         g_windStrength = 10.0f;
-        cout << "finish init" << endl;
+//        cout << "finish init" << endl;
     }
 
     virtual void CenterCamera(void)

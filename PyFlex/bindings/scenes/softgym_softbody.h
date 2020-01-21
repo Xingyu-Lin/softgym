@@ -130,13 +130,20 @@ public:
 	{
 
 		float radius = mRadius;
-
+		auto ptr = (float *) scene_params.request().ptr;
+        // Update all instances with scene_params
+        for (int i = 0; i < int(mInstances.size()); i++)
+        {
+            mInstances[i].mClusterSpacing = ptr[0];
+            mInstances[i].mClusterRadius = ptr[1];
+            mInstances[i].mClusterStiffness = ptr[2];
+        }
 		// no fluids or sdf based collision
 		g_solverDesc.featureMode = eNvFlexFeatureModeSimpleSolids;
 
 		g_params.radius = radius;
-		g_params.dynamicFriction = 0.35f;
-		g_params.particleFriction = 0.25f;
+		g_params.dynamicFriction = ptr[3];
+		g_params.particleFriction = ptr[4];
 		g_params.numIterations = 4;
 		g_params.collisionDistance = radius*0.75f;
 

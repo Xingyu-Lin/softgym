@@ -7,7 +7,7 @@ from copy import deepcopy
 
 
 class ClothEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', **kwargs):
+    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.07, **kwargs):
         self.render_mode = render_mode
         super().__init__(**kwargs)
 
@@ -24,10 +24,11 @@ class ClothEnv(FlexEnv):
             self.action_tool = ParallelGripper(gripper_type='sphere')
             self.action_space = self.action_tool.action_space
         elif action_mode == 'picker':
-            self.action_tool = Picker(num_picker, particle_radius=0.05) # TODO: should make radius a controllable parameter 
+            self.action_tool = Picker(num_picker, picker_radius=picker_radius,
+                                      particle_radius=0.05)  # TODO: should make radius a controllable parameter
             self.action_space = self.action_tool.action_space
         elif action_mode == 'pickerpickplace':
-            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=0.05) # TODO: should make radius a controllable parameter 
+            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=0.05)  # TODO: should make radius a controllable parameter
             self.action_space = self.action_tool.action_space
 
         if observation_mode == 'key_point':  # TODO: Keypoint is fiexed to be 2 now
@@ -44,6 +45,9 @@ class ClothEnv(FlexEnv):
             self.obs_key_point_idx = self._get_obs_key_point_idx()
         else:
             raise NotImplementedError
+
+    def _sample_cloth_size(self):
+        return np.random.randint(10, 64), np.random.randint(10, 40)
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
