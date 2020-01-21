@@ -5,6 +5,7 @@ from softgym.envs.pour_water import PourWaterPosControlEnv
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
+from softgym.utils.visualization import save_numpy_as_gif
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--policy", type=str, default='heuristic', help='heuristic or cem')
@@ -44,9 +45,10 @@ if args.policy == 'heuristic':
 
     # below is testing a naive heuristic policy
     print("total timestep: ", timestep)
-    for _ in range(10):
+    imgs = []
+    for _ in range(5):
         env.reset()
-        for i in range(5):
+        for i in range(50):
             if i < stable_part:
                 action = np.array([0, 0, 0])
 
@@ -63,12 +65,8 @@ if args.policy == 'heuristic':
 
             obs, reward, done, _ = env.step(action)
 
-            # if i  == 250:
-            # from matplotlib import pyplot as plt
-            # import cv2
-            # img = env.get_image(48, 48)
-            # cv2.imshow('test_img', img)
-            # cv2.waitKey(0)
+            img = env.render(mode='rgb_array')
+            imgs.append(img)
 
             print("step {} reward {}".format(i, reward))
             if done:
@@ -77,6 +75,8 @@ if args.policy == 'heuristic':
                 print("done!")
                 break
 
+    fp_out = './videos/pour_water_task_variations.gif'
+    save_numpy_as_gif(np.array(imgs), fp_out)
     env.close()
 
 elif args.policy == 'cem':

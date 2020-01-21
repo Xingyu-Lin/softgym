@@ -17,7 +17,7 @@ import os.path as osp
 
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, config=None, cached_init_state_path='pour_water_init_states', **kwargs):
+    def __init__(self, observation_mode, action_mode, config=None, cached_init_state_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -35,10 +35,6 @@ class PourWaterPosControlEnv(FluidEnv):
         self.inner_step = 0  # count action repetation
 
         super().__init__(**kwargs)
-
-        if not cached_init_state_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            cached_init_state_path = osp.join(cur_dir, cached_init_state_path)
 
         if self.get_cached_configs_and_states(cached_init_state_path) is False:
             if config is None:
@@ -115,7 +111,11 @@ class PourWaterPosControlEnv(FluidEnv):
                 self.cached_init_states.append(init_state)
 
         combined = [self.cached_configs, self.cached_init_states]
-        with open(save_path + '.pkl', 'wb') as handle:
+        if not save_path.startswith('/'):
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            save_path = osp.join(cur_dir, save_path)
+
+        with open(save_path, 'wb') as handle:
             pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         
@@ -209,9 +209,7 @@ class PourWaterPosControlEnv(FluidEnv):
         self.glass_states = state_dic['glass_states']
         self.poured_glass_states = state_dic['poured_glass_states']
         for _ in range(5):
-            print(" in set state, pyflex step {}".format(_))
             pyflex.step()
-            time.sleep(0.2)
 
     def initialize_camera(self):
         '''
@@ -317,6 +315,7 @@ class PourWaterPosControlEnv(FluidEnv):
         # no cached init states passed in 
         if states is None: 
             fluid_pos = np.ones((self.particle_num, self.dim_position))
+            print(self.particle_num)
 
             # move water all inside pouring cup
             lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 3.

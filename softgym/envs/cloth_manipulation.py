@@ -61,9 +61,12 @@ class ClothManipulation(ClothFlattenEnv, MultitaskEnv):
             num_picker = 2
             picker = PickerPickPlace(num_picker = num_picker, particle_radius=0.05)
             
+            idx1 = np.random.randint(pyflex.get_n_particles())
+            idx2 = np.random.randint(pyflex.get_n_particles())
+
             action = np.zeros((num_picker, 6))
             first_particle_pos = pyflex.get_positions()[:3]
-            last_particle_pos = pyflex.get_positions()[-4:-1]
+            last_particle_pos = pyflex.get_positions()[idx1*4: idx1*4 + 3]
 
             action[0, :3] = first_particle_pos
             action[1, :3] = last_particle_pos
@@ -166,7 +169,6 @@ class ClothManipulation(ClothFlattenEnv, MultitaskEnv):
         given a goal, set the flex state to be that goal.
         needed by image env to sample goals.
         '''
-        # TODO: implement this
         state_goal = goal['state_desired_goal']
         particle_pos = state_goal[:self.particle_num * self.dim_position]
         particle_vel = state_goal[self.particle_num * self.dim_position: (self.dim_position + self.dim_velocity) * self.particle_num]

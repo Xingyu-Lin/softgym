@@ -24,8 +24,10 @@ for i in range(5):
     env.set_to_goal(env.get_goal())
     img = env.get_image(960, 720)
     plt.imshow(img)
-    plt.show()
+    # plt.show()
+    plt.savefig('./imgs/cloth_manipulation_goal_{}.png'.format(i))
 
+exit()
 imgs = []
 for _ in range(5):
     env.reset()
@@ -46,5 +48,5 @@ for _ in range(5):
         img = env.render(mode='rgb_array')
         imgs.append(img)
 
-# fp_out = './videos/flatten_picker_random_{}.gif'.format(num_picker)
-# save_numpy_as_gif(np.array(imgs), fp_out)
+fp_out = './videos/flatten_picker_random_{}.gif'.format(num_picker)
+save_numpy_as_gif(np.array(imgs), fp_out)
