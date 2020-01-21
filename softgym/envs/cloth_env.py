@@ -46,7 +46,7 @@ class ClothEnv(FlexEnv):
             raise NotImplementedError
 
     def _sample_cloth_size(self):
-        return np.random.randint(32), np.random.randint(64)
+        return np.random.randint(10, 64), np.random.randint(10, 40)
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
