@@ -23,7 +23,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         '''
         This class implements a pouring water task.
         
-        observation_mode: "cam_img" or "full_state"
+        observation_mode: "cam_rgb" or "full_state"
         action_mode: "direct"
         horizon: environment horizon
         

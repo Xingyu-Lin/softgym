@@ -43,8 +43,9 @@ class ClothEnv(FlexEnv):
                 self.observation_space = Box(np.array([-np.inf] * (2 * 3 + num_picker * 3)),
                                              np.array([np.inf] * (2 * 3 + num_picker * 3)), dtype=np.float32)
             self.obs_key_point_idx = self._get_obs_key_point_idx()
-        else:
-            raise NotImplementedError
+        elif observation_mode == 'cam_rgb':
+            self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
+                                         dtype=np.float32)
 
     def _sample_cloth_size(self):
         return np.random.randint(10, 64), np.random.randint(10, 40)
@@ -72,7 +73,7 @@ class ClothEnv(FlexEnv):
         elif self.observation_mode == 'key_point':
             pos = keypoint_pos
         elif self.observation_mode == 'cam_rgb':
-            return self.render().flatten()
+            return self.get_image(self.camera_height, self.camera_width)
 
         if self.action_mode in ['sphere', 'picker']:
             shapes = pyflex.get_shape_states()

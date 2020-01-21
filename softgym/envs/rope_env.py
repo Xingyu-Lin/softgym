@@ -24,6 +24,9 @@ class RopeEnv(FlexEnv):
         if observation_mode == 'point_cloud' and action_mode == 'picker':
             self.observation_space = Box(np.array([-np.inf] * (max_particles * 3 + num_picker * 3)),
                                          np.array([np.inf] * (max_particles * 3 + num_picker * 3)), dtype=np.float32)
+        elif observation_mode == 'cam_rgb':
+            self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
+                                         dtype=np.float32)
 
         self.horizon = horizon
 
@@ -56,7 +59,7 @@ class RopeEnv(FlexEnv):
         if self.observation_mode == 'point_cloud':
             pos = particle_pos
         elif self.observation_mode == 'cam_rgb':
-            return self.render().flatten()
+            return self.get_image(self.camera_height, self.camera_width)
 
         if self.action_mode in ['sphere', 'picker']:
             shapes = pyflex.get_shape_states()
