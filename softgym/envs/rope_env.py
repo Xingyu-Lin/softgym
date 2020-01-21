@@ -7,7 +7,7 @@ from copy import deepcopy
 
 
 class RopeEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, horizon=250, render_mode='particle', **kwargs):
+    def __init__(self, observation_mode, action_mode, num_picker=2, horizon=250, render_mode='particle', picker_radius=0.15, **kwargs):
         self.render_mode = render_mode
         super().__init__(**kwargs)
 
@@ -17,7 +17,7 @@ class RopeEnv(FlexEnv):
         self.action_mode = action_mode
 
         if action_mode == 'picker':
-            self.action_tool = Picker(num_picker, picker_radius=0.1)
+            self.action_tool = Picker(num_picker, picker_radius=picker_radius)
             self.action_space = self.action_tool.action_space
 
         max_particles = 30

@@ -15,26 +15,26 @@ import torch
 @click.argument('episode', type=int, default=16)
 @click.argument('save_dir', type=str, default='./data/video/env_demos')
 @click.argument('img_size', type=int, default=128)
-@click.argument('use_cached_states', type=bool, default=False)
+@click.argument('use_cached_states', type=bool, default=True)
 def main(headless, episode, save_dir, img_size, use_cached_states):
     """ Generate demos for all environments with different variations"""
     envs = {
-        # 'rope_flatten': RopeFlattenEnv(
-        #     observation_mode='point_cloud',
-        #     action_mode='picker',
-        #     num_picker=2,
-        #     render=True,
-        #     headless=headless,
-        #     horizon=75,
-        #     action_repeat=8,
-        #     render_mode='cloth',
-        #     num_variations=200,
-        #     use_cached_states=use_cached_states,
-        #     deterministic=False),
+        'rope_flatten': RopeFlattenEnv(
+            observation_mode='point_cloud',
+            action_mode='picker',
+            num_picker=2,
+            render=True,
+            headless=headless,
+            horizon=75,
+            action_repeat=8,
+            render_mode='cloth',
+            num_variations=200,
+            use_cached_states=use_cached_states,
+            deterministic=False),
         'cloth_flatten': ClothFlattenEnv(
             observation_mode='key_point',
             action_mode='picker',
-            num_picker=4,
+            num_picker=2,
             render=True,
             headless=headless,
             horizon=75,
