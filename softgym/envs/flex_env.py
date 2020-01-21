@@ -40,13 +40,51 @@ class FlexEnv(gym.Env):
         self.deterministic = deterministic
         self.use_cached_states = use_cached_states
         self.current_config = self.get_default_config()
+        self.current_config_id = None
         self.cached_configs, self.cached_init_states = None, None
+
 
         self.dim_position = 4
         self.dim_velocity = 3
         self.dim_shape_state = 14
         self.particle_num = 0
-        
+
+    @staticmethod
+    def _random_pick_and_place(pick_num=10):
+        """ Random pick a particle up and the drop it for pick_num times"""
+        curr_pos = pyflex.get_positions().reshape(-1, 4)
+        num_particles = curr_pos.shape[0]
+        for i in range(pick_num):
+            pick_id = np.random.randint(num_particles)
+            pick_dir = np.random.random(3) * 2 - 1
+            pick_dir[1] = (pick_dir[1] + 1)
+            pick_dir *= 0.01
+            original_inv_mass = curr_pos[pick_id, 3]
+            for _ in range(60):
+                curr_pos = pyflex.get_positions().reshape(-1, 4)
+                curr_pos[pick_id, :3] += pick_dir
+                curr_pos[pick_id, 3] = 0
+                pyflex.set_positions(curr_pos.flatten())
+                pyflex.step()
+
+            # Revert mass
+            curr_pos = pyflex.get_positions().reshape(-1, 4)
+            curr_pos[pick_id, 3] = original_inv_mass
+            pyflex.set_positions(curr_pos.flatten())
+            pyflex.step()
+
+            # Wait to stabalize
+            for _ in range(100):
+                pyflex.step()
+                curr_vel = pyflex.get_velocities()
+                if np.alltrue(curr_vel < 0.01):
+                    break
+        for _ in range(500):
+            pyflex.step()
+            curr_vel = pyflex.get_velocities()
+            if np.alltrue(curr_vel < 0.01):
+                break
+
     def _center_object(self):
         """ 
         Center the object to be at the origin
@@ -183,7 +221,7 @@ class FlexEnv(gym.Env):
     def reset(self):
         config_id = np.random.randint(len(self.cached_configs)) if not self.deterministic else 0
         self.current_config = self.cached_configs[config_id]
-        self.current_config_idx = config_id
+        self.current_config_id = config_id
         self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
 
         self.particle_num = pyflex.get_n_particles()

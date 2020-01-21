@@ -3,84 +3,104 @@ import random
 import pickle
 import os.path as osp
 import pyflex
+from copy import deepcopy
 from softgym.envs.cloth_env import ClothEnv
 
 
 class ClothFoldEnv(ClothEnv):
-    def __init__(self, cached_init_state_path='cloth_fold_init_states.pkl', **kwargs):
+    def __init__(self, cached_states_path='cloth_fold_init_states.pkl', num_variations=2, **kwargs):
         self.fold_group_a = self.fold_group_b = None
         self.init_pos, self.prev_dist = None, None
-        super().__init__( **kwargs)
+        super().__init__(**kwargs)
 
-        self.action_tool.update_picker_boundary(picker_low=(-1.5, 0.0, -0.8), picker_high=(1.5, 0.7, 1.5))
+        self.num_variations = num_variations
+        if not cached_states_path.startswith('/'):
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            self.cached_states_path = osp.join(cur_dir, cached_states_path)
+        else:
+            self.cached_states_path = cached_states_path
+        success = self.get_cached_configs_and_states(cached_states_path)
+        if not success or not self.use_cached_states:
+            self.generate_env_variation(num_variations, save_to_file=True)
+            success = self.get_cached_configs_and_states(cached_states_path)
+            assert success
 
     def initialize_camera(self):
-        '''
-        set the camera width, height, ition and angle.
+        """
+        set the camera width, height, position and angle.
         **Note: width and height is actually the screen width and screen height of FLex.
         I suggest to keep them the same as the ones used in pyflex.cpp.
-        '''
+        """
         self.camera_name = 'default_camera'
-        self.camera_params = {
-            'default_camera':
-                {'pos': np.array([0., 3, 3.5]),
-                 'angle': np.array([0, -45 / 180. * np.pi, 0.]),
-                 'width': self.camera_width,
-                 'height': self.camera_height}
+        self.camera_params['default_camera'] = {
+            'pos': np.array([0., 3, 3.5]),
+            'angle': np.array([0, -45 / 180. * np.pi, 0.]),
+            'width': self.camera_width,
+            'height': self.camera_height
         }
 
+    def _sample_cloth_size(self):
+        return np.random.randint(10, 64), np.random.randint(10, 40)
 
-
-    def generate_init_state(self, num_init_state=1, save_to_file=False):
+    def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
-        # TODO Xingyu: Add options for generating initial states with different parameters.
-        # TODO additionally, can vary the height / number of pick point
-        original_state = self.get_state()
-        num_particle = original_state['particle_pos'].reshape((-1, 4)).shape[0]
-        max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.03  # Cloth stable when all particles' vel are smaller than this
-        init_states = []
+        max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
+        stable_vel_threshold = 0.001  # Cloth stable when all particles' vel are smaller than this
+        generated_configs, generated_states = [], []
+        default_config = self.get_default_config()
 
-        for i in range(num_init_state):
-            # Drop the cloth and wait to stablize
+        for i in range(num_variations):
+            print(i)
+            config = deepcopy(default_config)
+            self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
+            if vary_cloth_size:
+                cloth_dimx, cloth_dimy = self._sample_cloth_size()
+                config['ClothSize'] = [cloth_dimx, cloth_dimy]
+            else:
+                cloth_dimx, cloth_dimy = config['ClothSize']
+            self.set_scene(config)
+            self.action_tool.reset([0., -1., 0.])
+
             for _ in range(max_wait_step):
                 pyflex.step()
                 curr_vel = pyflex.get_velocities()
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
 
-            init_states.append(self.get_state())
-            self.set_state(original_state)
+            self._center_object()
+
+            generated_configs.append(deepcopy(config))
+            print('config {}: {}'.format(i, config['camera_params']))
+            generated_states.append(deepcopy(self.get_state()))
 
         if save_to_file:
-            with open(self.cached_init_state_path, 'wb') as handle:
-                pickle.dump(init_states, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        return init_states
+            with open(self.cached_states_path, 'wb') as handle:
+                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    def set_scene(self):
-        """ Setup the cloth scene and split particles into two groups for folding """
-        super().set_scene()
-        # Set folding group
-        particle_grid_idx = np.array(list(range(self.cloth_xdim * self.cloth_ydim))).reshape(self.cloth_ydim,
-                                                                                             self.cloth_xdim)
+    # def set_scene(self, config, **kwargs):
+    #     """ Setup the cloth scene and split particles into two groups for folding """
+    #     super().set_scene(config, **kwargs)
+    #     # Set folding group
+    #     num_particles = np.prod(config['ClothSize'])
+    #     particle_grid_idx = np.array(list(range(num_particles))).reshape(*config['ClothSize'])
+    #
+    #     cloth_dimx = config['ClothSize'][0]
+    #     x_split = cloth_dimx // 2
+    #     self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
+    #     self.fold_group_b = particle_grid_idx[:, cloth_dimx:x_split - 1:-1].flatten()
+    #
+    #     colors = np.zeros(num_particles)
+    #     colors[self.fold_group_b] = 1
+    #
+    #     self.set_colors(colors)
+    # self.set_test_color(num_particles)
 
-        x_split = self.cloth_xdim // 2
-        self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
-        self.fold_group_b = particle_grid_idx[:, self.cloth_xdim:x_split - 1:-1].flatten()
-
-        colors = np.zeros([self.cloth_ydim * self.cloth_xdim])
-        colors[self.fold_group_b] = 1
-
-        self.set_colors(colors)
-        # self.set_test_color()
-        # print("scene set")
-
-    def set_test_color(self):
-        '''
+    def set_test_color(self, num_particles):
+        """
         Assign random colors to group a and the same colors for each corresponding particle in group b
         :return:
-        '''
-        colors = np.zeros((self.cloth_xdim * self.cloth_ydim))
+        """
+        colors = np.zeros((num_particles))
         rand_size = 30
         rand_colors = np.random.randint(0, 5, size=rand_size)
         rand_index = np.random.choice(range(len(self.fold_group_a)), rand_size)
@@ -90,14 +110,22 @@ class ClothFoldEnv(ClothEnv):
 
     def _reset(self):
         """ Right now only use one initial state"""
-        if len(self.cached_init_state) == 0:
-            state_dicts = self.generate_init_state(1)
-            self.cached_init_state.extend(state_dicts)
-        cached_id = np.random.randint(len(self.cached_init_state))
-        self.set_state(self.cached_init_state[cached_id])
-
         if hasattr(self, 'action_tool'):
-            self.action_tool.reset([-1.2, 0.3, 0.2])
+            self.action_tool.reset([0, 0.2, 0])
+
+        config = self.get_current_config()
+        num_particles = np.prod(config['ClothSize'], dtype=int)
+        particle_grid_idx = np.array(list(range(num_particles))).reshape(config['ClothSize'][1], config['ClothSize'][0])  # Reversed index here
+
+        cloth_dimx = config['ClothSize'][0]
+        x_split = cloth_dimx // 2
+        self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
+        self.fold_group_b = np.flip(particle_grid_idx, axis=1)[:, :x_split].flatten()
+
+        colors = np.zeros(num_particles)
+        colors[self.fold_group_a] = 1
+        self.set_colors(colors)
+
         pyflex.step()
         self.init_pos = pyflex.get_positions().reshape((-1, 4))[:, :3]
         pos_a = self.init_pos[self.fold_group_a, :]
@@ -105,21 +133,6 @@ class ClothFoldEnv(ClothEnv):
         self.prev_dist = np.mean(np.linalg.norm(pos_a - pos_b, axis=1))
 
         return self._get_obs()
-
-    def compute_reward(self, action=None, obs=None, set_prev_reward=True):
-        """
-        The particles are splitted into two groups. The reward will be the minus average eculidean distance between each
-        particle in group a and the crresponding particle in group b
-        :param pos: nx4 matrix (x, y, z, inv_mass)
-        """
-        pos = pyflex.get_positions()
-        pos = pos.reshape((-1, 4))[:, :3]
-        pos_group_a = pos[self.fold_group_a]
-        pos_group_b_init = self.init_pos[self.fold_group_b]
-        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b_init, axis=1))
-        reward = self.prev_dist - curr_dist
-        self.prev_dist = curr_dist
-        return reward
 
     def _step(self, action):
         if self.action_mode == 'key_point':
@@ -134,5 +147,21 @@ class ClothFoldEnv(ClothEnv):
             cur_pos[self.action_key_point_idx, :] = last_pos[self.action_key_point_idx] + action
             pyflex.set_positions(cur_pos.flatten())
         else:
-            pyflex.step()
             self.action_tool.step(action)
+            pyflex.step()
+
+    def compute_reward(self, action=None, obs=None, set_prev_reward=True):
+        """
+        The particles are splitted into two groups. The reward will be the minus average eculidean distance between each
+        particle in group a and the crresponding particle in group b
+        :param pos: nx4 matrix (x, y, z, inv_mass)
+        """
+        pos = pyflex.get_positions()
+        pos = pos.reshape((-1, 4))[:, :3]
+        pos_group_a = pos[self.fold_group_a]
+        pos_group_b_init = self.init_pos[self.fold_group_b]
+        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b_init, axis=1))
+        reward = self.prev_dist - curr_dist
+        if set_prev_reward:
+            self.prev_dist = curr_dist
+        return reward

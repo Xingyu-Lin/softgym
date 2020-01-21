@@ -31,49 +31,17 @@ class RopeFlattenEnv(RopeEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
-    def _sample_rope_length(self):
-        # TODO
-        return 10
-
-    @staticmethod
-    def _random_pick_and_place(pick_num=10):
-        """ Random pick a particle up and the drop it for pick_num times"""
-        curr_pos = pyflex.get_positions().reshape(-1, 4)
-        num_particles = curr_pos.shape[0]
-        for i in range(pick_num):
-            pick_id = np.random.randint(num_particles)
-            pick_dir = np.random.random(3) * 2 - 1
-            pick_dir[1] = (pick_dir[1] + 1)
-            pick_dir *= 0.4
-            curr_pos[pick_id, 3] = 0
-            for _ in range(40):
-                curr_pos = pyflex.get_positions().reshape(-1, 4)
-                curr_pos[pick_id, :3] += pick_dir
-                pyflex.set_positions(curr_pos.flatten())
-                pyflex.step()
-            curr_pos[pick_id, 3] = 1
-            # Wait to stabalize
-            for _ in range(100):
-                pyflex.step()
-                curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < 0.01):
-                    break
-        for _ in range(500):
-            pyflex.step()
-            curr_vel = pyflex.get_velocities()
-            if np.alltrue(curr_vel < 0.01):
-                break
-
-    def generate_env_variation(self, num_variations=1, save_to_file=False, vary_rope_length=False):
+    def generate_env_variation(self, num_variations=1, save_to_file=False, **kwargs):
         """ Generate initial states. Note: This will also change the current states! """
         generated_configs, generated_states = [], []
         default_config = self.get_default_config()
         for i in range(num_variations):
             config = deepcopy(default_config)
-            if vary_rope_length:
-                rope_length = self._sample_rope_length()
-                config['RopeLength'] = rope_length
             self.set_scene(config)
+
+            pos = pyflex.get_positions().reshape(-1, 4)
+            pos[:, 3] = config['ParticleInvMass']
+            pyflex.set_positions(pos)
 
             self.update_camera('default_camera', default_config['camera_params']['default_camera'])
             config['camera_params'] = deepcopy(self.camera_params)
@@ -101,8 +69,8 @@ class RopeFlattenEnv(RopeEnv):
 
     def _step(self, action):
         if self.action_mode.startswith('picker'):
-            pyflex.step()
             self.action_tool.step(action)
+            pyflex.step()
         else:
             raise NotImplementedError
         return
@@ -110,7 +78,7 @@ class RopeFlattenEnv(RopeEnv):
     def _get_endpoint_distance(self):
         pos = pyflex.get_positions().reshape(-1, 4)
         p1, p2 = pos[0, :3], pos[-1, :3]
-        print('end point distance:', p1, ' ', p2, ' ', np.linalg.norm(p1 - p2).squeeze())
+        # print('end point distance:', p1, ' ', p2, ' ', np.linalg.norm(p1 - p2).squeeze())
         return np.linalg.norm(p1 - p2).squeeze()
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=True):

@@ -53,7 +53,7 @@ public:
 		g_solverDesc.featureMode = eNvFlexFeatureModeSimpleSolids;
 
 		g_params.radius = radius*1.5f;
-		g_params.dynamicFriction = 0.25f;
+		g_params.dynamicFriction = 0.5f;
 		g_params.dissipation = 0.0f;
 		g_params.numIterations = 4;
 		g_params.drag = 0.06f;
