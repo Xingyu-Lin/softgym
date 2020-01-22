@@ -24,6 +24,7 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
 
         self.state_goal = None
 
+        # TODO: the observation space here might be a bit different from that of the underlying environment.
         self.observation_space = Dict([
             ('observation', self.observation_space),
             ('state_observation', self.observation_space),
@@ -35,9 +36,7 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
 
     def get_cached_configs_and_states(self, cached_states_path):
         """
-        If the path exists, load from it. Should be a list of (config, states)
-        :param cached_states_path:
-        :return:
+        If the path exists, load from it. Should be a list of (config, states, goals)
         """
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
