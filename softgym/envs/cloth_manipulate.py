@@ -54,7 +54,7 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         goal_dict = {}
         for idx in range(len(generated_configs)):
             ClothFlattenEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
-            self.action_tool.reset()
+            self.action_tool.reset([0., -1., 0.])
             goals = self.sample_goals(goal_num)
             goal_dict[idx] = goals
 
