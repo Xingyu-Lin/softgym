@@ -17,7 +17,7 @@ import os.path as osp
 
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, config=None, cached_init_state_path='pour_water_init_states.pkl', **kwargs):
+    def __init__(self, observation_mode, action_mode, config=None, cached_states_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -36,10 +36,16 @@ class PourWaterPosControlEnv(FluidEnv):
 
         super().__init__(**kwargs)
 
-        if self.get_cached_configs_and_states(cached_init_state_path) is False:
+        if not cached_states_path.startswith('/'):
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            self.cached_states_path = osp.join(cur_dir, cached_states_path)
+        else:
+            self.cached_states_path = cached_states_path
+
+        if self.get_cached_configs_and_states(cached_states_path) is False:
             if config is None:
                 config = self.get_default_config()
-            self.generate_env_variation(config, save_path=cached_init_state_path)
+            self.generate_env_variation(config, save_to_file=True)
 
         if observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
@@ -84,7 +90,7 @@ class PourWaterPosControlEnv(FluidEnv):
         }
         return config
 
-    def generate_env_variation(self, config, num_variations=5, save_path=None, **kwargs):
+    def generate_env_variation(self, config, num_variations=5, save_to_file=False, **kwargs):
         water_volumns = [[8, 18, 8], [7, 25, 7], [5, 10, 5]]
         glass_height = [0.6, 0.55, 0.5]
 
@@ -111,12 +117,10 @@ class PourWaterPosControlEnv(FluidEnv):
                 self.cached_init_states.append(init_state)
 
         combined = [self.cached_configs, self.cached_init_states]
-        if not save_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            save_path = osp.join(cur_dir, save_path)
-
-        with open(save_path, 'wb') as handle:
-            pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
+       
+        if save_to_file:
+            with open(self.cached_states_path, 'wb') as handle:
+                pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def get_config(self):
         if self.deterministic:
