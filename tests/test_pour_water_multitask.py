@@ -133,7 +133,7 @@ elif args.policy == 'cem':
     import copy, pickle
 
     traj_path = args.cem_traj_path
-    env = PourWaterPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', horizon=300, deterministic=True,
+    env = PourWaterPosControlEnv(observation_mode = 'cam_rgb', action_mode = 'direct', horizon=300, deterministic=True,
         render_mode='fluid')
 
     if not args.replay:

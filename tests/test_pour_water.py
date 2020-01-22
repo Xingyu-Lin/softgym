@@ -14,13 +14,13 @@ args.add_argument("--replay", type=int, default=0, help='if load pre-stored acti
 args = args.parse_args()
 
 if args.policy == 'heuristic':
-    env = PourWaterPosControlEnv(observation_mode='cam_img', horizon=75, render=True, headless=False,
+    env = PourWaterPosControlEnv(observation_mode='cam_rgb', horizon=75, render=True, headless=False,
                                  action_mode='direct', deterministic=False, render_mode='fluid')
     # softgym.register_flex_envs()
     # env = gym.make('PourWaterPosControl-v0')
     # env.close()
     # print("last env closed")
-    # env = PourWaterPosControlEnv(observation_mode = 'cam_img', horizon = 300, 
+    # env = PourWaterPosControlEnv(observation_mode = 'cam_rgb', horizon = 300,
     #     action_mode = 'direct', deterministic=True, render_mode = 'fluid')
 
     print("env make done!")

@@ -10,7 +10,7 @@ args.add_argument("--cem_traj_path", type = str, default = '../data/traj/pour_wa
 args.add_argument("--replay", type = int, default = 0, help = 'if load pre-stored actions and make gifs')
 args = args.parse_args()
 
-env = PourJamPosControlEnv(observation_mode = 'cam_img', action_mode = 'direct', deterministic=True)
+env = PourJamPosControlEnv(observation_mode = 'cam_rgb', action_mode = 'direct', deterministic=True)
 
 timestep = env.horizon
 move_part = int(0.3 * timestep)
