@@ -16,7 +16,7 @@ class PourJamPosControlEnv(FluidEnv):
         '''
         This class implements a pouring water task.
         
-        observation_mode: "cam_img" or "full_state"
+        observation_mode: "cam_rgb" or "full_state"
         action_mode: "direct"
         horizon: environment horizon
         
@@ -29,10 +29,10 @@ class PourJamPosControlEnv(FluidEnv):
         self.wall_num = 5 # number of glass walls. floor/left/right/front/back 
 
         super().__init__(horizon, deterministic, render_mode)
-        assert observation_mode in ['cam_img', 'full_state'] 
+        assert observation_mode in ['cam_rgb', 'full_state']
         assert action_mode in ['direct'] 
 
-        if observation_mode == 'cam_img':
+        if observation_mode == 'cam_rgb':
             self.observation_space = Box(low = -np.inf, high = np.inf, shape = (self.camera_height, self.camera_width, 3), 
                 dtype=np.float32)
         else:
@@ -227,7 +227,7 @@ class PourJamPosControlEnv(FluidEnv):
         '''
         return the observation based on the current flex state.
         '''
-        if self.observation_mode == 'cam_img':
+        if self.observation_mode == 'cam_rgb':
             img = pyflex.render()
             width, height = self.camera_width, self.camera_height
             img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension

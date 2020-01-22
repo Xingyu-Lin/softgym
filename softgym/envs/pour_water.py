@@ -21,12 +21,12 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         This class implements a pouring water task.
         
-        observation_mode: "cam_img" or "full_state"
+        observation_mode: "cam_rgb" or "full_state"
         action_mode: "direct"
         
         TODO: add more description of the task.
         '''
-        assert observation_mode in ['cam_img', 'full_state']
+        assert observation_mode in ['cam_rgb', 'full_state']
         assert action_mode in ['direct']
 
         self.observation_mode = observation_mode
@@ -41,7 +41,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 config = self.get_default_config()
             self.generate_env_variation(config, save_path=cached_init_state_path)
 
-        if observation_mode == 'cam_img':
+        if observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
         elif self.observation_mode == 'full_state':
@@ -339,7 +339,7 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         return the observation based on the current flex state.
         '''
-        if self.observation_mode == 'cam_img':
+        if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_width, self.camera_height)
         elif self.observation_mode == 'full_state':
             # just for cluster debug usage for now

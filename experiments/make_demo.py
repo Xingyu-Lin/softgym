@@ -16,11 +16,12 @@ import torch
 @click.argument('save_dir', type=str, default='./data/video/env_demos')
 @click.argument('img_size', type=int, default=128)
 @click.argument('use_cached_states', type=bool, default=True)
-def main(headless, episode, save_dir, img_size, use_cached_states):
+@click.option('--deterministic/--no-deterministic', default=False)
+def main(headless, episode, save_dir, img_size, use_cached_states, deterministic):
     """ Generate demos for all environments with different variations"""
     envs = {
-        'rope_flatten': RopeFlattenEnv(
-            observation_mode='point_cloud',
+        'RopeFlatten': RopeFlattenEnv(
+            observation_mode='cam_rgb',
             action_mode='picker',
             num_picker=2,
             render=True,
@@ -30,33 +31,33 @@ def main(headless, episode, save_dir, img_size, use_cached_states):
             render_mode='cloth',
             num_variations=200,
             use_cached_states=use_cached_states,
-            deterministic=False),
-        'cloth_flatten': ClothFlattenEnv(
-            observation_mode='key_point',
-            action_mode='picker',
-            num_picker=2,
-            render=True,
-            headless=headless,
-            horizon=75,
-            action_repeat=8,
-            render_mode='cloth',
-            num_variations=200,
-            use_cached_states=use_cached_states,
-            deterministic=False),
-        'cloth_fold': ClothFoldEnv(
-            observation_mode='key_point',
-            action_mode='picker',
-            num_picker=2,
-            render=True,
-            headless=headless,
-            horizon=75,
-            action_repeat=8,
-            render_mode='cloth',
-            num_variations=200,
-            use_cached_states=use_cached_states,
-            deterministic=False),
+            deterministic=deterministic),
+        # 'ClothFlatten': ClothFlattenEnv(
+        #     observation_mode='key_point',
+        #     action_mode='picker',
+        #     num_picker=2,
+        #     render=True,
+        #     headless=headless,
+        #     horizon=100,
+        #     action_repeat=8,
+        #     render_mode='cloth',
+        #     num_variations=200,
+        #     use_cached_states=use_cached_states,
+        #     deterministic=deterministic),
+        # 'ClothFold': ClothFoldEnv(
+        #     observation_mode='key_point',
+        #     action_mode='picker',
+        #     num_picker=2,
+        #     render=True,
+        #     headless=headless,
+        #     horizon=100,
+        #     action_repeat=8,
+        #     render_mode='cloth',
+        #     num_variations=200,
+        #     use_cached_states=use_cached_states,
+        #     deterministic=deterministic),
         # 'pour_water': PourWaterPosControlEnv(
-        #     observation_mode='cam_img',
+        #     observation_mode='cam_rgb',
         #     horizon=75,
         #     render=True,
         #     headless=headless,
@@ -64,7 +65,9 @@ def main(headless, episode, save_dir, img_size, use_cached_states):
         #     deterministic=False,
         #     render_mode='fluid')
     }
-
+    env = envs['RopeFlatten']
+    print(env.observation_space)
+    exit()
     for (env_name, env) in envs.items():
         all_frames = []
         for i in range(episode):
@@ -80,7 +83,9 @@ def main(headless, episode, save_dir, img_size, use_cached_states):
         # Convert to T x index x C x H x W for pytorch
         all_frames = np.array(all_frames).transpose([1, 0, 4, 2, 3])
         grid_imgs = [torchvision.utils.make_grid(torch.from_numpy(frame), nrow=4).permute(1, 2, 0).data.cpu().numpy() for frame in all_frames]
-        save_numpy_as_gif(np.array(grid_imgs), osp.join(save_dir, env_name + '.gif'))
+
+        save_name = (env_name if not deterministic else env_name + '_deterministic') + '.gif'
+        save_numpy_as_gif(np.array(grid_imgs), osp.join(save_dir, save_name))
 
 
 if __name__ == '__main__':
