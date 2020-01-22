@@ -16,7 +16,8 @@ env = ClothManipulate(
     headless=False,
     horizon=75,
     action_repeat=8,
-    render_mode='cloth')
+    render_mode='cloth',
+    deterministic=False)
 
 for i in range(5):
     print("right before reset")
@@ -27,7 +28,6 @@ for i in range(5):
     # plt.show()
     plt.savefig('./imgs/cloth_manipulation_goal_{}.png'.format(i))
 
-exit()
 imgs = []
 for _ in range(5):
     env.reset()
@@ -48,5 +48,5 @@ for _ in range(5):
         img = env.render(mode='rgb_array')
         imgs.append(img)
 
-fp_out = './videos/flatten_picker_random_{}.gif'.format(num_picker)
-save_numpy_as_gif(np.array(imgs), fp_out)
+# fp_out = './videos/flatten_picker_random_{}.gif'.format(num_picker)
+# save_numpy_as_gif(np.array(imgs), fp_out)
