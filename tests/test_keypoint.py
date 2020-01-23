@@ -50,30 +50,30 @@ if __name__ == '__main__':
     #                      num_variations=200,
     #                      use_cached_states=True,
     #                      deterministic=False)
-    # num_picker = 4
-    # env = ClothFoldEnv(
-    #     observation_mode='key_point',
-    #     action_mode='picker',
-    #     num_picker=num_picker,
-    #     render=True,
-    #     headless=False,
-    #     horizon=100,
-    #     action_repeat=8,
-    #     render_mode='cloth',
-    #     num_variations=200,
-    #     use_cached_states=True,
-    #     deterministic=False)
-
-    env = PourWaterPosControlEnv(
-        observation_mode='key_point',
-        horizon=75,
+    num_picker = 4
+    env = ClothFoldEnv(
+        observation_mode='point_cloud',
+        action_mode='picker',
+        num_picker=num_picker,
         render=True,
         headless=False,
-        action_mode='direct',
-        deterministic=False,
-        render_mode='fluid')
-    print(env.observation_space)
-    exit()
+        horizon=100,
+        action_repeat=8,
+        render_mode='cloth',
+        num_variations=200,
+        use_cached_states=True,
+        deterministic=False)
+
+    # env = PourWaterPosControlEnv(
+    #     observation_mode='point_cloud',
+    #     horizon=75,
+    #     render=True,
+    #     headless=False,
+    #     action_mode='direct',
+    #     deterministic=False,
+    #     render_mode='fluid')
+    obs = env.reset()
+    print(obs[-30:])
     # test_keypoint(env, num_picker)
 
-    test_random(env, 50)
+    # test_random(env, 50)
