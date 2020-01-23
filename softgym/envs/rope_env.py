@@ -20,9 +20,13 @@ class RopeEnv(FlexEnv):
             self.action_tool = Picker(num_picker, picker_radius=picker_radius, picker_low=(-1.5, 0., -1.), picker_high=(4.5, 2.8, 4.))
             self.action_space = self.action_tool.action_space
 
-        max_particles = 30
-        if observation_mode in ['key_point']:
-            obs_dim = len(self._get_key_point_idx()) * 3
+        if observation_mode in ['key_point', 'point_cloud']:
+            if observation_mode == 'key_point':
+                obs_dim = len(self._get_key_point_idx()) * 3
+            else:
+                max_particles = 160
+                obs_dim = max_particles * 3
+                self.particle_obs_dim = obs_dim
             if action_mode in ['picker']:
                 obs_dim += num_picker * 3
             else:
@@ -59,8 +63,9 @@ class RopeEnv(FlexEnv):
         if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_height, self.camera_width)
         if self.observation_mode == 'point_cloud':
-            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
-            pos = particle_pos
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
+            pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+            pos[:len(particle_pos)] = particle_pos
         elif self.observation_mode == 'key_point':
             particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
             keypoint_pos = particle_pos[self._get_key_point_idx(), :3]
