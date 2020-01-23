@@ -26,7 +26,7 @@ class PourWaterPosControlEnv(FluidEnv):
         
         TODO: add more description of the task.
         '''
-        assert observation_mode in ['cam_rgb', 'full_state']
+        assert observation_mode in ['cam_rgb', 'point_cloud', 'key_point']
         assert action_mode in ['direct']
 
         self.observation_mode = observation_mode
@@ -50,9 +50,13 @@ class PourWaterPosControlEnv(FluidEnv):
         if observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
-        elif self.observation_mode == 'full_state':
+        elif self.observation_mode == 'point_cloud':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(1, 1),
                                          dtype=np.float32)
+        elif self.observation_mode == 'key_point':  # Pos (x, z, theta) and shape (w, h, l) of the two cups.
+            # z and theta of the second cup (poured_glass) does not change and thus are omitted.
+            obs_dim = 10
+            self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         else:
             raise NotImplementedError
 
@@ -117,7 +121,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 self.cached_init_states.append(init_state)
 
         combined = [self.cached_configs, self.cached_init_states]
-       
+
         if save_to_file:
             with open(self.cached_states_path, 'wb') as handle:
                 pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -345,9 +349,9 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_width, self.camera_height)
-        elif self.observation_mode == 'full_state':
-            # just for cluster debug usage for now
-            return 0
+        elif self.observation_mode == 'key_point':
+            return np.array([self.glass_x, self.glass_y, self.glass_rotation, self.glass_dis_x, self.glass_dis_z, self.height,
+                             self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z])
         else:
             raise NotImplementedError
 

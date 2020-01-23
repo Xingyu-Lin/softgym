@@ -11,19 +11,23 @@ class RopeEnv(FlexEnv):
         self.render_mode = render_mode
         super().__init__(**kwargs)
 
-        assert observation_mode in ['point_cloud', 'cam_rgb']
+        assert observation_mode in ['point_cloud', 'cam_rgb', 'key_point']
         assert action_mode in ['picker']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
 
         if action_mode == 'picker':
-            self.action_tool = Picker(num_picker, picker_radius=picker_radius)
+            self.action_tool = Picker(num_picker, picker_radius=picker_radius, picker_low=(-1.5, 0., -1.), picker_high=(4.5, 2.8, 4.))
             self.action_space = self.action_tool.action_space
 
         max_particles = 30
-        if observation_mode == 'point_cloud' and action_mode == 'picker':
-            self.observation_space = Box(np.array([-np.inf] * (max_particles * 3 + num_picker * 3)),
-                                         np.array([np.inf] * (max_particles * 3 + num_picker * 3)), dtype=np.float32)
+        if observation_mode in ['key_point']:
+            obs_dim = len(self._get_key_point_idx())
+            if action_mode in ['picker']:
+                obs_dim += num_picker * 3
+            else:
+                raise NotImplementedError
+            self.observation_space = Box(np.array([-np.inf] * obs_dim), np.array([np.inf] * obs_dim), dtype=np.float32)
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
@@ -51,15 +55,16 @@ class RopeEnv(FlexEnv):
         }
         return config
 
-    def _reset(self):
-        pass
-
     def _get_obs(self):
-        particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
-        if self.observation_mode == 'point_cloud':
-            pos = particle_pos
-        elif self.observation_mode == 'cam_rgb':
+        if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_height, self.camera_width)
+        if self.observation_mode == 'point_cloud':
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
+            pos = particle_pos
+        elif self.observation_mode == 'key_point':
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
+            keypoint_pos = particle_pos[self._get_key_point_idx(), :3]
+            pos = keypoint_pos
 
         if self.action_mode in ['sphere', 'picker']:
             shapes = pyflex.get_shape_states()
@@ -67,19 +72,10 @@ class RopeEnv(FlexEnv):
             pos = np.concatenate([pos.flatten(), shapes[:, 0:3].flatten()])
         return pos
 
-    # Cloth index looks like the following:
-    # 0, 1, ..., cloth_xdim -1
-    # ...
-    # cloth_xdim * (cloth_ydim -1 ), ..., cloth_xdim * cloth_ydim
-
-    def _get_obs_key_point_idx(self):
+    def _get_key_point_idx(self):
+        """ Return the two endpoints on the rope as the keypoints """
         idx_p1 = 0
-        idx_p2 = self.current_config['ClothSize'][0] * (self.current_config['ClothSize'][1] - 1)
-        return np.array([idx_p1, idx_p2])
-
-    def _get_action_key_point_idx(self):
-        idx_p1 = 0
-        idx_p2 = self.current_config['ClothSize'][0] * (self.current_config['ClothSize'][1] - 1)
+        idx_p2 = 159  # Hardcode the keypoint index as the rope does not change
         return np.array([idx_p1, idx_p2])
 
     """

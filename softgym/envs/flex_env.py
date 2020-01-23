@@ -223,7 +223,7 @@ class FlexEnv(gym.Env):
         self.current_config = self.cached_configs[config_id]
         self.current_config_id = config_id
         self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
-
+        print('flex_env: set scene done.')
         self.particle_num = pyflex.get_n_particles()
         self.prev_reward = 0.
         self.time_step = 0 

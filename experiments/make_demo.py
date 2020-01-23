@@ -63,7 +63,8 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
             headless=headless,
             action_mode='direct',
             deterministic=False,
-            render_mode='fluid')
+            render_mode='fluid'),
+        'DoughFlatten':
     }
 
     for (env_name, env) in envs.items():
