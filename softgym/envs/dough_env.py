@@ -25,7 +25,7 @@ class DoughEnv(FlexEnv):
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
 
-        self.action_space = Box(np.array([-0.2] * 4), np.array([0.2] * 4), dtype=np.float32)
+        self.action_space = Box(np.array([-0.05] * 4), np.array([0.05] * 4), dtype=np.float32)
         self.horizon = horizon
 
         self.cached_configs = [self.get_default_config()]
@@ -39,6 +39,8 @@ class DoughEnv(FlexEnv):
             'ClusterStiffness': 0.55,
             'DynamicFriction': 3.0,
             'ParticleFriction': 0.25,
+            'ClusterPlasticThreshold': 0.000015,
+            'ClusterPlasticCreep': 0.32,
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
                                   {'pos': np.array([0., 7., 3.]),
@@ -67,7 +69,8 @@ class DoughEnv(FlexEnv):
 
         # add a sphere plastic dough 
         params = np.array(
-            [config['ClusterSpacing'], config['ClusterRadius'], config['ClusterStiffness'], config['DynamicFriction'], config['ParticleFriction']])
+            [7, config['ClusterSpacing'], config['ClusterRadius'], config['ClusterStiffness'], config['DynamicFriction'], 
+                config['ParticleFriction'], config['ClusterPlasticThreshold'], config['ClusterPlasticCreep']])
         pyflex.set_scene(13, params, 0)
         self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
 

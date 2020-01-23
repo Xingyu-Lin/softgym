@@ -9,6 +9,7 @@ import os.path as osp
 import numpy as np
 import torchvision
 import torch
+import os
 
 
 @click.command()
@@ -19,6 +20,9 @@ import torch
 @click.argument('use_cached_states', type=bool, default=True)
 @click.option('--deterministic/--no-deterministic', default=False)
 def main(headless, episode, save_dir, img_size, use_cached_states, deterministic):
+    if not osp.exists(save_dir):
+        os.makedirs(save_dir)
+
     """ Generate demos for all environments with different variations"""
     envs = {
         # 'RopeFlatten': RopeFlattenEnv(
