@@ -28,29 +28,28 @@ def test_keypoint(env, num_picker):
 
 
 def test_random(env, N=5):
-    N = 10
     for i in range(N):
         print('episode {}'.format(i))
         obs = env.reset()
         for _ in range(10):
             action = env.action_space.sample()
             obs, _, _, _ = env.step(action)
-            print(obs)
+            # print(obs)
 
 
 if __name__ == '__main__':
-    num_picker = 2
-    env = RopeFlattenEnv(observation_mode='key_point',
-                         action_mode='picker',
-                         num_picker=num_picker,
-                         render=True,
-                         headless=False,
-                         horizon=75,
-                         action_repeat=8,
-                         render_mode='cloth',
-                         num_variations=200,
-                         use_cached_states=True,
-                         deterministic=False)
+    # num_picker = 2
+    # env = RopeFlattenEnv(observation_mode='key_point',
+    #                      action_mode='picker',
+    #                      num_picker=num_picker,
+    #                      render=True,
+    #                      headless=False,
+    #                      horizon=75,
+    #                      action_repeat=8,
+    #                      render_mode='cloth',
+    #                      num_variations=200,
+    #                      use_cached_states=True,
+    #                      deterministic=False)
     # num_picker = 4
     # env = ClothFoldEnv(
     #     observation_mode='key_point',
@@ -73,6 +72,8 @@ if __name__ == '__main__':
         action_mode='direct',
         deterministic=False,
         render_mode='fluid')
-
+    print(env.observation_space)
+    exit()
     # test_keypoint(env, num_picker)
-    test_random(env, 5)
+
+    test_random(env, 50)
