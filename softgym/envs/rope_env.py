@@ -22,7 +22,7 @@ class RopeEnv(FlexEnv):
 
         max_particles = 30
         if observation_mode in ['key_point']:
-            obs_dim = len(self._get_key_point_idx())
+            obs_dim = len(self._get_key_point_idx()) * 3
             if action_mode in ['picker']:
                 obs_dim += num_picker * 3
             else:
