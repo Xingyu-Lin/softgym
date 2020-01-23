@@ -5,17 +5,18 @@ from softgym.envs.dough_flatten import DoughFlattenEnv
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
-
+import time
 
 def test_random(env):
     N = 10
     for i in range(N):
         print('episode {}'.format(i))
         env.reset()
-        for _ in range(20):
+        for _ in range(100):
             action = np.array([0, -0.002, 0.002, 0])
-            action = env.action_space.sample()
+            # action = env.action_space.sample()
             env.step(action)
+            time.sleep(0.05)
         # for _ in range(50):
         #     action = np.array([0, 0.05, 0, 0])
         #     env.step(action)

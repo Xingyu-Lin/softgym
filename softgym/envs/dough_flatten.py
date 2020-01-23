@@ -33,32 +33,21 @@ class DoughFlattenEnv(DoughEnv):
         #     success = self.get_cached_configs_and_states(cached_states_path)
         #     assert success
 
-        self.action_low = -0.2
-        self.action_high = 0.2
+        self.action_low = -0.05
+        self.action_high = 0.05
         self.cached_configs = [self.get_default_config()]
         self.cached_init_states = [None]
 
     def get_default_config(self):
-        config = {
-            'ClusterSpacing': 1.5,
-            'ClusterRadius': 0.,
-            'ClusterStiffness': 0.55,
-            'DynamicFriction': 3.0,
-            'ParticleFriction': 0.25,
-            'camera_name': 'default_camera',
-            'camera_params': {'default_camera':
-                                  {'pos': np.array([0., 7., 3.]),
-                                   'angle': np.array([0, -65 / 180. * np.pi, 0.]),
-                                   'width': self.camera_width,
-                                   'height': self.camera_height}},
-            'capsule': {
-                'radius': 0.2,
-                'halfheight': 0.7,
-            }
+        config = DoughEnv.get_default_config(self)
+        config['capsule'] = {
+            'radius': 0.1,
+            'halfheight': 0.6,
         }
         return config
 
     def set_scene(self, config, state=None):
+
         # first add a sphere dough
         DoughEnv.set_scene(self, config)
 
@@ -71,7 +60,7 @@ class DoughFlattenEnv(DoughEnv):
         if state is not None:
             self.set_state(state)
     
-    def get_state(self, state_dic):
+    def get_state(self):
         particle_pos = pyflex.get_positions()
         particle_vel = pyflex.get_velocities()
         shape_position = pyflex.get_shape_states()
@@ -101,17 +90,20 @@ class DoughFlattenEnv(DoughEnv):
 
     def create_capsule(self, radius=0.2, halfheight=0.5):
         particle_pos = pyflex.get_positions().reshape((-1, self.dim_position))
-        min_x, max_y, min_z = np.min(particle_pos[:, 0]) + 0.1, np.max(particle_pos[:, 1]) + 0.5, np.min(particle_pos[:, 2]) + 0.1
+        min_x, min_y, min_z = np.min(particle_pos[:, 0]), np.min(particle_pos[:, 1]), np.min(particle_pos[:, 2])
+        max_x, max_y, max_z = np.max(particle_pos[:, 0]), np.max(particle_pos[:, 1]), np.max(particle_pos[:, 2])
         params = np.array([radius, halfheight])
         lower = np.array([min_x, max_y, min_z])
         quat = quatFromAxisAngle([0, -1, 0], 0.)
         pyflex.add_capsule(params, lower, quat)
 
-        self.capsule_x = min_x
-        self.capsule_y = max_y
-        self.capsule_z = min_z
+        self.capsule_x = min_x + 0.1
+        self.capsule_y = max_y + 0.3
+        self.capsule_z = min_z + 0.1
         self.capsule_rotation = 0.
+        self.capsule_pos = []
         self.capsule_states = pyflex.get_shape_states()
+        self.capsule_boundary = np.array([[min_x - 0.5, max_x + 0.5], [0.0, max_y + 0.5], [min_z - 0.5, max_z + 0.5]])
 
     def generate_env_variation(self, num_variations=1, save_to_file=False, **kwargs):
         """ Generate initial states. Note: This will also change the current states! """
@@ -158,8 +150,9 @@ class DoughFlattenEnv(DoughEnv):
         # the action only take effects if there is no collision
         self.capsule_states = self.move_capsule(self.capsule_states, x, y, z, theta)
         self.capsule_x, self.capsule_y, self.capsule_z, self.capsule_rotation = x, y, z, theta
+        self._apply_capsule_boundary()
 
-        # pyflex takes a step to update the glass and the water fluid
+        # pyflex takes a step to update the dough and
         pyflex.set_shape_states(self.capsule_states)
         pyflex.step()
         
@@ -204,6 +197,11 @@ class DoughFlattenEnv(DoughEnv):
         slotted_y = (offset[:, 1] // span[1])
         grid[slotted_y.astype(int), slotted_x.astype(int)] = 1
         return np.sum(grid) * span[0] * span[1]
+
+    def _apply_capsule_boundary(self):
+        self.capsule_x = np.clip(self.capsule_x, self.capsule_boundary[0][0], self.capsule_boundary[0][1])
+        self.capsule_y = np.clip(self.capsule_y, self.capsule_boundary[1][0], self.capsule_boundary[1][1])
+        self.capsule_z = np.clip(self.capsule_z, self.capsule_boundary[2][0], self.capsule_boundary[2][1])
 
 
 if __name__ == '__main__':

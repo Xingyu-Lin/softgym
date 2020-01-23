@@ -88,7 +88,7 @@ class RopeEnv(FlexEnv):
         else:
             render_mode = 2
         params = np.array(
-            [config['ClusterSpacing'], config['ClusterRadius'], config['ClusterStiffness'], config['DynamicFriction'], config['ParticleFriction']])
+            [5, config['ClusterSpacing'], config['ClusterRadius'], config['ClusterStiffness'], config['DynamicFriction'], config['ParticleFriction']])
         pyflex.set_scene(12, params, 0)
         self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
 
