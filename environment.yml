@@ -16,4 +16,5 @@ dependencies:
   - joblib
   - Pillow=6.1
   - plotly=2.0
-
+  - gtimer
+  - sk-video
