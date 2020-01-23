@@ -16,98 +16,123 @@ from mpl_toolkits.mplot3d import Axes3D
 import yaml
 import os.path as osp
 from softgym.core.multitask_env import MultitaskEnv
+import pickle
 
 
 class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv):
-    def __init__(self, observation_mode='full_state', action_mode='direct', **kwargs):
+    def __init__(self, cached_states_path='pour_water_multitask.pkl', **kwargs):
         '''
-        This class implements a pouring water task.
-        
-        observation_mode: "cam_rgb" or "full_state"
-        action_mode: "direct"
-        horizon: environment horizon
-        
-        TODO: add more description of the task.
-        TODO: allow parameter configuring of the scence.
+        This class implements a multi-goal pouring water task.
+        Where the goal has different positions of the pouring glass.
         '''
 
-        self.dict_goals = None
-        self.goals = None
-
-        assert observation_mode in ['full_state']
-        assert action_mode in ['direct']
-        PourWaterPosControlEnv.__init__(self, observation_mode=observation_mode, action_mode=action_mode, **kwargs)
-
-        ### this is currently incorrect using 2, should change to max_particle_num
-        self.obs_box = Box(low=-np.inf, high=np.inf, shape=((self.dim_position + self.dim_velocity) * 2 + 7 * 2,),
-                           dtype=np.float32)  # the last 12 dim: 6 for each cup, x, y, z, theta, width, length, height
-        self.goal_box = Box(low=-2, high=2, shape=((self.dim_position + self.dim_velocity) * 2 + 7 * 2,),
-                            dtype=np.float32)  # make water particles being in some range
+        PourWaterPosControlEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
+        self.state_goal = None
 
         self.observation_space = Dict([
-            ('observation', self.obs_box),
-            ('state_observation', self.obs_box),
-            ('desired_goal', self.goal_box),
-            ('state_desired_goal', self.goal_box),
-            ('achieved_goal', self.goal_box),
-            ('state_achieved_goal', self.goal_box),
+            ('observation', self.observation_space),
+            ('state_observation', self.observation_space),
+            ('desired_goal', self.observation_space),
+            ('state_desired_goal', self.observation_space),
+            ('achieved_goal', self.observation_space),
+            ('state_achieved_goal', self.observation_space),
         ])
 
-    def sample_goals(self, batch_size):
+    def get_cached_configs_and_states(self, cached_states_path):
+        """
+        If the path exists, load from it. Should be a list of (config, states, goals)
+        """
+        if not cached_states_path.startswith('/'):
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            cached_states_path = osp.join(cur_dir, cached_states_path)
+        if not osp.exists(cached_states_path):
+            return False
+        with open(cached_states_path, "rb") as handle:
+            self.cached_configs, self.cached_init_states, self.cached_goal_dicts = pickle.load(handle)
+        print('{} config, state and goal pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
+        return True
+
+    def generate_env_variation(self, config, num_variations=4, goal_num=4, save_to_file=False):
+        generated_configs, generated_init_states = PourWaterPosControlEnv.generate_env_variation(self, 
+            config, num_variations=num_variations)
+        goal_dict = {}
+        for idx in range(len(generated_configs)):
+            PourWaterPosControlEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
+            self.action_tool.reset([0., -1., 0.])
+            goals = self.sample_goals(goal_num)
+            goal_dict[idx] = goals
+
+        combined = (generated_configs, generated_init_states, goal_dict)
+        with open(self.cached_states_path, 'wb') as handle:
+            pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        self.cached_configs = generated_configs
+        self.cached_init_states = generated_init_states
+        self.cached_goal_dicts = goal_dict
+
+    def sample_goals(self, batch_size=1):
         '''
-        currently there is only one goal that can be sampled, where all the water particles are directly set to be in the
-        target cup.
+        The goal is to have all the water particles set to be in the target cup.
+        The pouring cup could be at different positions.
         '''
-        # assert batch_size == 1, "currently we only support sample one goal at a time!"
+        goal_observations = []
 
-        # make the wate being like a cubic
-        fluid_pos = np.ones((self.particle_num, self.dim_position))
-        fluid_vel = np.zeros((self.particle_num, self.dim_velocity))
-
-        # lower = np.random.uniform(self.goal_box.low, self.goal_box.high, size = (1, self.dim_position))
-
-        # goal: water all inside target cup
-        lower_x = self.glass_params['poured_glass_x_center'] - self.glass_params['poured_glass_dis_x'] / 3.
-        lower_z = -self.glass_params['poured_glass_dis_z'] / 3
-        lower_y = self.glass_params['poured_border']
-        lower = np.array([lower_x, lower_y, lower_z])
-        cnt = 0
-        for x in range(self.fluid_params['dim_x']):
-            for y in range(self.fluid_params['dim_y']):
-                for z in range(self.fluid_params['dim_z']):
-                    fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * self.fluid_params['radius'] / 2  # + np.random.rand() * 0.01
-                    cnt += 1
-
-        fluid_goal = np.concatenate((fluid_pos.reshape(1, -1), fluid_vel.reshape(1, -1)), axis=1)
-
-        # the full goal state includes the control cup and target cup's state
-        # make control cup hang near the target cup and rotates towards the target cup, simulating a real pouring.
-
-        goals = np.zeros((batch_size, (self.dim_position + self.dim_velocity) * self.particle_num + 7 * 2))
+        initial_state = copy.deepcopy(self.get_state())
         for idx in range(batch_size):
+            print("sample goals idx {}".format(idx))
+            self.set_state(initial_state)
+
+            fluid_pos = np.ones((self.particle_num, self.dim_position))
+
+            # goal: make a fraction [0.5, 1] of the water inside target cup
+            fraction = np.random.rand() * 0.5 + 0.5
+            lower_x = self.glass_params['poured_glass_x_center'] - self.glass_params['poured_glass_dis_x'] / 3.
+            lower_z = -self.glass_params['poured_glass_dis_z'] / 3
+            lower_y = self.glass_params['poured_border']
+            lower = np.array([lower_x, lower_y, lower_z])
+            cnt = 0
+            for x in range(self.fluid_params['dim_x']):
+                for y in range(self.fluid_params['dim_y']):
+                    for z in range(self.fluid_params['dim_z']):
+                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * self.fluid_params['radius'] / 2  # + np.random.rand() * 0.01
+                        cnt += 1
+                        if cnt >= fraction * self.particle_num:
+                            break
+            
+            # the other water stays the same
+            ori_fluid_positon = pyflex.get_positions().reshape((self.particle_num. self.dim_position))
+            fluid_pos[:, cnt:] = ori_fluid_positon[:, cnt:]
+            pyflex.set_positions(fluid_pos)
+
+            # make control cup hang near the target cup and rotates towards the target cup, simulating a real pouring.
             pouring_glass_x = lower_x -  (0.9 + np.random.rand() * 0.2) * self.glass_params['glass_distance']
-            pouring_glass_z = 0.
             pouring_glass_y = (1.5 + np.random.rand() * 0.4) * self.glass_params['poured_height']
             pouring_theta = 0.8 + np.random.rand() * 0.4 * np.pi
+            control_cup_x, control_cup_y, control_cup_theta = pouring_glass_x,  pouring_glass_y, pouring_theta
 
-            pouring_glass_goal = np.array([pouring_glass_x, pouring_glass_y, pouring_glass_z, pouring_theta, self.glass_params['glass_dis_x'],
-                                        self.glass_params['glass_dis_z'], self.glass_params['height']])
-            poured_glass_goal = self.get_poured_glass_state()
-            glass_goal = np.concatenate((pouring_glass_goal.reshape(1, -1), poured_glass_goal.reshape(1, -1)), axis=1)
+            # move controled cup tp target position
+            tmp_states = self.glass_states
+            diff_x = control_cup_x - self.glass_x
+            diff_y = control_cup_y - self.glass_y
+            diff_theta = control_cup_theta - self.glass_rotation
+            steps = 300
+            for i in range(steps):
+                glass_new_states = self.rotate_glass(tmp_states, diff_x * i / steps, diff_y * i / steps, diff_theta * i / steps)
+                self.set_shape_states(glass_new_states, self.poured_glass_states)
+                pyflex.step()
+                tmp_states = glass_new_states
 
-            goal = np.concatenate((fluid_goal, glass_goal), axis=1)
-            goals[idx] = goal
+            particle_pos = pyflex.get_particle_positions().reshape((-1, 1))
+            particle_vel = pyflex.get_particle_velocities().reshape((-1, 1))
+            shape_pos = pyflex.get_shape_positions().reshape((-1, 1))
+            goal = np.concatenate([particle_pos, particle_vel, shape_pos], axis=1)
+            goal_observations.append(goal)
 
-        self.goals = goals
-
+        goal_observations = np.asarray(goal_observations).reshape((batch_size, -1))
         return {
-            'desired_goal': goals,
-            'state_desired_goal': goals,
+            'desired_goal': goal_observations,
+            'state_desired_goal': goal_observations,
         }
-
-    def get_poured_glass_state(self):
-        return np.array([self.glass_params['poured_glass_x_center'], self.glass_params['poured_border'], 0, 0,
-                         self.glass_params['poured_glass_dis_x'], self.glass_params['poured_glass_dis_z'], self.glass_params['poured_height']])
 
     def compute_reward(self, action, obs, set_prev_reward=False, info=None):
         '''
@@ -132,20 +157,22 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         reset to environment to the initial state.
         return the initial observation.
         '''
-        # NOTE: only suits for skewfit algorithm, because we are not actually sampling from this
-        # true underlying env, but only sample from the vae latents. This reduces overhead to sample a goal each time for now.
-        if self.goals is None:
-            self.dict_goals = self.sample_goals(20)
-
-        goal_idx = np.random.randint(len(self.goals))
-        self.dict_goal = {
-            "desired_goal": self.dict_goals["desired_goal"][goal_idx], 
-            "state_desired_goal": self.dict_goals["state_desired_goal"][goal_idx]
-        } 
-        self.state_goal = self.goals[goal_idx] # the real goal we want, np array
 
         PourWaterPosControlEnv._reset(self)
+        self.resample_goals()
+
         return self._get_obs()
+
+    def resample_goals(self):
+        goal_idx = np.random.randint(len(self.cached_goal_dicts[self.current_config_id]["state_desired_goal"]))
+
+        print("current config idx is {}, goal idx is {}".format(self.current_config_id, goal_idx))
+        self.dict_goal = {
+            "desired_goal": self.cached_goal_dicts[self.current_config_id]["desired_goal"][goal_idx],
+            "state_desired_goal": self.cached_goal_dicts[self.current_config_id]["state_desired_goal"][goal_idx]
+        }
+
+        self.state_goal = self.dict_goal['state_desired_goal'].reshape((1, -1))  # the real goal we want, np array
 
     def get_env_state(self):
         '''
@@ -169,28 +196,14 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         state_goal = goal['state_desired_goal']
         particle_pos = state_goal[:self.particle_num * self.dim_position]
         particle_vel = state_goal[self.particle_num * self.dim_position: (self.dim_position + self.dim_velocity) * self.particle_num]
+        shape_pos = state_goal[(self.dim_position + self.dim_velocity) * self.particle_num:]
 
-        tmp = (self.dim_position + self.dim_velocity) * self.particle_num
-        control_cup_x, control_cup_y, control_cup_z, control_cup_theta = \
-            state_goal[tmp], state_goal[tmp + 1], state_goal[tmp + 2], state_goal[tmp + 3]
-
-        # move controled cup tp target position
-        tmp_states = self.glass_states
-        diff_x = control_cup_x - self.glass_x
-        diff_y = control_cup_y - self.glass_y
-        diff_theta = control_cup_theta - self.glass_rotation
-        steps = 200
-        for i in range(steps):
-            glass_new_states = self.rotate_glass(tmp_states, diff_x * i / steps, diff_y * i / steps, diff_theta * i / steps)
-            self.set_shape_states(glass_new_states, self.poured_glass_states)
-            pyflex.step()
-            tmp_states = glass_new_states
-
-        # move water to target cup, wait for it to be stable
+        # move cloth to target position, wait for it to be stable
         pyflex.set_positions(particle_pos)
         pyflex.set_velocities(particle_vel)
-        steps = 200
-        for i in range(steps):
+        pyflex.set_shape_states(shape_pos)
+        steps = 5
+        for _ in range(steps):
             pyflex.step()
 
     def set_goal(self, goal):
@@ -200,52 +213,28 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
     def get_goal(self):
         return self.dict_goal
 
-    def initialize_camera(self, make_multi_world_happy=None):
-        '''
-        set the camera width, height, position and angle.
-        **Note: width and height is actually the screen width and screen height of FLex.
-        I suggest to keep them the same as the ones used in pyflex.cpp.
-        '''
-        x_center = self.x_center  # center of the glass floor
-        z = self.fluid_params['z']  # lower corner of the water fluid along z-axis.
-        self.camera_params = {
-            'default_camera': {'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
-                            'angle': np.array([0.45 * np.pi, -65 / 180. * np.pi, 0]),
-                            'width': self.camera_width,
-                            'height': self.camera_height},
-            'cam_2d': {'pos': np.array([x_center + 0.5, .7, z + 4.]),
-                    'angle': np.array([0, 0, 0.]),
-                    'width': self.camera_width,
-                    'height': self.camera_height}
-        }
-
-    def _get_obs(self):
+    def _update_obs(self, obs):
         '''
         return the observation based on the current flex state.
         '''
+        if self.state_goal is None:
+            self.resample_goals()
 
-        # print("inside pour water multitask _get_obs")
-        particle_pos = pyflex.get_positions().reshape((-1, self.dim_position))
-        particle_vel = pyflex.get_velocities().reshape((-1, self.dim_velocity))
-        particle_state = np.concatenate((particle_pos, particle_vel), axis=1).reshape((1, -1))
-
-        pouring_glass_state = np.array([self.glass_x, self.glass_y, 0, self.glass_rotation, self.glass_params['glass_dis_x'],
-                                        self.glass_params['glass_dis_z'], self.glass_params['height']])
-        poured_glass_state = self.get_poured_glass_state()
-        glass_state = np.concatenate((pouring_glass_state.reshape(1, -1), poured_glass_state.reshape(1, -1)), axis=1)
-
-        obs = np.concatenate((particle_state, glass_state), axis=1)
-
+        obs = obs.reshape((1, -1))
         new_obs = dict(
             observation=obs,
             state_observation=obs,
-            desired_goal=self.state_goal,
-            state_desired_goal=self.state_goal,
+            desired_goal=self.state_goal[:, :len(obs[0])],
+            state_desired_goal=self.state_goal[:, :len(obs[0])],
             achieved_goal=obs,
             state_achieved_goal=obs,
         )
 
         return new_obs
+
+    def _get_obs(self):
+        obs = PourWaterPosControlEnv._get_obs(self)
+        return self._update_obs(obs)
 
     def _get_info(self):
         reward = PourWaterPosControlEnv.compute_reward(self,set_prev_reward=True)

@@ -8,10 +8,11 @@ from softgym.core.multitask_env import MultitaskEnv
 from softgym.envs.action_space import PickerPickPlace
 import numpy as np
 import copy
+import pickle
 
 
 class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
-    def __init__(self, goal_num=5, **kwargs):
+    def __init__(self, cached_states_path='cloth_manipulate_init_states.pkl' ,**kwargs):
         '''
         Wrap cloth flatten to be goal conditioned cloth manipulation.
         The goal is a random cloth state.
@@ -19,12 +20,11 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         goal_num: how many goals to sample for each taks variation.
         '''
 
-        ClothFlattenEnv.__init__(self, **kwargs)
+        ClothFlattenEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
 
-        self.goal_num = goal_num
-        self.dict_goals = [None for _ in range(len(self.cached_configs))]
         self.state_goal = None
 
+        # TODO: the observation space here might be a bit different from that of the underlying environment.
         self.observation_space = Dict([
             ('observation', self.observation_space),
             ('state_observation', self.observation_space),
@@ -33,6 +33,37 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
             ('achieved_goal', self.observation_space),
             ('state_achieved_goal', self.observation_space),
         ])
+
+    def get_cached_configs_and_states(self, cached_states_path):
+        """
+        If the path exists, load from it. Should be a list of (config, states, goals)
+        """
+        if not cached_states_path.startswith('/'):
+            cur_dir = osp.dirname(osp.abspath(__file__))
+            cached_states_path = osp.join(cur_dir, cached_states_path)
+        if not osp.exists(cached_states_path):
+            return False
+        with open(cached_states_path, "rb") as handle:
+            self.cached_configs, self.cached_init_states, self.cached_goal_dicts = pickle.load(handle)
+        print('{} config, state and goal pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
+        return True
+
+    def generate_env_variation(self, config, num_variations=4, goal_num=4, save_to_file=False):
+        generated_configs, generated_init_states = ClothFlattenEnv.generate_env_variation(self, num_variations=num_variations)
+        goal_dict = {}
+        for idx in range(len(generated_configs)):
+            ClothFlattenEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
+            self.action_tool.reset([0., -1., 0.])
+            goals = self.sample_goals(goal_num)
+            goal_dict[idx] = goals
+
+        combined = (generated_configs, generated_init_states, goal_dict)
+        with open(self.cached_states_path, 'wb') as handle:
+            pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        self.cached_configs = generated_configs
+        self.cached_init_states = generated_init_states
+        self.cached_goal_dicts = goal_dict
 
     def sample_goals(self, batch_size=1):
         """
@@ -45,7 +76,7 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         for _ in range(batch_size):
             print("sample goals idx {}".format(_))
             self.set_state(initial_state)
-            self._random_pick_and_place()
+            self._random_pick_and_place(pick_num=2)
 
             self._center_object()
             env_state = copy.deepcopy(self.get_state())
@@ -86,23 +117,18 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         reset to environment to the initial state.
         return the initial observation.
         '''
-        # if self.state_dict_goal is None: # NOTE: only suits for skewfit algorithm, because we are not actually sampling from this
-        # true underlying env, but only sample from the vae latents. This reduces overhead to sample a goal each time for now.     
         ClothFlattenEnv._reset(self)
-        self.resample_goals(self.goal_num)
+        self.resample_goals()
 
         return self._get_obs()
 
-    def resample_goals(self, num=5):
-        if self.dict_goals[self.current_config_id] is None:
-            self.dict_goals[self.current_config_id] = self.sample_goals(num)
-
-        goal_idx = np.random.randint(len(self.dict_goals[self.current_config_id]["state_desired_goal"]))
+    def resample_goals(self):
+        goal_idx = np.random.randint(len(self.cached_goal_dicts[self.current_config_id]["state_desired_goal"]))
 
         print("current config idx is {}, goal idx is {}".format(self.current_config_id, goal_idx))
         self.dict_goal = {
-            "desired_goal": self.dict_goals[self.current_config_id]["desired_goal"][goal_idx],
-            "state_desired_goal": self.dict_goals[self.current_config_id]["state_desired_goal"][goal_idx]
+            "desired_goal": self.cached_goal_dicts[self.current_config_id]["desired_goal"][goal_idx],
+            "state_desired_goal": self.cached_goal_dicts[self.current_config_id]["state_desired_goal"][goal_idx]
         }
 
         self.state_goal = self.dict_goal['state_desired_goal'].reshape((1, -1))  # the real goal we want, np array
@@ -126,7 +152,6 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         given a goal, set the flex state to be that goal.
         needed by image env to sample goals.
         '''
-        # TODO: implement this
         state_goal = goal['state_desired_goal']
         particle_pos = state_goal[:self.particle_num * self.dim_position]
         particle_vel = state_goal[self.particle_num * self.dim_position: (self.dim_position + self.dim_velocity) * self.particle_num]
