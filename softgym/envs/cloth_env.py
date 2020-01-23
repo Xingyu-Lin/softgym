@@ -31,9 +31,13 @@ class ClothEnv(FlexEnv):
             self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=0.05)  # TODO: should make radius a controllable parameter
             self.action_space = self.action_tool.action_space
 
-        if observation_mode in ['key_point']:
-            key_point_idx = self._get_key_point_idx()
-            obs_dim = len(key_point_idx) * 3
+        if observation_mode in ['key_point', 'point_cloud']:
+            if observation_mode == 'key_point':
+                obs_dim = len(self._get_key_point_idx()) * 3
+            else:
+                max_particles = 64 * 40
+                obs_dim = max_particles * 3
+                self.particle_obs_dim = obs_dim
             if action_mode in ['picker']:
                 obs_dim += num_picker * 3
             else:
@@ -61,13 +65,13 @@ class ClothEnv(FlexEnv):
         }
         return config
 
-    def _get_obs(self):  # NOTE: just rename to _get_obs
+    def _get_obs(self):
         if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_height, self.camera_width)
-
         if self.observation_mode == 'point_cloud':
-            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
-            pos = particle_pos
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
+            pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+            pos[:len(particle_pos)] = particle_pos
         elif self.observation_mode == 'key_point':
             particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
             keypoint_pos = particle_pos[self._get_key_point_idx(), :3]

@@ -47,18 +47,18 @@ class PourWaterPosControlEnv(FluidEnv):
                 config = self.get_default_config()
             self.generate_env_variation(config, save_to_file=True)
 
-        if observation_mode == 'cam_rgb':
+        if observation_mode in ['point_cloud', 'key_point']:
+            if observation_mode == 'key_point':
+                obs_dim = 0
+            else:
+                obs_dim = 1225 * 3
+                self.particle_obs_dim = obs_dim
+            # z and theta of the second cup (poured_glass) does not change and thus are omitted.
+            obs_dim += 10  # Pos (x, z, theta) and shape (w, h, l) of the two cups.
+            self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
+        elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
-        elif self.observation_mode == 'point_cloud':
-            self.observation_space = Box(low=-np.inf, high=np.inf, shape=(1, 1),
-                                         dtype=np.float32)
-        elif self.observation_mode == 'key_point':  # Pos (x, z, theta) and shape (w, h, l) of the two cups.
-            # z and theta of the second cup (poured_glass) does not change and thus are omitted.
-            obs_dim = 10
-            self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
-        else:
-            raise NotImplementedError
 
         if action_mode == 'direct':
             self.action_direct_dim = 3
@@ -143,7 +143,7 @@ class PourWaterPosControlEnv(FluidEnv):
         """
 
         init_states = []
-        print(num)
+        # print(num)
         for i in range(num):
             print("generating {} init state by resetting target cup distance and shape!".format(i + 1))
             pyflex.pop_box(self.wall_num)  # pop out the last target glass
@@ -225,11 +225,11 @@ class PourWaterPosControlEnv(FluidEnv):
         x_center = self.x_center  # center of the glass floor
         z = self.fluid_params['z']  # lower corner of the water fluid along z-axis.
         self.camera_params = {
-            'default_camera': {'pos': np.array([x_center + 1.5, 1.0 + 1.7, z + 0.2]),
-                               'angle': np.array([0.45 * np.pi, -65 / 180. * np.pi, 0]),
+            'default_camera': {'pos': np.array([1.5, 1.0 + 1.7, 0.3]),
+                               'angle': np.array([0.45 * np.pi, -60 / 180. * np.pi, 0]),
                                'width': self.camera_width,
                                'height': self.camera_height},
-            'cam_2d': {'pos': np.array([x_center + 0.5, .7, z + 4.]),
+            'cam_2d': {'pos': np.array([0.5, .7, 4.]),
                        'angle': np.array([0, 0, 0.]),
                        'width': self.camera_width,
                        'height': self.camera_height}
@@ -320,7 +320,7 @@ class PourWaterPosControlEnv(FluidEnv):
         # no cached init states passed in 
         if states is None:
             fluid_pos = np.ones((self.particle_num, self.dim_position))
-            print(self.particle_num)
+            # print(self.particle_num)
 
             # move water all inside pouring cup
             lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 3.
@@ -349,9 +349,17 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_width, self.camera_height)
-        elif self.observation_mode == 'key_point':
-            return np.array([self.glass_x, self.glass_y, self.glass_rotation, self.glass_dis_x, self.glass_dis_z, self.height,
-                             self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z])
+        elif self.observation_mode in ['point_cloud', 'key_point']:
+            if self.observation_mode == 'point_cloud':
+                particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
+                pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+                pos[:len(particle_pos)] = particle_pos
+            else:
+                pos = np.empty(0, dtype=np.float)
+
+            cup_state = np.array([self.glass_x, self.glass_y, self.glass_rotation, self.glass_dis_x, self.glass_dis_z, self.height,
+                                  self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z])
+            return np.hstack([pos, cup_state]).flatten()
         else:
             raise NotImplementedError
 

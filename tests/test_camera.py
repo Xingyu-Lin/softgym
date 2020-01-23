@@ -74,6 +74,5 @@ if __name__ == '__main__':
         num_variations=50,
         use_cached_states=True,
         deterministic=False)
-
     # exit()
     test_random(env)
