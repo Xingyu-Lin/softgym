@@ -20,7 +20,7 @@ import pickle
 
 
 class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv):
-    def __init__(self, cached_states_path='pour_water_multitask.pkl', **kwargs):
+    def __init__(self, cached_states_path='pour_water_multitask_init_states.pkl', **kwargs):
         '''
         This class implements a multi-goal pouring water task.
         Where the goal has different positions of the pouring glass.
@@ -52,13 +52,12 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         print('{} config, state and goal pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
         return True
 
-    def generate_env_variation(self, config, num_variations=4, goal_num=4, save_to_file=False):
+    def generate_env_variation(self, config, num_variations=2, goal_num=2, save_to_file=False):
         generated_configs, generated_init_states = PourWaterPosControlEnv.generate_env_variation(self, 
             config, num_variations=num_variations)
         goal_dict = {}
         for idx in range(len(generated_configs)):
             PourWaterPosControlEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
-            self.action_tool.reset([0., -1., 0.])
             goals = self.sample_goals(goal_num)
             goal_dict[idx] = goals
 
@@ -85,7 +84,8 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
             fluid_pos = np.ones((self.particle_num, self.dim_position))
 
             # goal: make a fraction [0.5, 1] of the water inside target cup
-            fraction = np.random.rand() * 0.5 + 0.5
+            # fraction = np.random.rand() * 0.5 + 0.5
+            fraction = 1.1
             lower_x = self.glass_params['poured_glass_x_center'] - self.glass_params['poured_glass_dis_x'] / 3.
             lower_z = -self.glass_params['poured_glass_dis_z'] / 3
             lower_y = self.glass_params['poured_border']
@@ -100,7 +100,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
                             break
             
             # the other water stays the same
-            ori_fluid_positon = pyflex.get_positions().reshape((self.particle_num. self.dim_position))
+            ori_fluid_positon = pyflex.get_positions().reshape((self.particle_num, self.dim_position))
             fluid_pos[:, cnt:] = ori_fluid_positon[:, cnt:]
             pyflex.set_positions(fluid_pos)
 
@@ -122,9 +122,9 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
                 pyflex.step()
                 tmp_states = glass_new_states
 
-            particle_pos = pyflex.get_particle_positions().reshape((-1, 1))
-            particle_vel = pyflex.get_particle_velocities().reshape((-1, 1))
-            shape_pos = pyflex.get_shape_positions().reshape((-1, 1))
+            particle_pos = pyflex.get_positions().reshape((1, -1))
+            particle_vel = pyflex.get_velocities().reshape((1, -1))
+            shape_pos = pyflex.get_shape_states().reshape((1, -1))
             goal = np.concatenate([particle_pos, particle_vel, shape_pos], axis=1)
             goal_observations.append(goal)
 

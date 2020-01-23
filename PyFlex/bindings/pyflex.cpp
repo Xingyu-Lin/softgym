@@ -2693,16 +2693,16 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
 	softRopeSceneNew->AddInstance(rope);
     g_scenes.push_back(softRopeSceneNew);
 
-    SoftBody::Instance stackBox(make_path(box_high_path, "/data/box_high.ply"));
+    softgym_SoftBody::Instance stackBox(make_path(box_high_path, "/data/box_high.ply"));
     stackBox.mScale = Vec3(10.0f);
     stackBox.mClusterSpacing = 1.5f;
     stackBox.mClusterRadius = 0.0f;
     stackBox.mClusterStiffness = 0.0f;
     stackBox.mGlobalStiffness = 1.0f;
-    stackBox.mClusterPlasticThreshold = 0.0015f;
+    stackBox.mClusterPlasticThreshold = 0.005f;
     stackBox.mClusterPlasticCreep = 0.25f;
-    stackBox.mTranslation.y = 1.0f;
-    SoftBody::Instance stackSphere(make_path(sphere_path, "/data/sphere.ply"));
+    stackBox.mTranslation.y = 0.5f;
+    softgym_SoftBody::Instance stackSphere(make_path(sphere_path, "/data/sphere.ply"));
     stackSphere.mScale = Vec3(10.0f);
     stackSphere.mClusterSpacing = 1.5f;
     stackSphere.mClusterRadius = 0.0f;
@@ -2711,14 +2711,14 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     stackSphere.mClusterPlasticThreshold = 0.0015f;
     stackSphere.mClusterPlasticCreep = 0.25f;
     stackSphere.mTranslation.y = 2.0f;
-    auto *softgym_PlasticDough = new SoftBody("Plastic Stack");
-    // plasticStackScene->AddInstance(stackBox);
-    plasticStackScene->AddInstance(stackSphere);
+    auto *softgym_PlasticDough = new softgym_SoftBody("Plastic Stack");
+    softgym_PlasticDough->AddInstance(stackBox);
+    // softgym_PlasticDough->AddInstance(stackSphere);
     // for (int i = 0; i < 3; i++) {
     //     stackBox.mTranslation.y += 2.0f;
     //     stackSphere.mTranslation.y += 2.0f;
-    //     plasticStackScene->AddInstance(stackBox);
-    //     plasticStackScene->AddInstance(stackSphere);
+    //     softgym_PlasticDough->AddInstance(stackBox);
+    //     softgym_PlasticDough->AddInstance(stackSphere);
     // }
     g_scenes.push_back(softgym_PlasticDough);
 
@@ -3179,16 +3179,16 @@ void pyflex_add_capsule(py::array_t<float> params, py::array_t<float> lower_pos,
     pyflex_MapShapeBuffers(g_buffers);
 
     auto ptr_params = (float *) params.request().ptr;
-    radius = params[0];
-    halfheight = params[1];
+    float capsule_radius = ptr_params[0];
+    float halfheight = ptr_params[1];
 
     auto ptr_lower_pos = (float *) lower_pos.request().ptr;
-    Vec3 lower_pos = Vec3(ptr_lower_pos[0], ptr_lower_pos[1], ptr_lower_pos[2]);
+    Vec3 lower_position = Vec3(ptr_lower_pos[0], ptr_lower_pos[1], ptr_lower_pos[2]);
 
     auto ptr_quat = (float *) quat_.request().ptr;
     Quat quat = Quat(ptr_quat[0], ptr_quat[1], ptr_quat[2], ptr_quat[3]);
 
-    AddCapsule(radius, halfheight, lower_pos, quat);
+    AddCapsule(capsule_radius, halfheight, lower_position, quat);
 
     pyflex_UnmapShapeBuffers(g_buffers);
 }
