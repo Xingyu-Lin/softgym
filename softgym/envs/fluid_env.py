@@ -21,21 +21,21 @@ class FluidEnv(FlexEnv):
 
         # center of the glass floor. lower corner of the water fluid grid along x,y,z-axis. 
         fluid_radis = params['radius'] * params['rest_dis_coef']
-        self.x_center = 0 
-            
-        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x']-3)/1.*fluid_radis  + 0.1
-        self.fluid_params['y'] = fluid_radis/2 + 0.05
-        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z'] - 2)*fluid_radis / 1.5
+        self.x_center = 0
+
+        self.fluid_params['x'] = self.x_center - (self.fluid_params['dim_x'] - 3) / 1. * fluid_radis + 0.1
+        self.fluid_params['y'] = fluid_radis / 2 + 0.05
+        self.fluid_params['z'] = 0. - (self.fluid_params['dim_z'] - 2) * fluid_radis / 1.5
 
         print(self.fluid_params['x'])
         print(self.fluid_params['y'])
         print(self.fluid_params['z'])
 
-        return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'], 
-            params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'], 
-            self.fluid_params['x'], self.fluid_params['y'], self.fluid_params['z'], 
-            self.fluid_params['dim_x'], self.fluid_params['dim_y'], self.fluid_params['dim_z']])
-            
+        return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'],
+                         params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'],
+                         self.fluid_params['x'], self.fluid_params['y'], self.fluid_params['z'],
+                         self.fluid_params['dim_x'], self.fluid_params['dim_y'], self.fluid_params['dim_z']])
+
     def set_scene(self, fluid_param_dic, states=None):
         '''
         child envs can pass in specific fluid params through fluid param dic.
@@ -45,8 +45,8 @@ class FluidEnv(FlexEnv):
 
         # set camera parameters. 
         self.initialize_camera()
-        camera_params = np.array([*self.camera_params[self.camera_name]['pos'], 
-            *self.camera_params[self.camera_name]['angle'], self.camera_width, self.camera_height, self.render_mode])
+        camera_params = np.array([*self.camera_params[self.camera_name]['pos'],
+                                  *self.camera_params[self.camera_name]['angle'], self.camera_width, self.camera_height, self.render_mode])
 
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
@@ -85,5 +85,3 @@ class FluidEnv(FlexEnv):
 
     def _get_info(self):
         return {}
-
-
