@@ -20,18 +20,18 @@ import torch
 def main(headless, episode, save_dir, img_size, use_cached_states, deterministic):
     """ Generate demos for all environments with different variations"""
     envs = {
-        'RopeFlatten': RopeFlattenEnv(
-            observation_mode='cam_rgb',
-            action_mode='picker',
-            num_picker=2,
-            render=True,
-            headless=headless,
-            horizon=75,
-            action_repeat=8,
-            render_mode='cloth',
-            num_variations=200,
-            use_cached_states=use_cached_states,
-            deterministic=deterministic),
+        # 'RopeFlatten': RopeFlattenEnv(
+        #     observation_mode='cam_rgb',
+        #     action_mode='picker',
+        #     num_picker=2,
+        #     render=True,
+        #     headless=headless,
+        #     horizon=75,
+        #     action_repeat=8,
+        #     render_mode='cloth',
+        #     num_variations=200,
+        #     use_cached_states=use_cached_states,
+        #     deterministic=deterministic),
         # 'ClothFlatten': ClothFlattenEnv(
         #     observation_mode='key_point',
         #     action_mode='picker',
@@ -56,18 +56,16 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
         #     num_variations=200,
         #     use_cached_states=use_cached_states,
         #     deterministic=deterministic),
-        # 'pour_water': PourWaterPosControlEnv(
-        #     observation_mode='cam_rgb',
-        #     horizon=75,
-        #     render=True,
-        #     headless=headless,
-        #     action_mode='direct',
-        #     deterministic=False,
-        #     render_mode='fluid')
+        'PourWater': PourWaterPosControlEnv(
+            observation_mode='cam_rgb',
+            horizon=75,
+            render=True,
+            headless=headless,
+            action_mode='direct',
+            deterministic=False,
+            render_mode='fluid')
     }
-    env = envs['RopeFlatten']
-    print(env.observation_space)
-    exit()
+
     for (env_name, env) in envs.items():
         all_frames = []
         for i in range(episode):

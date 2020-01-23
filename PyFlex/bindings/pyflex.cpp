@@ -1075,7 +1075,7 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
 
         printf("Finished warm up.\n");
     }
-    printf("init scene done.\n");
+//    printf("init scene done.\n");
 }
 
 /*
