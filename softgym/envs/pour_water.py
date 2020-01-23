@@ -6,7 +6,7 @@ from softgym.envs.fluid_env import FluidEnv
 import time
 import copy
 import os
-from softgym.envs.util import rotate_rigid_object
+from softgym.envs.util import rotate_rigid_object, quatFromAxisAngle
 from pyquaternion import Quaternion
 import random
 from shapely.geometry import Polygon, LineString
@@ -126,6 +126,8 @@ class PourWaterPosControlEnv(FluidEnv):
             with open(self.cached_states_path, 'wb') as handle:
                 pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+        return self.cached_configs, self.cached_init_states
+
     def get_config(self):
         if self.deterministic:
             config_idx = 0
@@ -168,8 +170,6 @@ class PourWaterPosControlEnv(FluidEnv):
         reset to environment to the initial state.
         return the initial observation.
         '''
-
-        print("reset!")
         self.inner_step = 0
         return self._get_obs()
 
@@ -424,7 +424,7 @@ class PourWaterPosControlEnv(FluidEnv):
         That's why left and right walls have exactly the same params, and so do front and back walls.   
         """
         center = np.array([0., 0., 0.])
-        quat = self.quatFromAxisAngle([0, 0, -1.], 0.)
+        quat = quatFromAxisAngle([0, 0, -1.], 0.)
         boxes = []
 
         # floor
@@ -466,7 +466,7 @@ class PourWaterPosControlEnv(FluidEnv):
         10-14: previous quat 
         '''
         dis_x, dis_z = self.glass_dis_x, self.glass_dis_z
-        quat_curr = self.quatFromAxisAngle([0, 0, -1.], theta)
+        quat_curr = quatFromAxisAngle([0, 0, -1.], theta)
 
         border = self.border
 
@@ -511,7 +511,7 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         dis_x, dis_z = glass_dis_x, glass_dis_z
         x_center, y_curr, y_last = x, y, 0.
-        quat = self.quatFromAxisAngle([0, 0, -1.], 0.)
+        quat = quatFromAxisAngle([0, 0, -1.], 0.)
 
         # states of 5 walls
         states = np.zeros((5, self.dim_shape_state))

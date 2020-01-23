@@ -2,6 +2,7 @@ from softgym.envs.rope_flatten import RopeFlattenEnv
 from softgym.envs.cloth_flatten import ClothFlattenEnv
 from softgym.envs.cloth_fold import ClothFoldEnv
 from softgym.envs.pour_water import PourWaterPosControlEnv
+from softgym.envs.dough_flatten import DoughFlattenEnv
 from softgym.utils.visualization import save_numpy_as_gif
 import click
 import os.path as osp
@@ -56,15 +57,25 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
         #     num_variations=200,
         #     use_cached_states=use_cached_states,
         #     deterministic=deterministic),
-        'PourWater': PourWaterPosControlEnv(
+        # 'PourWater': PourWaterPosControlEnv(
+        #     observation_mode='cam_rgb',
+        #     horizon=75,
+        #     render=True,
+        #     headless=headless,
+        #     action_mode='direct',
+        #     deterministic=False,
+        #     render_mode='fluid'),
+        'DoughFlatten': DoughFlattenEnv(
             observation_mode='cam_rgb',
-            horizon=75,
-            render=True,
-            headless=headless,
             action_mode='direct',
-            deterministic=False,
-            render_mode='fluid'),
-        'DoughFlatten':
+            render=True,
+            headless=False,
+            horizon=75,
+            action_repeat=8,
+            render_mode='dough',
+            num_variations=2,
+            use_cached_states=True,
+            deterministic=False)
     }
 
     for (env_name, env) in envs.items():

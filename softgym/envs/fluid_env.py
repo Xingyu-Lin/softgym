@@ -59,22 +59,6 @@ class FluidEnv(FlexEnv):
     def rand_int(self, lo, hi):
         return np.random.randint(lo, hi)
 
-    def quatFromAxisAngle(self, axis, angle):
-        '''
-        given a rotation axis and angle, return a quatirian that represents such roatation.
-        '''
-        axis /= np.linalg.norm(axis)
-
-        half = angle * 0.5
-        w = np.cos(half)
-
-        sin_theta_over_two = np.sin(half)
-        axis *= sin_theta_over_two
-
-        quat = np.array([axis[0], axis[1], axis[2], w])
-
-        return quat
-
     def set_video_recording_params(self):
         """
         Set the following parameters if video recording is needed:
