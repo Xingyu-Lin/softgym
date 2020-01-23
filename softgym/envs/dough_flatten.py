@@ -33,8 +33,8 @@ class DoughFlattenEnv(DoughEnv):
         #     success = self.get_cached_configs_and_states(cached_states_path)
         #     assert success
 
-        self.action_low = -0.05
-        self.action_high = 0.05
+        self.action_low = -0.1
+        self.action_high = 0.1
         self.cached_configs = [self.get_default_config()]
         self.cached_init_states = [None]
 
@@ -66,7 +66,7 @@ class DoughFlattenEnv(DoughEnv):
         shape_position = pyflex.get_shape_states()
         return {'particle_pos': particle_pos, 'particle_vel': particle_vel, 'shape_pos': shape_position,
                 'capsule_x': self.capsule_x, 'capsule_y': self.capsule_y, 'capsule_z': self.capsule_z,
-                'capsule_rotation': self.capsule_rotation, 'capsule_params': self.capsule_params, 
+                'capsule_rotation': self.capsule_rotation, 'capsule_params': self.capsule_params,
                 'capsule_states': self.capsule_states}
 
     def set_state(self, state_dic):
@@ -74,7 +74,7 @@ class DoughFlattenEnv(DoughEnv):
         self.capsule_radius = state_dic['capsule_params']['capsule_radius']
         self.capsule_halfheight = state_dic['capsule_params']['capsule_halfheight']
 
-        pyflex.pop_box(self.wall_num) # TODO: change this to pop capsule
+        pyflex.pop_box(self.wall_num)  # TODO: change this to pop capsule
         self.create_capsule(self.capsule_radius, self.capsule_halfheight)
 
         pyflex.set_positions(state_dic["particle_pos"])
@@ -144,7 +144,7 @@ class DoughFlattenEnv(DoughEnv):
         dx, dy, dz, dtheta = move[0], move[1], move[2], rotate
         print("currnet y {} dx {} dy {} dz {} dtheta {}".format(self.capsule_y, dx, dy, dz, dtheta))
         x, y, z, theta = self.capsule_x + dx, self.capsule_y + dy, self.capsule_z + dz, self.capsule_rotation + dtheta
-        y = max(0, y) # make sure capsule is above ground
+        y = max(0, y)  # make sure capsule is above ground
 
         # check if the movement of the pouring glass collide with the poured glass.
         # the action only take effects if there is no collision
@@ -155,7 +155,7 @@ class DoughFlattenEnv(DoughEnv):
         # pyflex takes a step to update the dough and
         pyflex.set_shape_states(self.capsule_states)
         pyflex.step()
-        
+
         return
 
     def move_capsule(self, prev_states, x, y, z, theta):
@@ -206,14 +206,14 @@ class DoughFlattenEnv(DoughEnv):
 
 if __name__ == '__main__':
     env = DoughFlattenEnv(observation_mode='full_state',
-                  action_mode='direct',
-                  render=True,
-                  headless=False,
-                  horizon=75,
-                  action_repeat=8,
-                  num_variations=200,
-                  use_cached_states=True,
-                  deterministic=False)
+                          action_mode='direct',
+                          render=True,
+                          headless=False,
+                          horizon=75,
+                          action_repeat=8,
+                          num_variations=200,
+                          use_cached_states=True,
+                          deterministic=False)
 
     env.reset()
     for i in range(500):
