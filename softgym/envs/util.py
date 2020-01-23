@@ -20,3 +20,20 @@ def rotate_rigid_object(center, axis, angle, pos = None, relative = None):
     quat = Quaternion(axis=axis, angle=angle)
     after_rotate = quat.rotate(relative)
     return after_rotate + center
+
+
+def quatFromAxisAngle(axis, angle):
+    '''
+    given a rotation axis and angle, return a quatirian that represents such roatation.
+    '''
+    axis /= np.linalg.norm(axis)
+
+    half = angle * 0.5
+    w = np.cos(half)
+
+    sin_theta_over_two = np.sin(half)
+    axis *= sin_theta_over_two
+
+    quat = np.array([axis[0], axis[1], axis[2], w])
+
+    return quat

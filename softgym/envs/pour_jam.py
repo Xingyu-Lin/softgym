@@ -6,7 +6,7 @@ from softgym.envs.fluid_env import FluidEnv
 import time
 import copy
 import os
-from softgym.envs.util import rotate_rigid_object
+from softgym.envs.util import rotate_rigid_object, quatFromAxisAngle
 from pyquaternion import Quaternion
 import random
 
@@ -305,7 +305,7 @@ class PourJamPosControlEnv(FluidEnv):
         That's why left and right walls have exactly the same params, and so do front and back walls.   
         """
         center = np.array([0., 0., 0.])
-        quat = self.quatFromAxisAngle([0, 0, -1.], 0.) 
+        quat = quatFromAxisAngle([0, 0, -1.], 0.) 
         boxes = []
 
         # floor
@@ -341,7 +341,7 @@ class PourJamPosControlEnv(FluidEnv):
         10-14: previous quat 
         '''
         dis_x, dis_z = self.glass_dis_x, self.glass_dis_z
-        quat_curr = self.quatFromAxisAngle([0, 0, -1.], theta) 
+        quat_curr = quatFromAxisAngle([0, 0, -1.], theta) 
 
         border = self.border
 
@@ -386,7 +386,7 @@ class PourJamPosControlEnv(FluidEnv):
         '''
         dis_x, dis_z = glass_dis_x, glass_dis_z
         x_center, y_curr, y_last  = x, y, 0.
-        quat = self.quatFromAxisAngle([0, 0, -1.], 0.) 
+        quat = quatFromAxisAngle([0, 0, -1.], 0.) 
 
         # states of 5 walls
         states = np.zeros((5, self.dim_shape_state))
