@@ -12,7 +12,7 @@ import pickle
 
 
 class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
-    def __init__(self, cached_states_path='cloth_manipulate_init_states.pkl' ,**kwargs):
+    def __init__(self, goal_num=10, cached_states_path='cloth_manipulate_init_states.pkl' ,**kwargs):
         '''
         Wrap cloth flatten to be goal conditioned cloth manipulation.
         The goal is a random cloth state.
@@ -20,10 +20,11 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         goal_num: how many goals to sample for each taks variation.
         '''
 
+        self.goal_num = goal_num
         ClothFlattenEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
 
         self.state_goal = None
-
+        
         # TODO: the observation space here might be a bit different from that of the underlying environment.
         self.observation_space = Dict([
             ('observation', self.observation_space),
@@ -48,9 +49,10 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         print('{} config, state and goal pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
         return True
 
-    def generate_env_variation(self, config, num_variations=4, goal_num=4, save_to_file=False):
+    def generate_env_variation(self, num_variations=5, save_to_file=False):
         generated_configs, generated_init_states = ClothFlattenEnv.generate_env_variation(self, num_variations=num_variations)
         goal_dict = {}
+        goal_num = self.goal_num
         for idx in range(len(generated_configs)):
             ClothFlattenEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
             self.action_tool.reset([0., -1., 0.])

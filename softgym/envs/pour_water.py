@@ -17,7 +17,8 @@ import os.path as osp
 
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, config=None, cached_states_path='pour_water_init_states.pkl', **kwargs):
+    def __init__(self, observation_mode, action_mode, config=None, 
+            num_variations=10, cached_states_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -45,7 +46,7 @@ class PourWaterPosControlEnv(FluidEnv):
         if self.get_cached_configs_and_states(cached_states_path) is False:
             if config is None:
                 config = self.get_default_config()
-            self.generate_env_variation(config, save_to_file=True)
+            self.generate_env_variation(config, num_variations=num_variations, save_to_file=True)
 
         if observation_mode in ['point_cloud', 'key_point']:
             if observation_mode == 'key_point':
@@ -95,6 +96,9 @@ class PourWaterPosControlEnv(FluidEnv):
         return config
 
     def generate_env_variation(self, config, num_variations=5, save_to_file=False, **kwargs):
+        """
+        TODO: add more randomly generated configs instead of using manually specified configs. 
+        """
         water_volumns = [[8, 18, 8], [7, 25, 7], [5, 10, 5]]
         glass_height = [0.6, 0.55, 0.5]
 
@@ -157,10 +161,6 @@ class PourWaterPosControlEnv(FluidEnv):
                                                              self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
 
             self.set_shape_states(self.glass_states, self.poured_glass_states)
-            # pyflex.step()
-            # img = self.get_image()
-            # plt.imshow(img)
-            # plt.show()
             init_states.append(copy.deepcopy(self.get_state()))
 
         return init_states
@@ -222,10 +222,8 @@ class PourWaterPosControlEnv(FluidEnv):
         **Note: width and height is actually the screen width and screen height of FLex.
         I suggest to keep them the same as the ones used in pyflex.cpp.
         '''
-        x_center = self.x_center  # center of the glass floor
-        z = self.fluid_params['z']  # lower corner of the water fluid along z-axis.
         self.camera_params = {
-            'default_camera': {'pos': np.array([1.5, 1.0 + 1.7, 0.3]),
+            'default_camera': {'pos': np.array([1.9, 1.0 + 1.7, 0.3]),
                                'angle': np.array([0.45 * np.pi, -60 / 180. * np.pi, 0]),
                                'width': self.camera_width,
                                'height': self.camera_height},
@@ -292,7 +290,6 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         # create fluid
         super().set_scene(config["fluid"])  # do not sample fluid parameters, as it's very likely to generate very strange fluid
-        print("fluid particle num: ", pyflex.get_n_particles())
 
         # compute glass params
         self.sample_pouring_glass_params(config["glass"])
