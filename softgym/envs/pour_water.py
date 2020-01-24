@@ -14,11 +14,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import yaml, pickle
 import os.path as osp
-
+import random
 
 class PourWaterPosControlEnv(FluidEnv):
     def __init__(self, observation_mode, action_mode, config=None, 
-            num_variations=10, cached_states_path='pour_water_init_states.pkl', **kwargs):
+            num_variations=5, cached_states_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -99,30 +99,56 @@ class PourWaterPosControlEnv(FluidEnv):
         """
         TODO: add more randomly generated configs instead of using manually specified configs. 
         """
-        water_volumns = [[8, 18, 8], [7, 25, 7], [5, 10, 5]]
-        glass_height = [0.6, 0.55, 0.5]
+        dim_xs = [5, 6, 7, 8]
+        dim_zs = [5, 6, 7, 8]
 
         self.cached_configs = []
         self.cached_init_states = []
 
-        config_variations = [copy.deepcopy(config) for _ in range(len(water_volumns))]
-        for idx in range(len(water_volumns)):
-            water_v = water_volumns[idx]
-            glass_h = glass_height[idx]
+        config_variations = [copy.deepcopy(config) for _ in range(num_variations)]
+        for idx in range(num_variations):
+            dim_x = random.choice(dim_xs)
+            dim_z = random.choice(dim_zs)
+            m = min(dim_x, dim_z)
+            p = np.random.rand()
+            water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef'] 
+            if p < 1. / 3.: # small water volume
+                print("small volume water")
+                dim_y = 2 * m + np.random.randint(0, 2)
+                v = dim_x * dim_y * dim_z
+                h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius
+                print("h {}".format(h))
+                glass_height = h + (np.random.rand() - 0.5) * 0.05
+            elif 1./ 3 < p and p < 2./ 3: # midium water volumes
+                print("medium volume water")
+                dim_y = int(2.5 * m) + np.random.randint(0, 2)
+                v = dim_x * dim_y * dim_z
+                h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 1.5
+                print("h {}".format(h))
+                glass_height = h + (np.random.rand() - 0.5) * 0.05
+            else:
+                print("large volume water")
+                dim_y = 4 * m
+                v = dim_x * dim_y * dim_z
+                h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 2.2
+                print("h {}".format(h))
+                glass_height = h + (m + np.random.rand()) * 0.007
 
-            config_variations[idx]['fluid']['dim_x'] = water_v[0]
-            config_variations[idx]['fluid']['dim_y'] = water_v[1]
-            config_variations[idx]['fluid']['dim_z'] = water_v[2]
+            print("dim_x {} dim_y {} dim_z {} glass_height {}".format(dim_x, dim_y, dim_z, glass_height))
+            config_variations[idx]['fluid']['dim_x'] = dim_x
+            config_variations[idx]['fluid']['dim_y'] = dim_y
+            config_variations[idx]['fluid']['dim_z'] = dim_z
 
-            config_variations[idx]['glass']['height'] = glass_h
+            config_variations[idx]['glass']['height'] = glass_height
+            config_variations[idx]['glass']['poured_height'] = glass_height + np.random.rand() * 0.1
+            config_variations[idx]['glass']['glass_distance'] = self.rand_float(0.1 * m, 0.16 * m) + dim_x * water_radius / 2.
+            config_variations[idx]['glass']['poured_border'] = self.rand_float(0.015, 0.025)
 
             self.set_scene(config_variations[idx])
-            state_dicts = [copy.deepcopy(self.get_state())]
-            state_dicts += self.generate_init_state(num_variations)
+            init_state = copy.deepcopy(self.get_state())
 
-            for init_state in state_dicts:
-                self.cached_configs.append(config_variations[idx])
-                self.cached_init_states.append(init_state)
+            self.cached_configs.append(config_variations[idx])
+            self.cached_init_states.append(init_state)
 
         combined = [self.cached_configs, self.cached_init_states]
 
@@ -140,30 +166,6 @@ class PourWaterPosControlEnv(FluidEnv):
 
         self.config = self.config_variations[config_idx]
         return self.config
-
-    def generate_init_state(self, num=1):
-        """
-        generate a batch of init states by varing the target cup position and size.
-        """
-
-        init_states = []
-        # print(num)
-        for i in range(num):
-            print("generating {} init state by resetting target cup distance and shape!".format(i + 1))
-            pyflex.pop_box(self.wall_num)  # pop out the last target glass
-            self.sample_poured_glass_params()  # no configure sent in, sample height, border, distance, dis_x, dis_z
-
-            # create poured glass with the newly sampled parameters
-            self.create_glass(self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
-
-            # move poured glass to be at ground
-            self.poured_glass_states = self.init_glass_state(self.x_center + self.glass_distance, 0,
-                                                             self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
-
-            self.set_shape_states(self.glass_states, self.poured_glass_states)
-            init_states.append(copy.deepcopy(self.get_state()))
-
-        return init_states
 
     def _reset(self):
         '''
@@ -223,7 +225,7 @@ class PourWaterPosControlEnv(FluidEnv):
         I suggest to keep them the same as the ones used in pyflex.cpp.
         '''
         self.camera_params = {
-            'default_camera': {'pos': np.array([1.9, 1.0 + 1.7, 0.3]),
+            'default_camera': {'pos': np.array([2.2, 1.5 + 1.7, 0.3]),
                                'angle': np.array([0.45 * np.pi, -60 / 180. * np.pi, 0]),
                                'width': self.camera_width,
                                'height': self.camera_height},
@@ -233,19 +235,8 @@ class PourWaterPosControlEnv(FluidEnv):
                        'height': self.camera_height}
         }
 
-    def sample_poured_glass_params(self, config=None):
+    def set_poured_glass_params(self, config):
         params = config
-
-        if params is None:
-            params = {}
-            params['glass_distance_range'] = 0.65, 1.0
-            params['poured_border_range'] = 0.015, 0.025
-            params['poured_height_range'] = 0.5, 0.7
-
-            params['glass_distance'] = self.rand_float(params['glass_distance_range'][0],
-                                                       params['glass_distance_range'][1])  # distance between the pouring glass and the poured glass
-            params['poured_border'] = self.rand_float(params['poured_border_range'][0], params['poured_border_range'][1])
-            params['poured_height'] = self.rand_float(params['poured_height_range'][0], params['poured_height_range'][1])
 
         self.glass_distance = params['glass_distance']
         self.poured_border = params['poured_border']
@@ -261,15 +252,8 @@ class PourWaterPosControlEnv(FluidEnv):
 
         self.glass_params.update(params)
 
-    def sample_pouring_glass_params(self, config=None):
+    def set_pouring_glass_params(self, config):
         params = config
-        if config is None:
-            params = {}
-            params['border_range'] = 0.015, 0.025
-            params['height_range'] = 0.5, 0.7
-
-            params['border'] = self.rand_float(params['border_range'][0], params['border_range'][1])  # the thickness of the glass wall.
-            params['height'] = self.rand_float(params['height_range'][0], params['height_range'][1])  # the height of the glass.
 
         self.border = params['border']
         self.height = params['height']
@@ -292,8 +276,8 @@ class PourWaterPosControlEnv(FluidEnv):
         super().set_scene(config["fluid"])  # do not sample fluid parameters, as it's very likely to generate very strange fluid
 
         # compute glass params
-        self.sample_pouring_glass_params(config["glass"])
-        self.sample_poured_glass_params(config["glass"])
+        self.set_pouring_glass_params(config["glass"])
+        self.set_poured_glass_params(config["glass"])
 
         # create pouring glass & poured glass
         self.create_glass(self.glass_dis_x, self.glass_dis_z, self.height, self.border)
@@ -320,21 +304,24 @@ class PourWaterPosControlEnv(FluidEnv):
             # print(self.particle_num)
 
             # move water all inside pouring cup
-            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 3.
-            lower_z = -self.glass_params['glass_dis_z'] / 3
+            fluid_radius = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
+            fluid_dis = np.array([1.2 * fluid_radius, fluid_radius * 0.45, 1.2 * fluid_radius])
+            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2. 
+            lower_z = -self.glass_params['glass_dis_z'] / 2 + 0.05
             lower_y = self.glass_params['border']
             lower = np.array([lower_x, lower_y, lower_z])
             cnt = 0
             for x in range(self.fluid_params['dim_x']):
                 for y in range(self.fluid_params['dim_y']):
                     for z in range(self.fluid_params['dim_z']):
-                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * self.fluid_params['radius'] / 2  # + np.random.rand() * 0.01
+                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * fluid_dis # + np.random.rand() * 0.01
                         cnt += 1
 
             pyflex.set_positions(fluid_pos)
             print("stablize water!")
             for _ in range(300):
                 pyflex.step()
+                # time.sleep(0.5)
         else:  # set to passed-in cached init states
             self.set_state(states)
 
