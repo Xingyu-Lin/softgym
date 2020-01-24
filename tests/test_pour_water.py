@@ -75,8 +75,8 @@ if args.policy == 'heuristic':
                 print("done!")
                 break
 
-    fp_out = './videos/pour_water_task_variations.gif'
-    save_numpy_as_gif(np.array(imgs), fp_out)
+    # fp_out = './videos/pour_water_task_variations.gif'
+    # save_numpy_as_gif(np.array(imgs), fp_out)
     env.close()
 
 elif args.policy == 'cem':
