@@ -8,7 +8,7 @@ from softgym.utils.visualization import save_numpy_as_gif
 num_picker = 2
 script = 'random'
 
-env = PourWaterPosControlGoalConditionedEnv(observation_mode = 'full_state', horizon = 75, 
+env = PourWaterPosControlGoalConditionedEnv(observation_mode = 'point_cloud', horizon = 75, 
         action_mode = 'direct', deterministic=True, render_mode = 'fluid', render = True, headless= False)
 
 for i in range(5):

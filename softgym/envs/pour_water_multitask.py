@@ -52,7 +52,7 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         print('{} config, state and goal pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
         return True
 
-    def generate_env_variation(self, config, num_variations=2, goal_num=2, save_to_file=False):
+    def generate_env_variation(self, config, num_variations=5, goal_num=10, save_to_file=False):
         generated_configs, generated_init_states = PourWaterPosControlEnv.generate_env_variation(self, 
             config, num_variations=num_variations)
         goal_dict = {}

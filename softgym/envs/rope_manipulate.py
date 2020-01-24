@@ -10,16 +10,17 @@ import copy
 import pickle
 
 class RopeManipulate(RopeFlattenEnv, MultitaskEnv):
-    def __init__(self, cached_states_path='rope_manipulate_init_states.pkl', **kwargs):
+    def __init__(self, goal_num=10, cached_states_path='rope_manipulate_init_states.pkl', **kwargs):
         """
         Wrap rope flatten to be goal conditioned rope manipulation.
         The goal is a random rope state.
         """
 
+        self.goal_num = goal_num
         RopeFlattenEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
 
         self.state_goal = None
-
+        
         self.observation_space = Dict([
             ('observation', self.observation_space),
             ('state_observation', self.observation_space),
@@ -43,9 +44,10 @@ class RopeManipulate(RopeFlattenEnv, MultitaskEnv):
         print('{} config, state and goal pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
         return True
 
-    def generate_env_variation(self, config, num_variations=4, goal_num=4, save_to_file=False):
+    def generate_env_variation(self,num_variations=4, save_to_file=False):
         generated_configs, generated_init_states = RopeFlattenEnv.generate_env_variation(self, num_variations=num_variations)
         goal_dict = {}
+        goal_num = self.goal_num
         for idx in range(len(generated_configs)):
             RopeFlattenEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
             self.action_tool.reset([0., -1., 0.])
