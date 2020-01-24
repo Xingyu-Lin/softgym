@@ -201,6 +201,14 @@ class Picker(ActionToolBase):
         pyflex.set_shape_states(shape_states)
         pyflex.set_positions(particle_pos)
 
+    @staticmethod
+    def set_picker_pos(picker_pos):
+        """ Caution! Should only be called during the reset of the environment. Used only for cloth drop environment. """
+        shape_states = np.array(pyflex.get_shape_states()).reshape(-1, 14)
+        shape_states[:, 3:6] = picker_pos
+        shape_states[:, :3] = picker_pos
+        pyflex.set_shape_states(shape_states)
+
     def step(self, action):
         """ action = [translation, pick/unpick] * num_pickers.
         1. Determine whether to pick/unpick the particle and which one, for each picker

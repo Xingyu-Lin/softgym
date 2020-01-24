@@ -60,6 +60,7 @@ class ClothFlattenEnv(ClothEnv):
             else:
                 cloth_dimx, cloth_dimy = config['ClothSize']
             self.set_scene(config)
+
             self.action_tool.reset([0., -1., 0.])
 
             num_particle = cloth_dimx * cloth_dimy
@@ -178,10 +179,14 @@ class ClothFlattenEnv(ClothEnv):
         max_y = np.max(pos[:, 2])
         return 0.5 * (min_x + max_x), 0.5 * (min_y + max_y)
 
-    def compute_reward(self, action=None, obs=None, set_prev_reward=True):
+    def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         particle_pos = pyflex.get_positions()
         curr_covered_area = self._get_current_covered_area(particle_pos)
-        r = curr_covered_area - self.prev_covered_area
-        if set_prev_reward:
-            self.prev_covered_area = curr_covered_area
+        if self.delta_reward:
+            r = curr_covered_area - self.prev_covered_area
+            if set_prev_reward:
+                self.prev_covered_area = curr_covered_area
+        else:
+            r = curr_covered_area
         return r
+

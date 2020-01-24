@@ -25,18 +25,18 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
 
     """ Generate demos for all environments with different variations"""
     envs = {
-        # 'RopeFlatten': RopeFlattenEnv(
-        #     observation_mode='cam_rgb',
-        #     action_mode='picker',
-        #     num_picker=2,
-        #     render=True,
-        #     headless=headless,
-        #     horizon=75,
-        #     action_repeat=8,
-        #     render_mode='cloth',
-        #     num_variations=200,
-        #     use_cached_states=use_cached_states,
-        #     deterministic=deterministic),
+        'RopeFlatten': RopeFlattenEnv(
+            observation_mode='cam_rgb',
+            action_mode='picker',
+            num_picker=2,
+            render=True,
+            headless=headless,
+            horizon=75,
+            action_repeat=8,
+            render_mode='cloth',
+            num_variations=200,
+            use_cached_states=use_cached_states,
+            deterministic=deterministic),
         # 'ClothFlatten': ClothFlattenEnv(
         #     observation_mode='key_point',
         #     action_mode='picker',
@@ -69,17 +69,17 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
         #     action_mode='direct',
         #     deterministic=False,
         #     render_mode='fluid'),
-        'DoughFlatten': DoughFlattenEnv(
-            observation_mode='cam_rgb',
-            action_mode='direct',
-            render=True,
-            headless=False,
-            horizon=75,
-            action_repeat=8,
-            render_mode='dough',
-            num_variations=2,
-            use_cached_states=True,
-            deterministic=False)
+        # 'DoughFlatten': DoughFlattenEnv(
+        #     observation_mode='cam_rgb',
+        #     action_mode='direct',
+        #     render=True,
+        #     headless=False,
+        #     horizon=75,
+        #     action_repeat=8,
+        #     render_mode='dough',
+        #     num_variations=2,
+        #     use_cached_states=True,
+        #     deterministic=False)
     }
 
     for (env_name, env) in envs.items():
