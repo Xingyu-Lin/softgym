@@ -81,9 +81,13 @@ class RopeFlattenEnv(RopeEnv):
         # print('end point distance:', p1, ' ', p2, ' ', np.linalg.norm(p1 - p2).squeeze())
         return np.linalg.norm(p1 - p2).squeeze()
 
-    def compute_reward(self, action=None, obs=None, set_prev_reward=True):
+    def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ Reward is the distance between the endpoints of the rope"""
         curr_endpoint_dist = self._get_endpoint_distance()
-        r = curr_endpoint_dist - self.prev_endpoint_dist
-        self.prev_endpoint_dist = curr_endpoint_dist
+        if self.delta_reward:
+            r = curr_endpoint_dist - self.prev_endpoint_dist
+            if set_prev_reward:
+                self.prev_endpoint_dist = curr_endpoint_dist
+        else:
+            r = curr_endpoint_dist
         return r
