@@ -60,6 +60,7 @@ class ClothFlattenEnv(ClothEnv):
             else:
                 cloth_dimx, cloth_dimy = config['ClothSize']
             self.set_scene(config)
+
             self.action_tool.reset([0., -1., 0.])
 
             num_particle = cloth_dimx * cloth_dimy

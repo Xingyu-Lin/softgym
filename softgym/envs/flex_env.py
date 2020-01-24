@@ -91,7 +91,10 @@ class FlexEnv(gym.Env):
         NOTE: call a pyflex.set_positions and then pyflex.step
         """
         pos = pyflex.get_positions().reshape(-1, self.dim_position)
+        # print(np.mean(pos[:, [0, 2]], axis=0, keepdims=True))
+        # print(pos)
         pos[:, [0, 2]] -= np.mean(pos[:, [0, 2]], axis=0, keepdims=True)
+        # print(pos)
         pyflex.set_positions(pos.flatten())
         pyflex.step()
 
