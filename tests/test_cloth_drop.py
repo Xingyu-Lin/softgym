@@ -45,12 +45,12 @@ if __name__ == '__main__':
         action_mode='picker',
         num_picker=num_picker,
         render=True,
-        headless=True,
+        headless=False,
         horizon=50,
         action_repeat=8,
         render_mode='cloth',
         num_variations=200,
-        use_cached_states=False,
+        use_cached_states=True,
         deterministic=False)
     # test_random(env)
     test_picker(env)

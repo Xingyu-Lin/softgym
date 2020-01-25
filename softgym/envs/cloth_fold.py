@@ -168,3 +168,15 @@ class ClothFoldEnv(ClothEnv):
         else:
             reward = -curr_dist
         return reward
+
+    def _get_info(self):
+        # Duplicate of the compute reward function!
+        pos = pyflex.get_positions()
+        pos = pos.reshape((-1, 4))[:, :3]
+        pos_group_a = pos[self.fold_group_a]
+        pos_group_b_init = self.init_pos[self.fold_group_b]
+        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b_init, axis=1))
+        return {
+            'performance': -curr_dist
+        }
+
