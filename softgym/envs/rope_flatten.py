@@ -91,3 +91,7 @@ class RopeFlattenEnv(RopeEnv):
         else:
             r = curr_endpoint_dist
         return r
+
+    def _get_info(self):
+        curr_endpoint_dist = self._get_endpoint_distance()
+        return {'performance': -curr_endpoint_dist}
