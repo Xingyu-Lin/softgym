@@ -314,7 +314,7 @@ class PassWater1DEnv(FluidEnv):
 
     def compute_reward(self, obs=None, action=None, set_prev_reward=False):
         """
-        The reward is computed as the fraction of water in the poured glass.
+        The reward is computed as the fraction of water in the poured glass and the distance to the target
         NOTE: the obs and action params are made here to be compatiable with the MultiTask env wrapper.
         """
         state_dic = self.get_state()
@@ -325,7 +325,7 @@ class PassWater1DEnv(FluidEnv):
         out_glass = water_num - in_glass
 
         # print("out glass water num: ", out_glass)
-        reward = -self.water_penalty_coef * (out_glass/water_num)
+        reward = -self.water_penalty_coef * (out_glass / water_num)
         reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
 
         if set_prev_reward:
@@ -350,7 +350,7 @@ class PassWater1DEnv(FluidEnv):
         # make action as increasement, clip its range
         dx = action[0]
         dx = np.clip(dx, a_min=-self.border, a_max=self.border)
-        x = self.glass_x + dx 
+        x = self.glass_x + dx
 
         # move the glass
         new_states = self.move_glass(self.glass_states, x)
@@ -434,7 +434,6 @@ class PassWater1DEnv(FluidEnv):
         x_center = x
         y = 0
 
-       
         # floor: center position does not change
         states[0, :3] = np.array([x_center, y, 0.])
 
@@ -518,19 +517,28 @@ class PassWater1DEnv(FluidEnv):
         return res
 
     def _get_info(self):
-        return {}
+        state_dic = self.get_state()
+        water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
+        water_num = len(water_state)
 
+        in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+        out_glass = water_num - in_glass
+        reward = -self.water_penalty_coef * (out_glass / water_num)
+        reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
+        return {'performance': reward,
+                'distance_to_target': np.abs((self.terminal_x - self.glass_x)),
+                'out_water': (out_glass / water_num)}
 
 
 if __name__ == '__main__':
     env = PassWater1DEnv(observation_mode='cam_rgb',
-                  action_mode='direct',
-                  render=True,
-                  headless=False,
-                  horizon=75,
-                  action_repeat=8,
-                  render_mode='fluid',
-                  deterministic=True)
+                         action_mode='direct',
+                         render=True,
+                         headless=False,
+                         horizon=75,
+                         action_repeat=8,
+                         render_mode='fluid',
+                         deterministic=True)
     env.reset()
     for i in range(500):
         pyflex.step()

@@ -17,7 +17,7 @@ class ClothDropEnv(ClothEnv):
         """
 
         super().__init__(**kwargs)
-        assert self.action_tool.num_picker == 2 # Two drop points for this task
+        assert self.action_tool.num_picker == 2  # Two drop points for this task
         self.prev_dist = None  # Should not be used until initialized
         self.num_variations = num_variations
         if not cached_states_path.startswith('/'):
@@ -187,3 +187,8 @@ class ClothDropEnv(ClothEnv):
         else:
             r = - curr_dist
         return r
+
+    def _get_info(self):
+        particle_pos = pyflex.get_positions()
+        curr_dist = self._get_current_dist(particle_pos)
+        return {'performance': -curr_dist}

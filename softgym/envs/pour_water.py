@@ -16,9 +16,10 @@ import yaml, pickle
 import os.path as osp
 import random
 
+
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, config=None, 
-            num_variations=5, cached_states_path='pour_water_init_states.pkl', **kwargs):
+    def __init__(self, observation_mode, action_mode, config=None,
+                 num_variations=5, cached_states_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -111,15 +112,15 @@ class PourWaterPosControlEnv(FluidEnv):
             dim_z = random.choice(dim_zs)
             m = min(dim_x, dim_z)
             p = np.random.rand()
-            water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef'] 
-            if p < 1. / 3.: # small water volume
+            water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef']
+            if p < 1. / 3.:  # small water volume
                 print("small volume water")
                 dim_y = 2 * m + np.random.randint(0, 2)
                 v = dim_x * dim_y * dim_z
                 h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius
                 print("h {}".format(h))
                 glass_height = h + (np.random.rand() - 0.5) * 0.05
-            elif 1./ 3 < p and p < 2./ 3: # midium water volumes
+            elif 1. / 3 < p and p < 2. / 3:  # midium water volumes
                 print("medium volume water")
                 dim_y = int(2.5 * m) + np.random.randint(0, 2)
                 v = dim_x * dim_y * dim_z
@@ -306,7 +307,7 @@ class PourWaterPosControlEnv(FluidEnv):
             # move water all inside pouring cup
             fluid_radius = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
             fluid_dis = np.array([1.2 * fluid_radius, fluid_radius * 0.45, 1.2 * fluid_radius])
-            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2. 
+            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2.
             lower_z = -self.glass_params['glass_dis_z'] / 2 + 0.05
             lower_y = self.glass_params['border']
             lower = np.array([lower_x, lower_y, lower_z])
@@ -314,7 +315,7 @@ class PourWaterPosControlEnv(FluidEnv):
             for x in range(self.fluid_params['dim_x']):
                 for y in range(self.fluid_params['dim_y']):
                     for z in range(self.fluid_params['dim_z']):
-                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * fluid_dis # + np.random.rand() * 0.01
+                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * fluid_dis  # + np.random.rand() * 0.01
                         cnt += 1
 
             pyflex.set_positions(fluid_pos)
@@ -639,4 +640,15 @@ class PourWaterPosControlEnv(FluidEnv):
         return res
 
     def _get_info(self):
-        return {}
+        # Duplicate of the compute reward function!
+        state_dic = self.get_state()
+        water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
+        water_num = len(water_state)
+
+        in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)
+
+        reward = float(in_poured_glass) / water_num
+
+        return {
+            'performance': reward
+        }
