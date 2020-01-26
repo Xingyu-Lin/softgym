@@ -190,3 +190,10 @@ class ClothFlattenEnv(ClothEnv):
             r = curr_covered_area
         return r
 
+    def _get_info(self):
+        # Duplicate of the compute reward function!
+        particle_pos = pyflex.get_positions()
+        curr_covered_area = self._get_current_covered_area(particle_pos)
+        return {
+            'performance': curr_covered_area
+        }
