@@ -27,9 +27,9 @@ class FluidEnv(FlexEnv):
         self.fluid_params['y'] = fluid_radis / 2 + 0.05
         self.fluid_params['z'] = 0. - (self.fluid_params['dim_z'] - 2) * fluid_radis / 1.5
 
-        print(self.fluid_params['x'])
-        print(self.fluid_params['y'])
-        print(self.fluid_params['z'])
+        # print(self.fluid_params['x'])
+        # print(self.fluid_params['y'])
+        # print(self.fluid_params['z'])
 
         return np.array([params['radius'], params['rest_dis_coef'], params['cohesion'], params['viscosity'],
                          params['surfaceTension'], params['adhesion'], params['vorticityConfinement'], params['solidpressure'],

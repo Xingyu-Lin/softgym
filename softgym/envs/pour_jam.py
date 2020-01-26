@@ -221,7 +221,7 @@ class PourJamPosControlEnv(FluidEnv):
         self.action_y = 0
         self.rotation = 0
 
-        print("pour water inital scene constructed over...")
+        # print("pour water inital scene constructed over...")
 
     def get_current_observation(self):
         '''

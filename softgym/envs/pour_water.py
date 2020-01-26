@@ -325,7 +325,7 @@ class PourWaterPosControlEnv(FluidEnv):
         else:  # set to passed-in cached init states
             self.set_state(states)
 
-        print("pour water inital scene constructed over...")
+        # print("pour water inital scene constructed over...")
 
     def _get_obs(self):
         '''

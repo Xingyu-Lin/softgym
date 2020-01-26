@@ -157,16 +157,13 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         reset to environment to the initial state.
         return the initial observation.
         '''
-
-        PourWaterPosControlEnv._reset(self)
         self.resample_goals()
-
-        return self._get_obs()
-
+        return PourWaterPosControlEnv._reset(self)
+        
     def resample_goals(self):
         goal_idx = np.random.randint(len(self.cached_goal_dicts[self.current_config_id]["state_desired_goal"]))
 
-        print("current config idx is {}, goal idx is {}".format(self.current_config_id, goal_idx))
+        # print("current config idx is {}, goal idx is {}".format(self.current_config_id, goal_idx))
         self.dict_goal = {
             "desired_goal": self.cached_goal_dicts[self.current_config_id]["desired_goal"][goal_idx],
             "state_desired_goal": self.cached_goal_dicts[self.current_config_id]["state_desired_goal"][goal_idx]
@@ -217,8 +214,6 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         '''
         return the observation based on the current flex state.
         '''
-        if self.state_goal is None:
-            self.resample_goals()
 
         obs = obs.reshape((1, -1))
         new_obs = dict(
