@@ -1,8 +1,3 @@
-from softgym.envs.rope_flatten import RopeFlattenEnv
-from softgym.envs.cloth_flatten import ClothFlattenEnv
-from softgym.envs.cloth_fold import ClothFoldEnv
-from softgym.envs.pour_water import PourWaterPosControlEnv
-from softgym.envs.dough_flatten import DoughFlattenEnv
 from softgym.utils.visualization import save_numpy_as_gif
 import click
 import os.path as osp
@@ -10,6 +5,7 @@ import numpy as np
 import torchvision
 import torch
 import os
+from softgym.registered_env import env_arg_dict, SOFTGYM_ENVS
 
 
 @click.command()
@@ -23,76 +19,27 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
 
-    """ Generate demos for all environments with different variations"""
-    envs = {
-        'RopeFlatten': RopeFlattenEnv(
-            observation_mode='cam_rgb',
-            action_mode='picker',
-            num_picker=2,
-            render=True,
-            headless=headless,
-            horizon=75,
-            action_repeat=8,
-            render_mode='cloth',
-            num_variations=200,
-            use_cached_states=use_cached_states,
-            deterministic=deterministic),
-        # 'ClothFlatten': ClothFlattenEnv(
-        #     observation_mode='key_point',
-        #     action_mode='picker',
-        #     num_picker=2,
-        #     render=True,
-        #     headless=headless,
-        #     horizon=100,
-        #     action_repeat=8,
-        #     render_mode='cloth',
-        #     num_variations=200,
-        #     use_cached_states=use_cached_states,
-        #     deterministic=deterministic),
-        # 'ClothFold': ClothFoldEnv(
-        #     observation_mode='key_point',
-        #     action_mode='picker',
-        #     num_picker=2,
-        #     render=True,
-        #     headless=headless,
-        #     horizon=100,
-        #     action_repeat=8,
-        #     render_mode='cloth',
-        #     num_variations=200,
-        #     use_cached_states=use_cached_states,
-        #     deterministic=deterministic),
-        # 'PourWater': PourWaterPosControlEnv(
-        #     observation_mode='cam_rgb',
-        #     horizon=75,
-        #     render=True,
-        #     headless=headless,
-        #     action_mode='direct',
-        #     deterministic=False,
-        #     render_mode='fluid'),
-        # 'DoughFlatten': DoughFlattenEnv(
-        #     observation_mode='cam_rgb',
-        #     action_mode='direct',
-        #     render=True,
-        #     headless=False,
-        #     horizon=75,
-        #     action_repeat=8,
-        #     render_mode='dough',
-        #     num_variations=2,
-        #     use_cached_states=True,
-        #     deterministic=False)
-    }
+    """ Generate demos for all environments with different variations, as well as making generate cached states"""
 
-    for (env_name, env) in envs.items():
+    envs = []
+    for env_name, env_class in SOFTGYM_ENVS.items():
+        # env_arg_dict[env_name]['render'] = False
+        env_arg_dict[env_name]['headless'] = headless
+        env_arg_dict[env_name]['observation_mode'] = 'point_cloud'
+        env_arg_dict[env_name]['use_cached_states'] = use_cached_states
+        env = env_class(**env_arg_dict[env_name])
+        envs.append(env)
+
+    for env_name, env in zip(SOFTGYM_ENVS.keys(), envs):
         all_frames = []
         for i in range(episode):
             frames = []
             env.reset()
-
             frames.append(env.get_image(img_size, img_size))
-            for _ in range(30):
+            for _ in range(env.horizon):
                 action = env.action_space.sample()
-                env.step(action)
-                frames.append(env.get_image(img_size, img_size))
+                _, _, _, _, env_frames = env.step(action, True, img_size)
+                frames.extend(env_frames)
             all_frames.append(frames)
         # Convert to T x index x C x H x W for pytorch
         all_frames = np.array(all_frames).transpose([1, 0, 4, 2, 3])

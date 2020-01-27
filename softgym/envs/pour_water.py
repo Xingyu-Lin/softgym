@@ -44,7 +44,7 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             self.cached_states_path = cached_states_path
 
-        if self.get_cached_configs_and_states(cached_states_path) is False:
+        if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
             if config is None:
                 config = self.get_default_config()
             self.generate_env_variation(config, num_variations=num_variations, save_to_file=True)
