@@ -53,7 +53,7 @@ class PourWaterPosControlEnv(FluidEnv):
             if observation_mode == 'key_point':
                 obs_dim = 0
             else:
-                obs_dim = 1225 * 3
+                obs_dim = 2048 * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
             obs_dim += 10  # Pos (x, z, theta) and shape (w, h, l) of the two cups.
@@ -192,22 +192,6 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         set the postion, velocity of flex particles, and postions of flex shapes.
         '''
-        # rebuild the target glass according to the glass params
-
-        # recreate poured glass with the stored parameters
-        self.poured_glass_dis_x = state_dic['glass_params']['poured_glass_dis_x']
-        self.poured_glass_dis_z = state_dic['glass_params']['poured_glass_dis_z']
-        self.poured_height = state_dic['glass_params']['poured_height']
-        self.poured_border = state_dic['glass_params']['poured_border']
-        self.glass_distance = state_dic['glass_params']['glass_distance']
-        self.glass_params = state_dic['glass_params']
-
-        pyflex.pop_box(self.wall_num)
-        self.create_glass(self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
-
-        _ = self.init_glass_state(self.x_center + self.glass_distance, 0,
-                                  self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
-
         pyflex.set_positions(state_dic["particle_pos"])
         pyflex.set_velocities(state_dic["particle_vel"])
         pyflex.set_shape_states(state_dic["shape_pos"])
@@ -358,8 +342,11 @@ class PourWaterPosControlEnv(FluidEnv):
         water_num = len(water_state)
 
         in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)
-
-        reward = float(in_poured_glass) / water_num
+        in_control_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+        good_water = in_poured_glass * (1 - in_control_glass)
+        good_water_num = np.sum(good_water)
+        
+        reward = float(good_water_num) / water_num
         if set_prev_reward:
             delta_reward = reward - self.prev_reward
             self.prev_reward = reward
@@ -562,7 +549,6 @@ class PourWaterPosControlEnv(FluidEnv):
         x, y, z = water[:, 0], water[:, 1], water[:, 2]
 
         res = (x >= x_lower) * (x <= x_upper) * (y >= y_lower) * (y <= y_upper) * (z >= z_lower) * (z <= z_upper)
-        res = np.sum(res)
         return res
 
     def in_glass2(self, water, glass_states, border, height):
@@ -624,19 +610,6 @@ class PourWaterPosControlEnv(FluidEnv):
 
         res = right_polygon.intersects(left_polygon)
 
-        # rightwalls = [r_corner1_real, r_corner2_real, r_corner3_real, r_corner4_real, r_corner5_real, r_corner6_real, r_corner7_real, r_corner8_real]
-        # leftwalls = [l_corner1, l_corner2, l_corner3, l_corner4, l_corner5, l_corner6, l_corner7, l_corner8]
-        # if res or self.time_step % 50 == 0:
-        #     fig = plt.figure()
-        #     ax = fig.add_subplot(111, projection='3d')
-        #     ax.scatter([x[0] for x in rightwalls], [x[1] for x in rightwalls], [x[2] for x in rightwalls])
-        #     ax.scatter([x[0] for x in leftwalls], [x[1] for x in leftwalls], [x[2] for x in leftwalls])
-        #     # ax.scatter(*left_polygon.exterior.xyz)
-        #     # ax.scatter(*right_polygon.exterior.xyz)
-
-        #     plt.show()
-        #     plt.close()
-
         return res
 
     def _get_info(self):
@@ -646,8 +619,11 @@ class PourWaterPosControlEnv(FluidEnv):
         water_num = len(water_state)
 
         in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)
-
-        reward = float(in_poured_glass) / water_num
+        in_control_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+        good_water = in_poured_glass * (1 - in_control_glass)
+        good_water_num = np.sum(good_water)
+        
+        reward = float(good_water_num) / water_num
 
         return {
             'performance': reward

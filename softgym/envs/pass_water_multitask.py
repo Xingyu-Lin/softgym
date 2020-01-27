@@ -82,14 +82,6 @@ class PassWater1DGoalConditionedEnv(PassWater1DEnv, MultitaskEnv):
         '''
         goal_observations = []
 
-        # if self.goal_sampling_mode == 'fixed_goal':
-        #     assert batch_size == 1
-
-        # initial_state = copy.deepcopy(self.get_state())
-        # # for idx in range(batch_size):
-        #     # print("sample goals idx {}".format(idx))
-        #     self.set_state(initial_state)
-
         # move controled cup to target position
         tmp_states = self.glass_states
         dx = 0.005
@@ -107,8 +99,7 @@ class PassWater1DGoalConditionedEnv(PassWater1DEnv, MultitaskEnv):
         particle_vel = pyflex.get_velocities().reshape((1, -1))
         shape_pos = pyflex.get_shape_states().reshape((1, -1))
         goal = np.concatenate([particle_pos, particle_vel, shape_pos], axis=1)
-        print("generated goal length: ", len(goal))
-        for i in range(batch_size):
+        for i in range(batch_size): # always generate the same goal
             goal_observations.append(goal)
 
         goal_observations = np.asarray(goal_observations).reshape((batch_size, -1))
@@ -201,14 +192,10 @@ class PassWater1DGoalConditionedEnv(PassWater1DEnv, MultitaskEnv):
         
         obs = obs.reshape((1, -1))
         n = pyflex.get_n_particles()
-        # print("_update_obs: current config idx is ", self.current_config_id)
-        # print("_update_obs: num of particles in scene: ", n)
-        # print("_update_obs: state goal shape: ", self.state_goal.shape)
         goal = np.zeros(n * 3 + 1) # all particle positions and glass x
         for i in range(n):
             goal[i*3: (i+1)*3] = self.state_goal[0, i*4: i*4 + 3]
         goal[-1] = self.state_goal[0, 7*n] # 7*n is the first idx for shape states, and that is the x of the floor box.
-        # assert np.abs(goal[-1] - self.terminal_x) < 1e-5
         goal = goal.reshape((1, -1))
 
         new_obs = dict(
