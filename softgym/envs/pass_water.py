@@ -50,14 +50,13 @@ class PassWater1DEnv(FluidEnv):
             self.generate_env_variation(config, num_variations=self.num_variations, save_to_file=True)
 
         if observation_mode in ['point_cloud', 'key_point']:
-            # TODO: change this to this task
             if observation_mode == 'key_point':
                 obs_dim = 0
             else:
                 obs_dim = 1225 * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
-            obs_dim += 10  # Pos (x, z, theta) and shape (w, h, l) resetof the two cups.
+            obs_dim += 5  # Pos (x) and shape (w, h, l) reset of the cup, as well as the water height.
             self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
@@ -303,8 +302,7 @@ class PassWater1DEnv(FluidEnv):
                 pos[:len(particle_pos)] = particle_pos
             else:
                 pos = np.empty(0, dtype=np.float)
-
-            cup_state = np.array([self.glass_x])
+            cup_state = np.array([self.glass_x, self.glass_dis_x, self.glass_dis_z, self.height, self._get_current_water_height()])
             return np.hstack([pos, cup_state]).flatten()
         else:
             raise NotImplementedError
