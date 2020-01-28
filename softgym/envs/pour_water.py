@@ -55,7 +55,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 obs_dim = 2048 * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
-            obs_dim += 10  # Pos (x, z, theta) and shape (w, h, l) of the two cups.
+            obs_dim += 11  # Pos (x, z, theta) and shape (w, h, l) of the two cups and the water height.
             self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
@@ -342,7 +342,8 @@ class PourWaterPosControlEnv(FluidEnv):
                 pos = np.empty(0, dtype=np.float)
 
             cup_state = np.array([self.glass_x, self.glass_y, self.glass_rotation, self.glass_dis_x, self.glass_dis_z, self.height,
-                                  self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z])
+                                  self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z,
+                                  self._get_current_water_height()])
             return np.hstack([pos, cup_state]).flatten()
         else:
             raise NotImplementedError
@@ -360,7 +361,7 @@ class PourWaterPosControlEnv(FluidEnv):
         in_control_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
         good_water = in_poured_glass * (1 - in_control_glass)
         good_water_num = np.sum(good_water)
-        
+
         reward = float(good_water_num) / water_num
         if set_prev_reward:
             delta_reward = reward - self.prev_reward
@@ -637,7 +638,7 @@ class PourWaterPosControlEnv(FluidEnv):
         in_control_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
         good_water = in_poured_glass * (1 - in_control_glass)
         good_water_num = np.sum(good_water)
-        
+
         reward = float(good_water_num) / water_num
 
         return {
