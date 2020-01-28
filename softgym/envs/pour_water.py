@@ -192,6 +192,22 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         set the postion, velocity of flex particles, and postions of flex shapes.
         '''
+        # rebuild the target glass according to the glass params
+
+        # recreate poured glass with the stored parameters
+        self.poured_glass_dis_x = state_dic['glass_params']['poured_glass_dis_x']
+        self.poured_glass_dis_z = state_dic['glass_params']['poured_glass_dis_z']
+        self.poured_height = state_dic['glass_params']['poured_height']
+        self.poured_border = state_dic['glass_params']['poured_border']
+        self.glass_distance = state_dic['glass_params']['glass_distance']
+        self.glass_params = state_dic['glass_params']
+
+        pyflex.pop_box(self.wall_num)
+        self.create_glass(self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
+
+        _ = self.init_glass_state(self.x_center + self.glass_distance, 0,
+                                  self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
+
         pyflex.set_positions(state_dic["particle_pos"])
         pyflex.set_velocities(state_dic["particle_vel"])
         pyflex.set_shape_states(state_dic["shape_pos"])
