@@ -9,7 +9,7 @@ import numpy as np
 import copy
 import pickle
 
-class RopeManipulate(RopeFlattenEnv, MultitaskEnv):
+class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
     def __init__(self, goal_num=10, cached_states_path='rope_manipulate_init_states.pkl', **kwargs):
         """
         Wrap rope flatten to be goal conditioned rope manipulation.
