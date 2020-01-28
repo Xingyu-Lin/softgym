@@ -14,8 +14,7 @@ import os.path as osp
 
 
 class PassWater1DEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, config=None, 
-            num_variations=10, cached_states_path='pass_water_init_states.pkl', **kwargs):
+    def __init__(self, observation_mode, action_mode, config=None, cached_states_path='pass_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -45,11 +44,10 @@ class PassWater1DEnv(FluidEnv):
         else:
             self.cached_states_path = cached_states_path
 
-        if self.get_cached_configs_and_states(cached_states_path) is False:
+        if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
             if config is None:
                 config = self.get_default_config()
-            self.generate_env_variation(config, num_variations=num_variations, save_to_file=True)
-
+            self.generate_env_variation(config, num_variations=self.num_variations, save_to_file=True)
 
         if observation_mode in ['point_cloud', 'key_point']:
             # TODO: change this to this task
@@ -66,10 +64,10 @@ class PassWater1DEnv(FluidEnv):
                                          dtype=np.float32)
 
         if action_mode == 'direct':
-            self.action_direct_dim = 3
+            self.action_direct_dim = 1
             # control the (x, y) corrdinate of the floor center, and theta its rotation angle.
-            action_low = np.array([-0.025, -0.025, -0.025])
-            action_high = np.array([0.025, 0.025, 0.025])
+            action_low = np.array([-0.025])
+            action_high = np.array([0.025])
             self.action_space = Box(action_low, action_high, dtype=np.float32)
         else:
             raise NotImplementedError
@@ -112,15 +110,15 @@ class PassWater1DEnv(FluidEnv):
             dim_z = random.choice(dim_zs)
             m = min(dim_x, dim_z)
             p = np.random.rand()
-            water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef'] 
-            if p < 1. / 3.: # small water volume
+            water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef']
+            if p < 1. / 3.:  # small water volume
                 print("small volume water")
                 dim_y = 2 * m + np.random.randint(0, 2)
                 v = dim_x * dim_y * dim_z
                 h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius
                 print("h {}".format(h))
                 glass_height = h + (np.random.rand() - 0.5) * 0.05
-            elif 1./ 3 < p and p < 2./ 3: # midium water volumes
+            elif 1. / 3 < p and p < 2. / 3:  # midium water volumes
                 print("medium volume water")
                 dim_y = int(2.5 * m) + np.random.randint(0, 2)
                 v = dim_x * dim_y * dim_z
@@ -180,7 +178,7 @@ class PassWater1DEnv(FluidEnv):
             self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         elif self.observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
-                                            dtype=np.float32)
+                                         dtype=np.float32)
 
         self.inner_step = 0
         return self._get_obs()
@@ -224,7 +222,6 @@ class PassWater1DEnv(FluidEnv):
                        'width': self.camera_width,
                        'height': self.camera_height}
         }
-
 
     def set_glass_params(self, config=None):
         params = config
@@ -273,7 +270,7 @@ class PassWater1DEnv(FluidEnv):
             # move water all inside pouring cup
             fluid_radius = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
             fluid_dis = np.array([1.2 * fluid_radius, fluid_radius * 0.45, 1.2 * fluid_radius])
-            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2. 
+            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2.
             lower_z = -self.glass_params['glass_dis_z'] / 2 + 0.05
             lower_y = self.glass_params['border']
             lower = np.array([lower_x, lower_y, lower_z])
@@ -281,7 +278,7 @@ class PassWater1DEnv(FluidEnv):
             for x in range(self.fluid_params['dim_x']):
                 for y in range(self.fluid_params['dim_y']):
                     for z in range(self.fluid_params['dim_z']):
-                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * fluid_dis # + np.random.rand() * 0.01
+                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * fluid_dis  # + np.random.rand() * 0.01
                         cnt += 1
 
             pyflex.set_positions(fluid_pos)

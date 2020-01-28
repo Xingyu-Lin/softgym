@@ -8,12 +8,11 @@ from softgym.envs.cloth_env import ClothEnv
 
 
 class ClothFoldEnv(ClothEnv):
-    def __init__(self, cached_states_path='cloth_fold_init_states.pkl', num_variations=2, **kwargs):
+    def __init__(self, cached_states_path='cloth_fold_init_states.pkl', **kwargs):
         self.fold_group_a = self.fold_group_b = None
         self.init_pos, self.prev_dist = None, None
         super().__init__(**kwargs)
 
-        self.num_variations = num_variations
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
             self.cached_states_path = osp.join(cur_dir, cached_states_path)
@@ -21,7 +20,7 @@ class ClothFoldEnv(ClothEnv):
             self.cached_states_path = cached_states_path
         success = self.get_cached_configs_and_states(cached_states_path)
         if not success or not self.use_cached_states:
-            self.generate_env_variation(num_variations, save_to_file=True)
+            self.generate_env_variation(self.num_variations, save_to_file=True)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
