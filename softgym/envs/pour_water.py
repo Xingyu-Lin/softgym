@@ -18,8 +18,7 @@ import random
 
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, config=None,
-                 num_variations=5, cached_states_path='pour_water_init_states.pkl', **kwargs):
+    def __init__(self, observation_mode, action_mode, config=None, cached_states_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -44,10 +43,10 @@ class PourWaterPosControlEnv(FluidEnv):
         else:
             self.cached_states_path = cached_states_path
 
-        if self.get_cached_configs_and_states(cached_states_path) is False:
+        if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
             if config is None:
                 config = self.get_default_config()
-            self.generate_env_variation(config, num_variations=num_variations, save_to_file=True)
+            self.generate_env_variation(config, num_variations=self.num_variations, save_to_file=True)
 
         if observation_mode in ['point_cloud', 'key_point']:
             if observation_mode == 'key_point':

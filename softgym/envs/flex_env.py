@@ -16,7 +16,7 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720,
+    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, num_variations=1,
                  action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True, use_cached_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
@@ -42,7 +42,7 @@ class FlexEnv(gym.Env):
         self.current_config = self.get_default_config()
         self.current_config_id = None
         self.cached_configs, self.cached_init_states = None, None
-
+        self.num_variations = num_variations
 
         self.dim_position = 4
         self.dim_velocity = 3
@@ -112,6 +112,7 @@ class FlexEnv(gym.Env):
         with open(cached_states_path, "rb") as handle:
             self.cached_configs, self.cached_init_states = pickle.load(handle)
         print('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
+        assert len(self.cached_init_states) == self.num_variations
         return True
 
     def get_default_config(self):
@@ -229,15 +230,19 @@ class FlexEnv(gym.Env):
         # print('flex_env: set scene done.')
         self.particle_num = pyflex.get_n_particles()
         self.prev_reward = 0.
-        self.time_step = 0 
+        self.time_step = 0
         obs = self._reset()
         if self.recording:
             self.video_frames.append(self.render(mode='rgb_array'))
         return obs
 
-    def step(self, action):
-        for _ in range(self.action_repeat):
+    def step(self, action, record_continuous_video=False, img_size=None):
+        """ If record_continuous_video is set to True, will record an image for each sub-step"""
+        frames = []
+        for i in range(self.action_repeat):
             self._step(action)
+            if record_continuous_video and i % 4 == 0:
+                frames.append(self.get_image(img_size, img_size))
         obs = self._get_obs()
         reward = self.compute_reward(action, obs, set_prev_reward=True)
         info = self._get_info()
@@ -249,8 +254,10 @@ class FlexEnv(gym.Env):
         done = False
         if self.time_step == self.horizon:
             done = True
-
-        return obs, reward, done, info
+        if record_continuous_video:
+            return obs, reward, done, info, frames
+        else:
+            return obs, reward, done, info
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ set_prev_reward is used for calculate delta rewards"""
