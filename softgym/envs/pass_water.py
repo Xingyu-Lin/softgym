@@ -64,10 +64,10 @@ class PassWater1DEnv(FluidEnv):
                                          dtype=np.float32)
 
         if action_mode == 'direct':
-            self.action_direct_dim = 3
+            self.action_direct_dim = 1
             # control the (x, y) corrdinate of the floor center, and theta its rotation angle.
-            action_low = np.array([-0.025, -0.025, -0.025])
-            action_high = np.array([0.025, 0.025, 0.025])
+            action_low = np.array([-0.025])
+            action_high = np.array([0.025])
             self.action_space = Box(action_low, action_high, dtype=np.float32)
         else:
             raise NotImplementedError

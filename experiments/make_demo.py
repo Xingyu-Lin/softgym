@@ -29,7 +29,6 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
         env_arg_dict[env_name]['use_cached_states'] = use_cached_states
         env = env_class(**env_arg_dict[env_name])
         envs.append(env)
-
     for env_name, env in zip(SOFTGYM_ENVS.keys(), envs):
         all_frames = []
         for i in range(episode):
