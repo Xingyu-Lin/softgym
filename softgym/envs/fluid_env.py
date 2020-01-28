@@ -69,3 +69,7 @@ class FluidEnv(FlexEnv):
 
     def _get_info(self):
         return {}
+
+    def _get_current_water_height(self):
+        pos = pyflex.get_positions().reshape(-1, 4)
+        return np.max(pos[:, 1])
