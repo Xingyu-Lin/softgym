@@ -9,7 +9,7 @@ from copy import deepcopy
 
 
 class ClothFlattenEnv(ClothEnv):
-    def __init__(self, cached_states_path='cloth_flatten_init_states.pkl', num_variations=2, **kwargs):
+    def __init__(self, cached_states_path='cloth_flatten_init_states.pkl', **kwargs):
         """
         :param cached_states_path:
         :param num_picker: Number of pickers if the aciton_mode is picker
@@ -18,7 +18,6 @@ class ClothFlattenEnv(ClothEnv):
 
         super().__init__(**kwargs)
         self.prev_covered_area = None  # Should not be used until initialized
-        self.num_variations = num_variations
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
             self.cached_states_path = osp.join(cur_dir, cached_states_path)
@@ -26,7 +25,7 @@ class ClothFlattenEnv(ClothEnv):
             self.cached_states_path = cached_states_path
         success = self.get_cached_configs_and_states(cached_states_path)
         if not success or not self.use_cached_states:
-            self.generate_env_variation(num_variations=num_variations, save_to_file=True)
+            self.generate_env_variation(num_variations=self.num_variations, save_to_file=True)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
