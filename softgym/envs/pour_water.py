@@ -18,8 +18,7 @@ import random
 
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, config=None,
-                 num_variations=5, cached_states_path='pour_water_init_states.pkl', **kwargs):
+    def __init__(self, observation_mode, action_mode, config=None, cached_states_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -47,7 +46,7 @@ class PourWaterPosControlEnv(FluidEnv):
         if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
             if config is None:
                 config = self.get_default_config()
-            self.generate_env_variation(config, num_variations=num_variations, save_to_file=True)
+            self.generate_env_variation(config, num_variations=self.num_variations, save_to_file=True)
 
         if observation_mode in ['point_cloud', 'key_point']:
             if observation_mode == 'key_point':
@@ -192,6 +191,22 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         set the postion, velocity of flex particles, and postions of flex shapes.
         '''
+        # rebuild the target glass according to the glass params
+
+        # recreate poured glass with the stored parameters
+        self.poured_glass_dis_x = state_dic['glass_params']['poured_glass_dis_x']
+        self.poured_glass_dis_z = state_dic['glass_params']['poured_glass_dis_z']
+        self.poured_height = state_dic['glass_params']['poured_height']
+        self.poured_border = state_dic['glass_params']['poured_border']
+        self.glass_distance = state_dic['glass_params']['glass_distance']
+        self.glass_params = state_dic['glass_params']
+
+        pyflex.pop_box(self.wall_num)
+        self.create_glass(self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
+
+        _ = self.init_glass_state(self.x_center + self.glass_distance, 0,
+                                  self.poured_glass_dis_x, self.poured_glass_dis_z, self.poured_height, self.poured_border)
+
         pyflex.set_positions(state_dic["particle_pos"])
         pyflex.set_velocities(state_dic["particle_vel"])
         pyflex.set_shape_states(state_dic["shape_pos"])
