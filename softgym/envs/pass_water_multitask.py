@@ -190,13 +190,17 @@ class PassWater1DGoalConditionedEnv(PassWater1DEnv, MultitaskEnv):
         return the observation based on the current flex state.
         '''
         
+        obs = obs.reshape((1, -1))
         if self.observation_mode == 'point_cloud':
-            obs = obs.reshape((1, -1))
             n = pyflex.get_n_particles()
-            goal = np.zeros(n * 3 + 1) # all particle positions and glass x
-            for i in range(n):
-                goal[i*3: (i+1)*3] = self.state_goal[0, i*4: i*4 + 3]
-            goal[-1] = self.state_goal[0, 7*n] # 7*n is the first idx for shape states, and that is the x of the floor box.
+            goal = np.zeros(self.particle_obs_dim + 5) # all particle positions 
+            goal_particle_pos = self.state_goal[0][:n*4].reshape([-1, 4])[:, :3]
+            goal_water_height = np.max(goal_particle_pos[:, 1])
+            goal_particle_pos = goal_particle_pos.flatten()
+            goal[:len(goal_particle_pos)] = goal_particle_pos
+            
+            cup_state = np.array([self.glass_x, self.glass_dis_x, self.glass_dis_z, self.height, goal_water_height])
+            goal[-5:] = cup_state
             goal = goal.reshape((1, -1))
 
         new_obs = dict(

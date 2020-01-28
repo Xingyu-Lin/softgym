@@ -129,8 +129,11 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
             particle_vel = pyflex.get_velocities().reshape((1, -1))
             shape_pos = pyflex.get_shape_states().reshape((1, -1))
 
+            water_height = self._get_current_water_height()
+            # print("water height: ", water_height)
             cup_state = np.array([control_cup_x, control_cup_y, control_cup_theta, self.glass_dis_x, self.glass_dis_z, self.height,
-                                  self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z])
+                                  self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z,
+                                  water_height]).reshape((1, -1))
             goal = np.concatenate([particle_pos, particle_vel, shape_pos, cup_state], axis=1)
 
             if self.goal_sampling_mode != 'fixed_goal':
@@ -231,11 +234,14 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         obs = obs.reshape((1, -1))
 
         if self.observation_mode == 'point_cloud':
-            goal = np.zeros(shape=self.particle_obs_dim + 10, dtype=np.float)
+            goal = np.zeros(shape=self.particle_obs_dim + 11, dtype=np.float)
             n = pyflex.get_n_particles()
-            for i in range(n):
-                goal[i*3: (i+1)*3] = self.state_goal[0, i*4: i*4 + 3]
-            goal[-10:] = self.state_goal[0, -10:] # cup_state.
+
+            goal_particle_pos = self.state_goal[0][:n*4].reshape([-1, 4])[:, :3]
+            goal_water_height = np.max(goal_particle_pos[:, 1])
+            goal_particle_pos = goal_particle_pos.flatten()
+            goal[:len(goal_particle_pos)] = goal_particle_pos
+            goal[-11:] = self.state_goal[0, -11:] # cup_state.
             goal = goal.reshape((1, -1))
 
         new_obs = dict(
