@@ -52,7 +52,8 @@ class PourWaterPosControlEnv(FluidEnv):
             if observation_mode == 'key_point':
                 obs_dim = 0
             else:
-                obs_dim = 2048 * 3
+                max_particle_num = 8 * 8 * 32
+                obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
             obs_dim += 11  # Pos (x, z, theta) and shape (w, h, l) of the two cups and the water height.
