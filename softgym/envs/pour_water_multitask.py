@@ -20,13 +20,16 @@ import pickle
 
 
 class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv):
-    def __init__(self, goal_sampling_mode='fixed_goal', cached_states_path='pour_water_multitask_init_states.pkl', **kwargs):
+    def __init__(self, goal_sampling_mode='fixed_goal', goal_num=1, cached_states_path='pour_water_multitask_init_states.pkl', **kwargs):
         '''
         This class implements a multi-goal pouring water task.
         Where the goal has different positions of the pouring glass.
         '''
 
+        self.goal_num = goal_num
         self.goal_sampling_mode = goal_sampling_mode
+        if self.goal_sampling_mode == 'fixed_goal':
+            self.goal_num = 1
         PourWaterPosControlEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
         self.state_goal = None
 
@@ -51,18 +54,16 @@ class PourWaterPosControlGoalConditionedEnv(PourWaterPosControlEnv, MultitaskEnv
         with open(cached_states_path, "rb") as handle:
             self.cached_configs, self.cached_init_states, self.cached_goal_dicts = pickle.load(handle)
         print('{} config, state and goal pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
+        # assert len(self.cached_init_states) == self.num_variations, "loaded config len != self.num_variations. Maybe you used an old cache?"
         return True
 
-    def generate_env_variation(self, config, num_variations=5, goal_num=10, save_to_file=False):
+    def generate_env_variation(self, config, num_variations=5, save_to_file=False):
         generated_configs, generated_init_states = PourWaterPosControlEnv.generate_env_variation(self, 
             config, num_variations=num_variations)
         goal_dict = {}
         for idx in range(len(generated_configs)):
             PourWaterPosControlEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
-            if self.goal_sampling_mode == 'fixed_goal':
-                goals = self.sample_goals(1)
-            else:
-                goals = self.sample_goals(goal_num)
+            goals = self.sample_goals(self.goal_num)
             goal_dict[idx] = goals
 
         combined = (generated_configs, generated_init_states, goal_dict)
