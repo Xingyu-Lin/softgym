@@ -25,8 +25,8 @@ for i in range(5):
     env.set_to_goal(env.get_goal())
     img = env.get_image(960, 720)
     plt.imshow(img)
-    # plt.show()
-    plt.savefig('./imgs/cloth_manipulation_goal_{}.png'.format(i))
+    plt.show()
+    # plt.savefig('./imgs/cloth_manipulation_goal_{}.png'.format(i))
 
 imgs = []
 for _ in range(5):
