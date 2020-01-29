@@ -1,4 +1,4 @@
-from softgym.envs.cloth_manipulate import ClothManipulateEnv
+from softgym.envs.cloth_drop_multitask import ClothDropGoalConditionedEnv
 import numpy as np
 from matplotlib import pyplot as plt
 import softgym, gym
@@ -8,7 +8,7 @@ from softgym.utils.visualization import save_numpy_as_gif
 num_picker = 2
 script = 'random'
 
-env = ClothManipulateEnv(
+env = ClothDropGoalConditionedEnv(
     observation_mode='point_cloud',
     action_mode='picker',
     num_picker=num_picker,
@@ -17,7 +17,7 @@ env = ClothManipulateEnv(
     horizon=75,
     action_repeat=8,
     render_mode='cloth',
-    num_variations=200,
+    num_variations=2,
     deterministic=False)
 
 for i in range(5):

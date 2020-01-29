@@ -10,13 +10,16 @@ import copy
 import pickle
 
 class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
-    def __init__(self, goal_num=10, cached_states_path='rope_manipulate_init_states.pkl', **kwargs):
+    def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='rope_manipulate_init_states.pkl', **kwargs):
         """
         Wrap rope flatten to be goal conditioned rope manipulation.
         The goal is a random rope state.
         """
 
         self.goal_num = goal_num
+        self.goal_sampling_mode = goal_sampling_mode
+        if self.goal_sampling_mode == 'fixed_goal':
+            self.goal_num = 1
         RopeFlattenEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
 
         self.state_goal = None
@@ -70,16 +73,20 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
         goal_observations = []
 
         initial_state = copy.deepcopy(self.get_state())
-        for _ in range(batch_size):
-            print("sample goals idx {}".format(_))
-            self.set_state(initial_state)
-            self._random_pick_and_place(pick_num=2)
+        if self.goal_sampling_mode != 'fixed_goal':
+            for _ in range(batch_size):
+                print("sample goals idx {}".format(_))
+                self.set_state(initial_state)
+                self._random_pick_and_place(pick_num=2)
 
-            self._center_object()
-            env_state = copy.deepcopy(self.get_state())
-            goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
+                self._center_object()
+                env_state = copy.deepcopy(self.get_state())
+                goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
 
-            goal_observations.append(goal)
+                goal_observations.append(goal)
+        else:
+            # TODO: flatten rope
+            pass
 
         goal_observations = np.asarray(goal_observations).reshape((batch_size, -1))
 
@@ -173,11 +180,26 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
         """
 
         obs = obs.reshape((1, -1))
+        if self.observation_mode == 'point_cloud':
+            n = pyflex.get_n_particles()
+            goal = np.zeros(self.particle_obs_dim) # all particle positions 
+            goal_particle_pos = self.state_goal[0][:n*4].reshape([-1, 4])[:, :3]
+            goal_particle_pos = goal_particle_pos.flatten()
+            goal[:len(goal_particle_pos)] = goal_particle_pos
+            
+            if self.action_mode in ['sphere', 'picker']: # should just set as random shape positions
+                shapes = pyflex.get_shape_states()
+                shapes = np.reshape(shapes, [-1, 14])
+                shape_pos = shapes[:, :3].flatten()
+                goal = np.concatenate([goal.flatten(), np.zeros_like(shape_pos)])
+
+            goal = goal.reshape((1, -1))
+
         new_obs = dict(
             observation=obs,
             state_observation=obs,
-            desired_goal=self.state_goal[:, :len(obs[0])],
-            state_desired_goal=self.state_goal[:, :len(obs[0])],
+            desired_goal=goal,
+            state_desired_goal=goal,
             achieved_goal=obs,
             state_achieved_goal=obs,
         )
