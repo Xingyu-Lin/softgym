@@ -399,6 +399,9 @@ class PourWaterPosControlEnv(FluidEnv):
         if not self.judge_glass_collide(new_states, theta) and self.above_floor(new_states, theta):
             self.glass_states = new_states
             self.glass_x, self.glass_y, self.glass_rotation = x, y, theta
+        else: # invalid move, old state becomes the same as the current state
+            self.glass_states[:, 3:6] = self.glass_states[:, :3].copy()
+            self.glass_states[:, 10:] = self.glass_states[:, 6:10].copy()
 
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
@@ -629,7 +632,27 @@ class PourWaterPosControlEnv(FluidEnv):
 
         return res
 
-    def above_floor(self, states, theta):
+    def above_floor(self, states, rotation):
+        
+        floor_center = states[0][:3]
+        corner_relative = [
+            np.array([self.glass_dis_x / 2., -self.border / 2., self.glass_dis_z / 2.]),
+            np.array([self.glass_dis_x / 2., -self.border / 2., -self.glass_dis_z / 2.]),
+            np.array([-self.glass_dis_x / 2., -self.border / 2., self.glass_dis_z / 2.]),
+            np.array([-self.glass_dis_x / 2., -self.border / 2., -self.glass_dis_z / 2.]),
+
+            np.array([self.glass_dis_x / 2., self.border / 2. + self.height, self.glass_dis_z / 2.]),
+            np.array([self.glass_dis_x / 2., self.border / 2. + self.height, -self.glass_dis_z / 2.]),
+            np.array([-self.glass_dis_x / 2., self.border / 2. + self.height, self.glass_dis_z / 2.]),
+            np.array([-self.glass_dis_x / 2., self.border / 2. + self.height, -self.glass_dis_z / 2.]),
+        ]
+
+        for corner_rel in corner_relative:
+            corner_real = rotate_rigid_object(center=floor_center, axis=np.array([0, 0, -1]), angle=rotation, 
+                relative=corner_rel)
+            if corner_real[1] < - self.border:
+                return False
+        
         return True
 
     def _get_info(self):
