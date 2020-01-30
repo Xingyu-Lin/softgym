@@ -382,7 +382,6 @@ class PourWaterPosControlEnv(FluidEnv):
         action: np.ndarray of dim 1x3, (x, y, theta). (x, y) specifies the floor center coordinate, and theta 
             specifies the rotation.
         '''
-
         # make action as increasement, clip its range
         move = action[:2]
         rotate = action[2]
