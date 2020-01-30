@@ -1,4 +1,4 @@
-from softgym.envs.cloth_manipulate import ClothManipulate
+from softgym.envs.cloth_manipulate import ClothManipulateEnv
 import numpy as np
 from matplotlib import pyplot as plt
 import softgym, gym
@@ -8,8 +8,8 @@ from softgym.utils.visualization import save_numpy_as_gif
 num_picker = 2
 script = 'random'
 
-env = ClothManipulate(
-    observation_mode='key_point',
+env = ClothManipulateEnv(
+    observation_mode='point_cloud',
     action_mode='picker',
     num_picker=num_picker,
     render=True,
@@ -17,6 +17,7 @@ env = ClothManipulate(
     horizon=75,
     action_repeat=8,
     render_mode='cloth',
+    num_variations=200,
     deterministic=False)
 
 for i in range(5):
@@ -25,8 +26,8 @@ for i in range(5):
     env.set_to_goal(env.get_goal())
     img = env.get_image(960, 720)
     plt.imshow(img)
-    # plt.show()
-    plt.savefig('./imgs/cloth_manipulation_goal_{}.png'.format(i))
+    plt.show()
+    # plt.savefig('./imgs/cloth_manipulation_goal_{}.png'.format(i))
 
 imgs = []
 for _ in range(5):

@@ -5,11 +5,10 @@ import softgym, gym
 from softgym.utils.visualization import save_numpy_as_gif
 
 
-num_picker = 2
 script = 'random'
 
 env = PourWaterPosControlGoalConditionedEnv(observation_mode = 'point_cloud', horizon = 75, 
-        action_mode = 'direct', deterministic=True, render_mode = 'fluid', render = True, headless= False)
+        action_mode = 'direct', deterministic=False, render_mode = 'fluid', render = True, headless= False)
 
 for i in range(5):
     print("right before reset")
