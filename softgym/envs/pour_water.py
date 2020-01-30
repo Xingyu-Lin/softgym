@@ -598,17 +598,17 @@ class PourWaterPosControlEnv(FluidEnv):
 
     def judge_glass_collide(self, new_states, rotation):
         '''
-        judge if the right wall of the pouring glass would collide with the left wall of the poured glass. 
+        judge if the front wall of the pouring glass would collide with the front wall of the poured glass. 
         '''
-        right_wall_center = new_states[2][:3]
+        pouring_right_wall_center = new_states[2][:3]
         pouring_left_wall_center = new_states[1][:3]
-        left_wall_center = self.poured_glass_states[1][:3]
 
+        # build the corner of the front wall of the control glass
         r_corner1_relative_cord = np.array([self.border / 2., self.height / 2., self.glass_dis_z / 2 + self.border])
-        r_corner1_real = rotate_rigid_object(center=right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner1_relative_cord)
+        r_corner1_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner1_relative_cord)
 
-        r_corner3_relative_cord = np.array([self.border / 2., -self.height / 2., -self.glass_dis_z / 2 - self.border])
-        r_corner3_real = rotate_rigid_object(center=right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner3_relative_cord)
+        r_corner3_relative_cord = np.array([self.border / 2., -self.height / 2., self.glass_dis_z / 2 - self.border])
+        r_corner3_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner3_relative_cord)
 
         r_corner5_relative_cord = np.array([-self.border / 2., -self.height / 2., self.glass_dis_z / 2 + self.border])
         r_corner5_real = rotate_rigid_object(center=pouring_left_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
@@ -620,13 +620,16 @@ class PourWaterPosControlEnv(FluidEnv):
 
         right_polygon = Polygon([r_corner1_real[:2], r_corner3_real[:2], r_corner5_real[:2], r_corner8_real[:2]])
 
+        left_wall_center = self.poured_glass_states[1][:3]
         leftx, lefty = left_wall_center[0], left_wall_center[1]
+        right_wall_center = self.poured_glass_states[2][:3]
+        rightx, righty = right_wall_center[0], right_wall_center[1]
         border = self.poured_border
-        l_corner1 = np.array([leftx - border / 2, lefty + self.poured_height / 2])
-        l_corner2 = np.array([leftx + border / 2, lefty + self.poured_height / 2])
-        l_corner3 = np.array([leftx + border / 2, lefty - self.poured_height / 2])
-        l_corner4 = np.array([leftx - border / 2, lefty - self.poured_height / 2])
-        left_polygon = Polygon([l_corner1, l_corner2, l_corner3, l_corner4])
+        target_front_corner1 = np.array([leftx - border / 2, lefty + self.poured_height / 2])
+        traget_front_corner2 = np.array([leftx - border / 2, lefty - self.poured_height / 2])
+        traget_front_corner3 = np.array([rightx + border / 2, righty - self.poured_height / 2])
+        target_front_corner4 = np.array([rightx + border / 2, righty + self.poured_height / 2])
+        left_polygon = Polygon([target_front_corner1, traget_front_corner2, traget_front_corner3, target_front_corner4])
 
         res = right_polygon.intersects(left_polygon)
 
