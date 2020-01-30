@@ -1,5 +1,5 @@
-from softgym.envs.rope_manipulate import RopeManipulate
-from softgym.envs.cloth_manipulate import ClothManipulate
+from softgym.envs.rope_manipulate import RopeManipulateEnv
+from softgym.envs.cloth_manipulate import ClothManipulateEnv
 from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
 from softgym.envs.pass_water_multitask import PassWater1DGoalConditionedEnv
 import click
@@ -25,7 +25,7 @@ def main(headless, episode, goal_num, save_dir, img_size, use_cached_states, det
 
     """ Generate demos for all environments with different variations"""
     envs = {
-        # 'ClothManipulate': ClothManipulate(
+        # 'ClothManipulate': ClothManipulateEnv(
         #     observation_mode='cam_rgb',
         #     action_mode='picker',
         #     num_picker=2,
@@ -38,7 +38,7 @@ def main(headless, episode, goal_num, save_dir, img_size, use_cached_states, det
         #     goal_num=20,
         #     use_cached_states=use_cached_states,
         #     deterministic=deterministic),
-        # 'RopeManipulate': RopeManipulate(
+        # 'RopeManipulate': RopeManipulateEnv(
         #     observation_mode='cam_rgb',
         #     action_mode='picker',
         #     num_picker=2,

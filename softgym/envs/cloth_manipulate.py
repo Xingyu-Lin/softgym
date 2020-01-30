@@ -11,8 +11,8 @@ import copy
 import pickle
 
 
-class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
-    def __init__(self, goal_num=10, cached_states_path='cloth_manipulate_init_states.pkl' ,**kwargs):
+class ClothManipulateEnv(ClothFlattenEnv, MultitaskEnv):
+    def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='cloth_manipulate_init_states.pkl' ,**kwargs):
         '''
         Wrap cloth flatten to be goal conditioned cloth manipulation.
         The goal is a random cloth state.
@@ -21,6 +21,9 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         '''
 
         self.goal_num = goal_num
+        self.goal_sampling_mode = goal_sampling_mode
+        if goal_sampling_mode == 'fixed_goal':
+            self.goal_num = 1
         ClothFlattenEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
 
         self.state_goal = None
@@ -74,17 +77,46 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
 
         goal_observations = []
 
-        initial_state = copy.deepcopy(self.get_state())
-        for _ in range(batch_size):
-            print("sample goals idx {}".format(_))
-            self.set_state(initial_state)
-            self._random_pick_and_place(pick_num=2)
+        if self.goal_sampling_mode != 'fixed_goal':
+            initial_state = copy.deepcopy(self.get_state())
+            for _ in range(batch_size):
+                print("sample goals idx {}".format(_))
+                self.set_state(initial_state)
+                self._random_pick_and_place(pick_num=2)
+
+                self._center_object()
+                env_state = copy.deepcopy(self.get_state())
+                goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
+
+                goal_observations.append(goal)
+        else:
+            # make the cloth lying on the ground
+            n = pyflex.get_n_particles()
+            cloth_pos = np.ones((n, self.dim_position))
+          
+            lower = np.zeros((1, 3)) # y should always be 0, which means exactly on the ground
+            lower[0][1] = 0.05 # assume cloth particle radius is 0.05
+            
+            # cloth goal: cloth flattened on the ground. Position is determined by lower.
+            dimx = int(self.current_config["ClothSize"][0])
+            dimy = int(self.current_config["ClothSize"][1])
+            dimz = 1
+            # print("dimx: {}, dimy: {}, dimz: {}".format(dimx, dimy, dimz))
+            cnt = 0
+            radius = 0.05
+            for z in range(dimz):
+                for y in range(dimy):
+                    for x in range(dimx):
+                        cloth_pos[cnt][:3] = lower + np.array([x, z, y])*radius #TODO: make radius a changable parameter that we pass to the scene
+                        cnt += 1
+            
+            pyflex.set_positions(cloth_pos)
 
             self._center_object()
             env_state = copy.deepcopy(self.get_state())
             goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
-
-            goal_observations.append(goal)
+            for _ in range(batch_size):
+                goal_observations.append(goal)
 
         goal_observations = np.asarray(goal_observations).reshape((batch_size, -1))
 
@@ -179,11 +211,22 @@ class ClothManipulate(ClothFlattenEnv, MultitaskEnv):
         '''
 
         obs = obs.reshape((1, -1))
+        if self.observation_mode == 'point_cloud':
+            goal = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
+            goal[:len(particle_pos)] = particle_pos
+
+            if self.action_mode in ['sphere', 'picker']: # should just set as random shape positions
+                shapes = pyflex.get_shape_states()
+                shapes = np.reshape(shapes, [-1, 14])
+                shape_pos = shapes[:, :3].flatten()
+                goal = np.concatenate([goal.flatten(), np.zeros_like(shape_pos)])
+
         new_obs = dict(
             observation=obs,
             state_observation=obs,
-            desired_goal=self.state_goal[:, :len(obs[0])],
-            state_desired_goal=self.state_goal[:, :len(obs[0])],
+            desired_goal=goal,
+            state_desired_goal=goal,
             achieved_goal=obs,
             state_achieved_goal=obs,
         )

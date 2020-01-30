@@ -4,6 +4,10 @@ from softgym.envs.rope_flatten import RopeFlattenEnv
 from softgym.envs.cloth_flatten import ClothFlattenEnv
 from softgym.envs.cloth_fold import ClothFoldEnv
 from softgym.envs.cloth_drop import ClothDropEnv
+from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
+from softgym.envs.pass_water_multitask import PassWater1DGoalConditionedEnv
+from softgym.envs.cloth_manipulate import ClothManipulateEnv
+from softgym.envs.rope_manipulate import RopeManipulateEnv
 from collections import OrderedDict
 
 env_arg_dict = {
@@ -73,7 +77,31 @@ env_arg_dict = {
                       render_mode='fluid',
                       delta_reward=False,
                       deterministic=False,
-                      num_variations=200)
+                      num_variations=200),
+    'PassWaterGoal': {
+            "observation_mode": 'point_cloud', # will be later wrapped by ImageEnv
+            "horizon": 75, 
+            "action_mode": 'direct', 
+            "deterministic": False, 
+            "render_mode":'fluid', 
+            "render": True, 
+            "headless": True,
+            "action_repeat": 8,
+            "delta_reward": False,
+            "num_variations": 200,
+        },
+    "PourWaterGoal": {
+                    'observation_mode': 'point_cloud',
+                    'action_mode': 'direct',
+                    'render_mode': 'fluid',
+                    'deterministic': False,
+                    'render': True,
+                    'headless': True,
+                    'num_variations': 200,
+                    'horizon': 100,
+                    'delta_reward': False,
+                    'camera_name': 'default_camera'
+        },
 }
 
 SOFTGYM_ENVS = OrderedDict({'ClothDrop': ClothDropEnv,
@@ -81,4 +109,8 @@ SOFTGYM_ENVS = OrderedDict({'ClothDrop': ClothDropEnv,
                             'PassWater': PassWater1DEnv,
                             'ClothFlatten': ClothFlattenEnv,
                             'ClothFold': ClothFoldEnv,
-                            'RopeFlatten': RopeFlattenEnv})
+                            'RopeFlatten': RopeFlattenEnv, 
+                            'PourWaterGoal': PourWaterPosControlGoalConditionedEnv, 
+                            'PassWaterGoal': PassWater1DGoalConditionedEnv,
+                            'ClothManipulate': ClothManipulateEnv,
+                            'RopeManipulate': RopeManipulateEnv})

@@ -8,20 +8,14 @@ from matplotlib import pyplot as plt
 from softgym.utils.visualization import save_numpy_as_gif
 
 args = argparse.ArgumentParser(sys.argv[0])
-args.add_argument("--policy", type=str, default='heuristic', help='heuristic or cem')
+args.add_argument("--mode", type=str, default='heuristic', help='heuristic or cem')
 args.add_argument("--cem_traj_path", type=str, default='./data/traj/pour_water_cem_traj.pkl')
 args.add_argument("--replay", type=int, default=0, help='if load pre-stored actions and make gifs')
 args = args.parse_args()
 
-if args.policy == 'heuristic':
+if args.mode == 'heuristic':
     env = PourWaterPosControlEnv(observation_mode='cam_rgb', horizon=75, render=True, headless=False,
                                  action_mode='direct', deterministic=False, render_mode='fluid')
-    # softgym.register_flex_envs()
-    # env = gym.make('PourWaterPosControl-v0')
-    # env.close()
-    # print("last env closed")
-    # env = PourWaterPosControlEnv(observation_mode = 'cam_rgb', horizon = 300,
-    #     action_mode = 'direct', deterministic=True, render_mode = 'fluid')
 
     print("env make done!")
     timestep = env.horizon
@@ -33,15 +27,6 @@ if args.policy == 'heuristic':
     dt = 0.1
     x = 0
     total_rotate = 0.28 * np.pi
-
-    # env.start_record(video_path='../data/video/', video_name='pour_water_shape_collision1.gif')
-    # this is for test that we can correctly vary the target glass position and shape
-    # for i in range(5):
-    #     env.reset()
-    #     print("after reset!")
-    #     img = env.get_image(960, 720)
-    #     plt.imshow(img)
-    #     plt.show()
 
     # below is testing a naive heuristic policy
     print("total timestep: ", timestep)
@@ -79,7 +64,7 @@ if args.policy == 'heuristic':
     # save_numpy_as_gif(np.array(imgs), fp_out)
     env.close()
 
-elif args.policy == 'cem':
+elif args.mode == 'cem':
     from algorithms.cem import CEMPolicy
     import copy, pickle
 
