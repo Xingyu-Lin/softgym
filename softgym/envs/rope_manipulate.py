@@ -52,9 +52,14 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
         goal_dict = {}
         goal_num = self.goal_num
         for idx in range(len(generated_configs)):
-            RopeFlattenEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
-            self.action_tool.reset([0., -1., 0.])
-            goals = self.sample_goals(goal_num)
+            if self.goal_sampling_mode == 'fixed_goal': # for better generating the goal states
+                RopeFlattenEnv.set_scene(self, generated_configs[idx])
+                self.action_tool.reset([0., -1., 0.])
+                goals = self.sample_goals(goal_num)
+            else:
+                RopeFlattenEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
+                self.action_tool.reset([0., -1., 0.])
+                goals = self.sample_goals(goal_num)
             goal_dict[idx] = goals
 
         combined = (generated_configs, generated_init_states, goal_dict)
@@ -85,8 +90,15 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
 
                 goal_observations.append(goal)
         else:
-            # TODO: flatten rope
-            pass
+            curr_pos = pyflex.get_positions().reshape((-1, 4))
+            curr_pos[:, 1] = 0.05  # Set the rope flatten on the ground. Assume that the particle radius is 0.05
+            pyflex.set_positions(curr_pos)
+
+            self._center_object()
+            env_state = copy.deepcopy(self.get_state())
+            goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
+            for _ in range(batch_size):
+                goal_observations.append(goal)
 
         goal_observations = np.asarray(goal_observations).reshape((batch_size, -1))
 

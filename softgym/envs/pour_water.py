@@ -391,12 +391,12 @@ class PourWaterPosControlEnv(FluidEnv):
         rotate = np.clip(rotate, a_min=-self.border, a_max=self.border)
         dx, dy, dtheta = move[0], move[1], rotate
         x, y, theta = self.glass_x + dx, self.glass_y + dy, self.glass_rotation + dtheta
-        y = max(0, y)
+        # y = max(0, y)
 
         # check if the movement of the pouring glass collide with the poured glass.
         # the action only take effects if there is no collision
         new_states = self.rotate_glass(self.glass_states, x, y, theta)
-        if not self.judge_glass_collide(new_states, theta):
+        if not self.judge_glass_collide(new_states, theta) and self.above_floor(new_states, theta):
             self.glass_states = new_states
             self.glass_x, self.glass_y, self.glass_rotation = x, y, theta
 
@@ -628,6 +628,9 @@ class PourWaterPosControlEnv(FluidEnv):
         res = right_polygon.intersects(left_polygon)
 
         return res
+
+    def above_floor(self, states, theta):
+        return True
 
     def _get_info(self):
         # Duplicate of the compute reward function!
