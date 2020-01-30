@@ -241,7 +241,7 @@ class FlexEnv(gym.Env):
         frames = []
         for i in range(self.action_repeat):
             self._step(action)
-            if record_continuous_video and i % 4 == 0:
+            if record_continuous_video and i % 2 == 0:  # No need to record each step
                 frames.append(self.get_image(img_size, img_size))
         obs = self._get_obs()
         reward = self.compute_reward(action, obs, set_prev_reward=True)
@@ -254,10 +254,8 @@ class FlexEnv(gym.Env):
         done = False
         if self.time_step == self.horizon:
             done = True
-        if record_continuous_video:
-            return obs, reward, done, info, frames
-        else:
-            return obs, reward, done, info
+        info['flex_env_recorded_frames'] = frames
+        return obs, reward, done, info
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ set_prev_reward is used for calculate delta rewards"""
