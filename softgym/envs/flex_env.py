@@ -222,11 +222,15 @@ class FlexEnv(gym.Env):
         save_numpy_as_gif(np.array(self.video_frames), video_path, **kwargs)
         del self.video_frames
 
-    def reset(self):
-        config_id = np.random.randint(len(self.cached_configs)) if not self.deterministic else 0
-        self.current_config = self.cached_configs[config_id]
-        self.current_config_id = config_id
-        self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
+    def reset(self, config=None, initial_state=None):
+        if config is None:
+            config_id = np.random.randint(len(self.cached_configs)) if not self.deterministic else 0
+            self.current_config = self.cached_configs[config_id]
+            self.current_config_id = config_id
+            self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
+        else:
+            self.current_config = config
+            self.set_scene(config, initial_state)
         # print('flex_env: set scene done.')
         self.particle_num = pyflex.get_n_particles()
         self.prev_reward = 0.
@@ -254,7 +258,8 @@ class FlexEnv(gym.Env):
         done = False
         if self.time_step == self.horizon:
             done = True
-        info['flex_env_recorded_frames'] = frames
+        if record_continuous_video:
+            info['flex_env_recorded_frames'] = frames
         return obs, reward, done, info
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
