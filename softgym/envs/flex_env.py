@@ -222,9 +222,10 @@ class FlexEnv(gym.Env):
         save_numpy_as_gif(np.array(self.video_frames), video_path, **kwargs)
         del self.video_frames
 
-    def reset(self, config=None, initial_state=None):
+    def reset(self, config=None, initial_state=None, config_id=None):
         if config is None:
-            config_id = np.random.randint(len(self.cached_configs)) if not self.deterministic else 0
+            if config_id is None:
+                config_id = np.random.randint(len(self.cached_configs)) if not self.deterministic else 0
             self.current_config = self.cached_configs[config_id]
             self.current_config_id = config_id
             self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])

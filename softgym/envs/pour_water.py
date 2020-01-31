@@ -390,14 +390,17 @@ class PourWaterPosControlEnv(FluidEnv):
         rotate = np.clip(rotate, a_min=-self.border, a_max=self.border)
         dx, dy, dtheta = move[0], move[1], rotate
         x, y, theta = self.glass_x + dx, self.glass_y + dy, self.glass_rotation + dtheta
-        y = max(0, y)
+        # y = max(0, y)
 
         # check if the movement of the pouring glass collide with the poured glass.
         # the action only take effects if there is no collision
         new_states = self.rotate_glass(self.glass_states, x, y, theta)
-        if not self.judge_glass_collide(new_states, theta):
+        if not self.judge_glass_collide(new_states, theta) and self.above_floor(new_states, theta):
             self.glass_states = new_states
             self.glass_x, self.glass_y, self.glass_rotation = x, y, theta
+        else: # invalid move, old state becomes the same as the current state
+            self.glass_states[:, 3:6] = self.glass_states[:, :3].copy()
+            self.glass_states[:, 10:] = self.glass_states[:, 6:10].copy()
 
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
@@ -594,17 +597,17 @@ class PourWaterPosControlEnv(FluidEnv):
 
     def judge_glass_collide(self, new_states, rotation):
         '''
-        judge if the right wall of the pouring glass would collide with the left wall of the poured glass. 
+        judge if the front wall of the pouring glass would collide with the front wall of the poured glass. 
         '''
-        right_wall_center = new_states[2][:3]
+        pouring_right_wall_center = new_states[2][:3]
         pouring_left_wall_center = new_states[1][:3]
-        left_wall_center = self.poured_glass_states[1][:3]
 
+        # build the corner of the front wall of the control glass
         r_corner1_relative_cord = np.array([self.border / 2., self.height / 2., self.glass_dis_z / 2 + self.border])
-        r_corner1_real = rotate_rigid_object(center=right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner1_relative_cord)
+        r_corner1_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner1_relative_cord)
 
-        r_corner3_relative_cord = np.array([self.border / 2., -self.height / 2., -self.glass_dis_z / 2 - self.border])
-        r_corner3_real = rotate_rigid_object(center=right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner3_relative_cord)
+        r_corner3_relative_cord = np.array([self.border / 2., -self.height / 2., self.glass_dis_z / 2 - self.border])
+        r_corner3_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner3_relative_cord)
 
         r_corner5_relative_cord = np.array([-self.border / 2., -self.height / 2., self.glass_dis_z / 2 + self.border])
         r_corner5_real = rotate_rigid_object(center=pouring_left_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
@@ -616,17 +619,43 @@ class PourWaterPosControlEnv(FluidEnv):
 
         right_polygon = Polygon([r_corner1_real[:2], r_corner3_real[:2], r_corner5_real[:2], r_corner8_real[:2]])
 
+        left_wall_center = self.poured_glass_states[1][:3]
         leftx, lefty = left_wall_center[0], left_wall_center[1]
+        right_wall_center = self.poured_glass_states[2][:3]
+        rightx, righty = right_wall_center[0], right_wall_center[1]
         border = self.poured_border
-        l_corner1 = np.array([leftx - border / 2, lefty + self.poured_height / 2])
-        l_corner2 = np.array([leftx + border / 2, lefty + self.poured_height / 2])
-        l_corner3 = np.array([leftx + border / 2, lefty - self.poured_height / 2])
-        l_corner4 = np.array([leftx - border / 2, lefty - self.poured_height / 2])
-        left_polygon = Polygon([l_corner1, l_corner2, l_corner3, l_corner4])
+        target_front_corner1 = np.array([leftx - border / 2, lefty + self.poured_height / 2])
+        traget_front_corner2 = np.array([leftx - border / 2, lefty - self.poured_height / 2])
+        traget_front_corner3 = np.array([rightx + border / 2, righty - self.poured_height / 2])
+        target_front_corner4 = np.array([rightx + border / 2, righty + self.poured_height / 2])
+        left_polygon = Polygon([target_front_corner1, traget_front_corner2, traget_front_corner3, target_front_corner4])
 
         res = right_polygon.intersects(left_polygon)
 
         return res
+
+    def above_floor(self, states, rotation):
+        
+        floor_center = states[0][:3]
+        corner_relative = [
+            np.array([self.glass_dis_x / 2., -self.border / 2., self.glass_dis_z / 2.]),
+            np.array([self.glass_dis_x / 2., -self.border / 2., -self.glass_dis_z / 2.]),
+            np.array([-self.glass_dis_x / 2., -self.border / 2., self.glass_dis_z / 2.]),
+            np.array([-self.glass_dis_x / 2., -self.border / 2., -self.glass_dis_z / 2.]),
+
+            np.array([self.glass_dis_x / 2., self.border / 2. + self.height, self.glass_dis_z / 2.]),
+            np.array([self.glass_dis_x / 2., self.border / 2. + self.height, -self.glass_dis_z / 2.]),
+            np.array([-self.glass_dis_x / 2., self.border / 2. + self.height, self.glass_dis_z / 2.]),
+            np.array([-self.glass_dis_x / 2., self.border / 2. + self.height, -self.glass_dis_z / 2.]),
+        ]
+
+        for corner_rel in corner_relative:
+            corner_real = rotate_rigid_object(center=floor_center, axis=np.array([0, 0, -1]), angle=rotation, 
+                relative=corner_rel)
+            if corner_real[1] < - self.border:
+                return False
+        
+        return True
 
     def _get_info(self):
         # Duplicate of the compute reward function!

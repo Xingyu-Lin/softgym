@@ -79,7 +79,7 @@ def calc_shape_states(x_curr, x_last, box_dis):
 
 
 
-pyflex.init(0, 1)
+pyflex.init(0, 1, 720, 720)
 
 use_gpu = torch.cuda.is_available()
 
@@ -175,7 +175,7 @@ for i in range(len(boxes)-1):
 for i in range(time_step):
     pyflex.set_positions(positions[i])
     pyflex.set_shape_states(shape_states[i, :-1])
-
-    pyflex.render(capture=1, path=os.path.join(des_dir, 'render_%d.tga' % i))
+    pyflex.step()
+    # pyflex.render(capture=1, path=os.path.join(des_dir, 'render_%d.tga' % i))
 
 pyflex.clean()

@@ -218,7 +218,3 @@ class PassWater1DGoalConditionedEnv(PassWater1DEnv, MultitaskEnv):
     def _get_obs(self):
         obs = PassWater1DEnv._get_obs(self)
         return self._update_obs(obs)
-
-    def _get_info(self):
-        reward = PassWater1DEnv.compute_reward(self,set_prev_reward=True)
-        return dict(real_task_reward=reward)

@@ -56,9 +56,14 @@ class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):
         goal_dict = {}
         goal_num = self.goal_num
         for idx in range(len(generated_configs)):
-            ClothDropEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
-            self.action_tool.reset([0., -1., 0.])
-            goals = self.sample_goals(goal_num)
+            if self.goal_sampling_mode == 'fixed_goal': # fpr better generate the fixed goal states
+                ClothDropEnv.set_scene(self, generated_configs[idx])
+                self.action_tool.reset([0., -1., 0.])
+                goals = self.sample_goals(goal_num)
+            else:
+                ClothDropEnv.set_scene(self, generated_configs[idx], generated_init_states[idx])
+                self.action_tool.reset([0., -1., 0.])
+                goals = self.sample_goals(goal_num)
             goal_dict[idx] = goals
 
         combined = (generated_configs, generated_init_states, goal_dict)
@@ -89,29 +94,10 @@ class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):
 
                 goal_observations.append(goal)
         else:
-            # make the cloth lying on the ground
-            n = pyflex.get_n_particles()
-            cloth_pos = np.ones((n, self.dim_position))
-          
-            lower = np.zeros((1, 3)) # y should always be 0, which means exactly on the ground
-            lower[0][1] = 0.05 # assume cloth particle radius is 0.05
-            
-            # cloth goal: cloth flattened on the ground. Position is determined by lower.
-            dimx = int(self.current_config["ClothSize"][0])
-            dimy = int(self.current_config["ClothSize"][1])
-            dimz = 1
-            # print("dimx: {}, dimy: {}, dimz: {}".format(dimx, dimy, dimz))
-            cnt = 0
-            radius = 0.05
-            for z in range(dimz):
-                for y in range(dimy):
-                    for x in range(dimx):
-                        cloth_pos[cnt][:3] = lower + np.array([x, z, y])*radius #TODO: make radius a changable parameter that we pass to the scene
-                        cnt += 1
-            
-            pyflex.set_positions(cloth_pos)
+            curr_pos = pyflex.get_positions().reshape((-1, 4))
+            curr_pos[:, 1] = 0.05  # Set the rope flatten on the ground. Assume that the particle radius is 0.05
+            pyflex.set_positions(curr_pos)
 
-            self._center_object()
             env_state = copy.deepcopy(self.get_state())
             goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
             for _ in range(batch_size):
