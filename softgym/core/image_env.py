@@ -183,7 +183,7 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             image_obs = Image.fromarray(image_obs).convert('L')
             image_obs = np.array(image_obs)
         if self.normalize:
-            image_obs = image_obs / 255.0
+            image_obs = normalize_image(image_obs)
         if self.transpose:
             image_obs = image_obs.transpose()
         assert image_obs.shape[0] == self.channels

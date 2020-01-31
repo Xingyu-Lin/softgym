@@ -9,6 +9,7 @@ from softgym.envs.pass_water_multitask import PassWater1DGoalConditionedEnv
 from softgym.envs.cloth_manipulate import ClothManipulateEnv
 from softgym.envs.rope_manipulate import RopeManipulateEnv
 from softgym.envs.cloth_drop_multitask import ClothDropGoalConditionedEnv
+from softgym.envs.cloth_fold_multitask import ClothFoldGoalConditionedEnv
 from collections import OrderedDict
 
 env_arg_dict = {
@@ -138,7 +139,20 @@ env_arg_dict = {
                     render_mode='rope',
                     num_variations=200,
                     deterministic=False
-        )
+        ),
+    "ClothFoldGoal": dict(
+                    observation_mode='point_cloud',
+                    action_mode='picker',
+                    num_picker=2,
+                    render=True,
+                    headless=True,
+                    horizon=150,
+                    action_repeat=8,
+                    render_mode='cloth',
+                    num_variations=200,
+                    deterministic=False,
+                    delta_reward=False,
+    )
 }
 
 SOFTGYM_ENVS = OrderedDict({'ClothDrop': ClothDropEnv,
@@ -151,4 +165,6 @@ SOFTGYM_ENVS = OrderedDict({'ClothDrop': ClothDropEnv,
                             'PassWaterGoal': PassWater1DGoalConditionedEnv,
                             'ClothDropGoal': ClothDropGoalConditionedEnv,
                             'ClothManipulate': ClothManipulateEnv,
-                            'RopeManipulate': RopeManipulateEnv})
+                            'RopeManipulate': RopeManipulateEnv,
+                            'ClothFoldGoal': ClothFoldGoalConditionedEnv,
+                            })
