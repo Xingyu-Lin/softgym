@@ -168,17 +168,6 @@ class PassWater1DEnv(FluidEnv):
         reset to environment to the initial state.
         return the initial observation.
         '''
-        if self.observation_mode in ['point_cloud', 'key_point']:
-            if self.observation_mode == 'key_point':
-                obs_dim = 0
-            else:
-                obs_dim = pyflex.get_n_particles() * 3
-                self.particle_obs_dim = obs_dim
-            obs_dim += 1  # self.glass_x
-            self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
-        elif self.observation_mode == 'cam_rgb':
-            self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
-                                         dtype=np.float32)
 
         self.inner_step = 0
         return self._get_obs()

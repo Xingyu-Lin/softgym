@@ -268,10 +268,33 @@ class ImageEnv(ProxyEnv, MultitaskEnv):
             ))
         return statistics
 
-def normalize_image(image, dtype=np.float64):
-    assert image.dtype == np.uint8
-    return dtype(image) / 255.0
+# def preprocess_observation_(observation, bit_depth):
+#     observation.div_(2 ** (8 - bit_depth)).floor_().div_(2 ** bit_depth).sub_(
+#         0.5)  # Quantise to given bit depth and centre
+#     observation.add_(torch.rand_like(observation).div_(
+#         2 ** bit_depth))  # Dequantise (to approx. match likelihood of PDF of continuous images vs. PMF of discrete images)
 
-def unormalize_image(image):
-    assert image.dtype != np.uint8
-    return np.uint8(image * 255.0)
+
+# # Postprocess an observation for storage (from float32 numpy array [-0.5, 0.5] to uint8 numpy array [0, 255])
+# def postprocess_observation(observation, bit_depth):
+#     return np.clip(np.floor((observation + 0.5) * 2 ** bit_depth) * 2 ** (8 - bit_depth), 0, 2 ** 8 - 1).astype(
+#         np.uint8)
+
+def normalize_image(image, dtype=np.float64, bit_depth=8):
+    """
+    normalize to [-0.5, 0.5], as in planet.
+    """
+    assert image.dtype == np.uint8
+    ret = dtype(image)
+    ret = np.floor(ret / (2 ** (8 - bit_depth))) / 2**bit_depth - 0.5
+    ret += (np.random.rand(*image.shape) / 2**bit_depth)
+    return ret
+
+def unormalize_image(image, bit_depth=8):
+    """
+    unnormalize like in planet.
+    """
+    # assert image.dtype != np.uint8
+    return np.clip(np.floor((image + 0.5) * 2 ** bit_depth) * 2 ** (8 - bit_depth), 0, 2 ** 8 - 1).astype(
+        np.uint8)
+

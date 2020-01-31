@@ -8,6 +8,7 @@ from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditioned
 from softgym.envs.pass_water_multitask import PassWater1DGoalConditionedEnv
 from softgym.envs.cloth_manipulate import ClothManipulateEnv
 from softgym.envs.rope_manipulate import RopeManipulateEnv
+from softgym.envs.cloth_drop_multitask import ClothDropGoalConditionedEnv
 from collections import OrderedDict
 
 env_arg_dict = {
@@ -79,16 +80,16 @@ env_arg_dict = {
                       deterministic=False,
                       num_variations=200),
     'PassWaterGoal': {
-            "observation_mode": 'point_cloud', # will be later wrapped by ImageEnv
-            "horizon": 75, 
-            "action_mode": 'direct', 
-            "deterministic": False, 
-            "render_mode":'fluid', 
-            "render": True, 
-            "headless": True,
-            "action_repeat": 8,
-            "delta_reward": False,
-            "num_variations": 200,
+                    "observation_mode": 'point_cloud', # will be later wrapped by ImageEnv
+                    "horizon": 75, 
+                    "action_mode": 'direct', 
+                    "deterministic": False, 
+                    "render_mode":'fluid', 
+                    "render": True, 
+                    "headless": True,
+                    "action_repeat": 8,
+                    "delta_reward": False,
+                    "num_variations": 200,
         },
     "PourWaterGoal": {
                     'observation_mode': 'point_cloud',
@@ -102,6 +103,42 @@ env_arg_dict = {
                     'delta_reward': False,
                     'camera_name': 'default_camera'
         },
+    "ClothManipulate": dict(
+                    observation_mode='point_cloud',
+                    action_mode='picker',
+                    num_picker=2,
+                    render=True,
+                    headless=True,
+                    horizon=150,
+                    action_repeat=8,
+                    render_mode='cloth',
+                    num_variations=200,
+                    deterministic=False
+        ),
+    "ClothDropGoal": dict(
+                    observation_mode='point_cloud',
+                    action_mode='picker',
+                    num_picker=2,
+                    render=True,
+                    headless=True,
+                    horizon=15,
+                    action_repeat=32,
+                    render_mode='cloth',
+                    num_variations=200,
+                    deterministic=False
+        ),
+    "RopeManipulate": dict(
+                    observation_mode='point_cloud',
+                    action_mode='picker',
+                    num_picker=2,
+                    render=True,
+                    headless=True,
+                    horizon=75,
+                    action_repeat=8,
+                    render_mode='rope',
+                    num_variations=200,
+                    deterministic=False
+        )
 }
 
 SOFTGYM_ENVS = OrderedDict({'ClothDrop': ClothDropEnv,
@@ -112,5 +149,6 @@ SOFTGYM_ENVS = OrderedDict({'ClothDrop': ClothDropEnv,
                             'RopeFlatten': RopeFlattenEnv, 
                             'PourWaterGoal': PourWaterPosControlGoalConditionedEnv, 
                             'PassWaterGoal': PassWater1DGoalConditionedEnv,
+                            'ClothDropGoal': ClothDropGoalConditionedEnv,
                             'ClothManipulate': ClothManipulateEnv,
                             'RopeManipulate': RopeManipulateEnv})
