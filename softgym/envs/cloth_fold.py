@@ -76,6 +76,8 @@ class ClothFoldEnv(ClothEnv):
             with open(self.cached_states_path, 'wb') as handle:
                 pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+        return generated_configs, generated_states
+
     # def set_scene(self, config, **kwargs):
     #     """ Setup the cloth scene and split particles into two groups for folding """
     #     super().set_scene(config, **kwargs)
@@ -110,7 +112,8 @@ class ClothFoldEnv(ClothEnv):
     def _reset(self):
         """ Right now only use one initial state"""
         if hasattr(self, 'action_tool'):
-            self.action_tool.reset([0, 0.2, 0])
+            x = pyflex.get_positions().reshape((-1, 4))[0][0] # x coordinate of left-top corner 
+            self.action_tool.reset([x + 0.1, 0.2, 0])
 
         config = self.get_current_config()
         num_particles = np.prod(config['ClothSize'], dtype=int)
