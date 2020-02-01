@@ -79,9 +79,10 @@ class RopeEnv(FlexEnv):
 
     def _get_key_point_idx(self):
         """ Return the two endpoints on the rope as the keypoints """
-        idx_p1 = 0
-        idx_p2 = 159  # Hardcode the keypoint index as the rope does not change
-        return np.array([idx_p1, idx_p2])
+        # idx_p1 = 0
+        # idx_p2 = 159  # Hardcode the keypoint index as the rope does not change
+        # return np.array([idx_p1, idx_p2])
+        return np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 159])
 
     """
     There's always the same parameters that you can set 

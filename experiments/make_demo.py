@@ -23,7 +23,7 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
 
     envs = []
     for env_name, env_class in SOFTGYM_ENVS.items():
-        # env_arg_dict[env_name]['render'] = False
+        env_arg_dict[env_name]['render'] = True
         env_arg_dict[env_name]['headless'] = headless
         env_arg_dict[env_name]['observation_mode'] = 'point_cloud'
         env_arg_dict[env_name]['use_cached_states'] = use_cached_states
@@ -37,8 +37,8 @@ def main(headless, episode, save_dir, img_size, use_cached_states, deterministic
             frames.append(env.get_image(img_size, img_size))
             for _ in range(env.horizon):
                 action = env.action_space.sample()
-                _, _, _, _, env_frames = env.step(action, True, img_size)
-                frames.extend(env_frames)
+                _, _, _, info = env.step(action, True, img_size)
+                frames.extend(info['flex_env_recorded_frames'])
             all_frames.append(frames)
         # Convert to T x index x C x H x W for pytorch
         all_frames = np.array(all_frames).transpose([1, 0, 4, 2, 3])

@@ -19,7 +19,7 @@ env_arg_dict = {
                   'deterministic': False,
                   'render': True,
                   'headless': True,
-                  'num_variations': 200,
+                  'num_variations': 1000,
                   'horizon': 100,
                   'delta_reward': False,
                   'camera_name': 'default_camera'},
@@ -31,7 +31,7 @@ env_arg_dict = {
                     'horizon': 75,
                     'action_repeat': 8,
                     'render_mode': 'cloth',
-                    'num_variations': 200,
+                    'num_variations': 1000,
                     'use_cached_states': True,
                     'delta_reward': False,
                     'deterministic': False},
@@ -43,7 +43,7 @@ env_arg_dict = {
                      'horizon': 150,
                      'action_repeat': 8,
                      'render_mode': 'cloth',
-                     'num_variations': 200,
+                     'num_variations': 1000,
                      'use_cached_states': True,
                      'delta_reward': False,
                      'deterministic': False},
@@ -55,7 +55,7 @@ env_arg_dict = {
                   'horizon': 150,
                   'action_repeat': 8,
                   'render_mode': 'cloth',
-                  'num_variations': 200,
+                  'num_variations': 1000,
                   'use_cached_states': True,
                   'delta_reward': False,
                   'deterministic': False},
@@ -67,7 +67,7 @@ env_arg_dict = {
                       horizon=15,
                       action_repeat=32,
                       render_mode='cloth',
-                      num_variations=200,
+                      num_variations=1000,
                       use_cached_states=True,
                       deterministic=False),
     'PassWater': dict(observation_mode='cam_rgb',
@@ -79,7 +79,7 @@ env_arg_dict = {
                       render_mode='fluid',
                       delta_reward=False,
                       deterministic=False,
-                      num_variations=200),
+                      num_variations=1000),
     'PassWaterGoal': {
                     "observation_mode": 'point_cloud', # will be later wrapped by ImageEnv
                     "horizon": 75, 
@@ -90,7 +90,7 @@ env_arg_dict = {
                     "headless": True,
                     "action_repeat": 8,
                     "delta_reward": False,
-                    "num_variations": 200,
+                    "num_variations": 1000,
         },
     "PourWaterGoal": {
                     'observation_mode': 'point_cloud',
@@ -99,7 +99,7 @@ env_arg_dict = {
                     'deterministic': False,
                     'render': True,
                     'headless': True,
-                    'num_variations': 200,
+                    'num_variations': 1000,
                     'horizon': 100,
                     'delta_reward': False,
                     'camera_name': 'default_camera'
@@ -113,7 +113,7 @@ env_arg_dict = {
                     horizon=150,
                     action_repeat=8,
                     render_mode='cloth',
-                    num_variations=200,
+                    num_variations=1000,
                     deterministic=False
         ),
     "ClothDropGoal": dict(
@@ -125,7 +125,7 @@ env_arg_dict = {
                     horizon=15,
                     action_repeat=32,
                     render_mode='cloth',
-                    num_variations=200,
+                    num_variations=1000,
                     deterministic=False
         ),
     "RopeManipulate": dict(
@@ -137,7 +137,7 @@ env_arg_dict = {
                     horizon=75,
                     action_repeat=8,
                     render_mode='rope',
-                    num_variations=200,
+                    num_variations=1000,
                     deterministic=False
         ),
     "ClothFoldGoal": dict(
@@ -149,7 +149,7 @@ env_arg_dict = {
                     horizon=150,
                     action_repeat=8,
                     render_mode='cloth',
-                    num_variations=200,
+                    num_variations=1000,
                     deterministic=False,
                     delta_reward=False,
     )
