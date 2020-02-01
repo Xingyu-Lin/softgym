@@ -5,7 +5,7 @@ from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditioned
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
-from multiworld.core.image_env import ImageEnv
+from softgym.core.image_env import ImageEnv
 from rlkit.envs.vae_wrapper import VAEWrappedEnv
 
 
