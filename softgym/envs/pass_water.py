@@ -53,7 +53,7 @@ class PassWater1DEnv(FluidEnv):
             if observation_mode == 'key_point':
                 obs_dim = 0
             else:
-                max_particle_num = 8 * 8 * 32
+                max_particle_num = 12 * 12 * 48
                 obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
@@ -98,8 +98,8 @@ class PassWater1DEnv(FluidEnv):
         """
         TODO: add more randomly generated configs instead of using manually specified configs. 
         """
-        dim_xs = [5, 6, 7, 8]
-        dim_zs = [5, 6, 7, 8]
+        dim_xs = [5, 6, 7, 8, 9, 10, 11, 12]
+        dim_zs = [5, 6, 7, 8, 9, 10, 11, 12]
 
         self.cached_configs = []
         self.cached_init_states = []
