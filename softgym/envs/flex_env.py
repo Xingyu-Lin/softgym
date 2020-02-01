@@ -48,6 +48,7 @@ class FlexEnv(gym.Env):
         self.dim_velocity = 3
         self.dim_shape_state = 14
         self.particle_num = 0
+        self.eval_flag = False
 
     @staticmethod
     def _random_pick_and_place(pick_num=10):
@@ -225,7 +226,12 @@ class FlexEnv(gym.Env):
     def reset(self, config=None, initial_state=None, config_id=None):
         if config is None:
             if config_id is None:
-                config_id = np.random.randint(len(self.cached_configs)) if not self.deterministic else 0
+                if self.eval_flag:
+                    eval_beg = int(0.8 * len(self.cached_configs))
+                    config_id = np.random.randint(low=eval_beg, high=len(self.cached_configs)) if not self.deterministic else eval_beg
+                else:
+                    train_high = int(0.8 * len(self.cached_configs))
+                    config_id = np.random.randint(low=0, high=train_high) if not self.deterministic else 0
             self.current_config = self.cached_configs[config_id]
             self.current_config_id = config_id
             self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
