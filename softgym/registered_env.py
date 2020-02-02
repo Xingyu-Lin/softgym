@@ -69,6 +69,7 @@ env_arg_dict = {
                       render_mode='cloth',
                       num_variations=1000,
                       use_cached_states=True,
+                      delta_reward=False,
                       deterministic=False),
     'PassWater': dict(observation_mode='cam_rgb',
                       action_mode='direct',
@@ -114,6 +115,7 @@ env_arg_dict = {
         action_repeat=8,
         render_mode='cloth',
         num_variations=1000,
+        delta_reward=False,
         deterministic=False
     ),
     "ClothDropGoal": dict(
@@ -126,6 +128,7 @@ env_arg_dict = {
         action_repeat=32,
         render_mode='cloth',
         num_variations=1000,
+        delta_reward=False,
         deterministic=False
     ),
     "RopeManipulate": dict(
@@ -138,6 +141,7 @@ env_arg_dict = {
         action_repeat=8,
         render_mode='rope',
         num_variations=1000,
+        delta_reward=False,
         deterministic=False
     ),
     "ClothFoldGoal": dict(
