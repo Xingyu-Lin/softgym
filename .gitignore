@@ -1,3 +1,4 @@
+softgym/envs/*.pkl
 data
 __pycache__/
 .idea
