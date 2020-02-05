@@ -5,6 +5,7 @@ from softgym.utils.utils import rotation_2d_around_center, extend_along_center
 import pyflex
 import scipy.spatial
 import time
+import copy
 
 
 class ActionToolBase(metaclass=abc.ABCMeta):
@@ -147,7 +148,7 @@ class Picker(ActionToolBase):
         self.action_space = Box(space_low, space_high, dtype=np.float32)
 
     def update_picker_boundary(self, picker_low, picker_high):
-        self.picker_low, self.picker_high = picker_low, picker_high
+        self.picker_low, self.picker_high = copy.copy(picker_low), copy.copy(picker_high)
 
     def _apply_picker_boundary(self, picker_pos):
         clipped_picker_pos = picker_pos.copy()

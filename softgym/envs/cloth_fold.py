@@ -112,8 +112,14 @@ class ClothFoldEnv(ClothEnv):
     def _reset(self):
         """ Right now only use one initial state"""
         if hasattr(self, 'action_tool'):
-            x = pyflex.get_positions().reshape((-1, 4))[0][0] # x coordinate of left-top corner 
+            x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
             self.action_tool.reset([x + 0.1, 0.2, 0])
+            picker_low = self.action_tool.picker_low
+            picker_high = self.action_tool.picker_high
+            offset_x = self.action_tool._get_pos()[0][0][0] - picker_low[0] - 0.1
+            picker_low[0] += offset_x
+            picker_high[0] += offset_x
+            self.action_tool.update_picker_boundary(picker_low, picker_high)
 
         config = self.get_current_config()
         num_particles = np.prod(config['ClothSize'], dtype=int)
