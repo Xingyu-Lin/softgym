@@ -116,9 +116,10 @@ class ClothFoldEnv(ClothEnv):
             self.action_tool.reset([x + 0.1, 0.2, 0])
             picker_low = self.action_tool.picker_low
             picker_high = self.action_tool.picker_high
-            offset_x = self.action_tool._get_pos()[0][0][0] - picker_low[0] - 0.1
+            offset_x = self.action_tool._get_pos()[0][0][0] - picker_low[0] - 0.3
             picker_low[0] += offset_x
             picker_high[0] += offset_x
+            picker_high[0] += 1.0
             self.action_tool.update_picker_boundary(picker_low, picker_high)
 
         config = self.get_current_config()
