@@ -149,8 +149,7 @@ class ClothFlattenEnv(ClothEnv):
             pyflex.step()
         return
 
-    @staticmethod
-    def _get_current_covered_area(pos):
+    def _get_current_covered_area(self, pos):
         """
         Calculate the covered area by taking max x,y cood and min x,y coord, create a discritized grid between the points
         :param pos: Current positions of the particle states
@@ -160,14 +159,19 @@ class ClothFlattenEnv(ClothEnv):
         min_y = np.min(pos[:, 2])
         max_x = np.max(pos[:, 0])
         max_y = np.max(pos[:, 2])
-        grid = np.zeros([101, 101])  # Discretization
+        grid = np.zeros([100, 100])  # Discretization
         init = np.array([min_x, min_y])
         span = np.array([max_x - min_x, max_y - min_y]) / 100.
         pos2d = pos[:, [0, 2]]
+
         offset = pos2d - init
-        slotted_x = (offset[:, 0] // span[0])
-        slotted_y = (offset[:, 1] // span[1])
-        grid[slotted_y.astype(int), slotted_x.astype(int)] = 1
+        slotted_x_low = np.maximum(np.round((offset[:, 0] - self.cloth_particle_radius) / span[0]).astype(int), 0)
+        slotted_x_high = np.minimum(np.round((offset[:, 0] + self.cloth_particle_radius) / span[0]).astype(int), 100)
+        slotted_y_low = np.maximum(np.round((offset[:, 1] - self.cloth_particle_radius) / span[1]).astype(int), 0)
+        slotted_y_high = np.minimum(np.round((offset[:, 1] + self.cloth_particle_radius) / span[1]).astype(int), 100)
+
+        for x_low, x_high, y_low, y_high in zip(slotted_x_low, slotted_x_high, slotted_y_low, slotted_y_high):
+            grid[x_low:x_high, y_low:y_high] = 1
         return np.sum(grid) * span[0] * span[1]
 
     def _get_center_point(self, pos):

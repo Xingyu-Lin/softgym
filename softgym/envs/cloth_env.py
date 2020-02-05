@@ -15,6 +15,7 @@ class ClothEnv(FlexEnv):
         assert action_mode in ['sphere', 'picker', 'pickerpickplace']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
+        self.cloth_particle_radius = 0.05  # Hardcoded radius
 
         if action_mode.startswith('key_point'):
             space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
