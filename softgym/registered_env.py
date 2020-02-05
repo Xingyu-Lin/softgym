@@ -160,16 +160,16 @@ env_arg_dict = {
 }
 
 SOFTGYM_ENVS = OrderedDict({
-    # 'ClothDrop': ClothDropEnv,
-    # 'PourWater': PourWaterPosControlEnv,
-    # 'PassWater': PassWater1DEnv,
-    # 'ClothFlatten': ClothFlattenEnv,
+    'ClothDrop': ClothDropEnv,
+    'PourWater': PourWaterPosControlEnv,
+    'PassWater': PassWater1DEnv,
+    'ClothFlatten': ClothFlattenEnv,
     'ClothFold': ClothFoldEnv,
-    # 'RopeFlatten': RopeFlattenEnv,
-    # 'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,
-    # 'PassWaterGoal': PassWater1DGoalConditionedEnv,
-    # 'ClothDropGoal': ClothDropGoalConditionedEnv,
-    # 'ClothManipulate': ClothManipulateEnv,
-    # 'RopeManipulate': RopeManipulateEnv,
-    # 'ClothFoldGoal': ClothFoldGoalConditionedEnv,
+    'RopeFlatten': RopeFlattenEnv,
+    'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,
+    'PassWaterGoal': PassWater1DGoalConditionedEnv,
+    'ClothDropGoal': ClothDropGoalConditionedEnv,
+    'ClothManipulate': ClothManipulateEnv,
+    'RopeManipulate': RopeManipulateEnv,
+    'ClothFoldGoal': ClothFoldGoalConditionedEnv,
 })
