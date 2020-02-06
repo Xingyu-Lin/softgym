@@ -107,6 +107,21 @@ class ClothFlattenEnv(ClothEnv):
                 pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
         return generated_configs, generated_states
 
+    def _set_to_flatten(self):
+        cloth_dimx, cloth_dimz = self.get_current_config()['ClothSize']
+        N = cloth_dimx * cloth_dimz
+        px = np.linspace(0, cloth_dimx * 0.05, cloth_dimx)
+        py = np.linspace(0, cloth_dimz * 0.05, cloth_dimz)
+        xx, yy = np.meshgrid(px, py)
+        new_pos = np.empty(shape=(N, 4), dtype=np.float)
+        new_pos[:, 0] = xx.flatten()
+        new_pos[:, 1] = 0.05
+        new_pos[:, 2] = yy.flatten()
+        new_pos[:, 3] = 1.
+        new_pos[:, :3] -= np.mean(new_pos[:, :3], axis=0)
+        pyflex.set_positions(new_pos.flatten())
+        return self._get_current_covered_area(new_pos)
+
     def _reset(self):
         """ Right now only use one initial state"""
         self.prev_covered_area = self._get_current_covered_area(pyflex.get_positions())

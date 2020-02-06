@@ -190,3 +190,22 @@ class ClothFoldEnv(ClothEnv):
         return {
             'performance': -curr_dist
         }
+
+    def _set_to_folded(self):
+        config = self.get_current_config()
+        num_particles = np.prod(config['ClothSize'], dtype=int)
+        particle_grid_idx = np.array(list(range(num_particles))).reshape(config['ClothSize'][1], config['ClothSize'][0])  # Reversed index here
+
+        cloth_dimx = config['ClothSize'][0]
+        x_split = cloth_dimx // 2
+        fold_group_a = particle_grid_idx[:, :x_split].flatten()
+        fold_group_b = np.flip(particle_grid_idx, axis=1)[:, :x_split].flatten()
+
+        curr_pos = pyflex.get_positions().reshape((-1, 4))
+        curr_pos[fold_group_a, :] = curr_pos[fold_group_b, :].copy()
+        curr_pos[fold_group_a, 1] += 0.05  # group a particle position made tcurr_pos[self.fold_group_b, 1] + 0.05e at top of group b position.
+
+        pyflex.set_positions(curr_pos)
+        for i in range(10):
+            pyflex.step()
+        return self._get_info()['performance']
