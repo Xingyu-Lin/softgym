@@ -2,64 +2,104 @@ import gym
 import numpy as np
 import pyflex
 from softgym.envs.cloth_drop import ClothDropEnv
+from softgym.envs.cloth_drop_multitask import ClothDropGoalConditionedEnv
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
 import torch, torchvision, cv2
+from softgym.registered_env import  env_arg_dict
+import argparse
+
+args = argparse.ArgumentParser(sys.argv[0])
+args.add_argument("--mode", type=str, default='heuristic', help='heuristic or cem')
+args = args.parse_args()
 
 
-def test_picker(env, num_picker=2):
+def run_heuristic(mode = 'visual'):
+    num_picker = 2
+    env_name = "ClothDropGoal" if mode == 'visual' else 'ClothDrop' 
+    dic = env_arg_dict[env_name]
+    dic['headless'] = True
+    action_repeat = dic.get('action_repeat', 8)
+    horizon = dic['horizon']
+    print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
+    env = ClothDropEnv(**dic) if mode != 'visual' else ClothDropGoalConditionedEnv(**dic)
+
     imgs = []
-    for _ in range(1):
-        env.reset()
+    returns = []
+    final_performances = []
+    N = 100 if mode != 'visual' else 1
+    for _ in range(N):
+        total_reward = 0
+        if mode != 'visual':
+            env.eval_flag = True
+            env.reset()
+        else:
+            idx = 15
+            env.reset(config_id=idx)
+            env.set_to_goal(env.get_goal())
+            goal_img = env.render('rgb_array')
+            env.reset(config_id=idx)
 
-        fast_move_steps = 30
+        fast_move_steps = 5
         for i in range(fast_move_steps):
             action = np.zeros((num_picker, 4))
             action[:, -1] = 1
-            action[:, 0] = 0.03
-            env.step(action)
-            imgs.append(env.render('rgb_array'))
+            action[:, 0] = 0.5 / env.action_repeat 
+            _, reward, _, _ = env.step(action)
+            total_reward += reward
+            if mode == 'visual':
+                imgs.append(env.render('rgb_array'))
 
-        slow_move_steps = 30
+        slow_move_steps = 3
         for i in range(slow_move_steps):
             action = np.zeros((num_picker, 4))
             action[:, -1] = 1
-            action[:, 0] = -0.02
-            env.step(action)
-            imgs.append(env.render('rgb_array'))
+            action[:, 0] = -0.6 / env.action_repeat
+            action[:, 1] = -0.12 / env.action_repeat
+            _, reward, _, _ =env.step(action)
+            total_reward += reward
+            if mode == 'visual':
+                imgs.append(env.render('rgb_array'))
 
-        let_go_steps = 100
+        let_go_steps = 6
         for i in range(let_go_steps):
             action = np.zeros((num_picker, 4))
-            env.step(action)
-            imgs.append(env.render('rgb_array'))
+            _, reward, _, _ = env.step(action)
+            total_reward += reward
+            if mode == 'visual':
+                imgs.append(env.render('rgb_array'))
+            if i == let_go_steps - 1:
+                final_performances.append(reward)
 
-    num = 8
-    show_imgs = []
-    factor = len(imgs) // num
-    for i in range(num):
-        img = imgs[i * factor].transpose(2, 0, 1)
-        print(img.shape)
-        show_imgs.append(torch.from_numpy(img.copy()))
+        print("episode total reward: ", total_reward)
+        returns.append(total_reward)
 
-    grid_imgs = torchvision.utils.make_grid(show_imgs, padding=20, pad_value=120).data.cpu().numpy().transpose(1, 2, 0)
-    grid_imgs=grid_imgs[:, :, ::-1]
-    cv2.imwrite('cloth_drop.jpg', grid_imgs)
+    print("return mean: ", np.mean(returns))
+    print("return std: ", np.std(returns))
+    print("final performances mean {}".format(np.mean(final_performances)))
 
-        # for i in range(50):
-        #     print('step: ', i)
-        #     action = np.zeros((num_picker, 4))
-        #     if i < 10:
-        #         action[:, 0] = 0.02
-        #         action[:, 3] = 1.
-        #     elif i < 15:
-        #         action[:, 0] = -0.02
-        #         action[:, 3] = 1.
-        #     elif i < 40:
-        #         action[:, 3] = 0.
-        #     obs, reward, _, _ = env.step(action)
-        #     print(reward)
+
+    if mode == 'visual':
+        num = 7
+        show_imgs = []
+        factor = len(imgs) // num
+        for i in range(num):
+            img = imgs[i * factor].transpose(2, 0, 1)
+            print(img.shape)
+            show_imgs.append(torch.from_numpy(img.copy()))
+
+        # goal_img = goal_img.transpose(2, 0, 1)
+        # show_imgs.append(torch.from_numpy(goal_img.copy()))
+        goal_img = goal_img[:, :, ::-1]
+        save_name = 'data/icml/cloth_drop_goal.jpg'
+        cv2.imwrite(save_name, goal_img)
+
+        grid_imgs = torchvision.utils.make_grid(show_imgs, padding=20, pad_value=120).data.cpu().numpy().transpose(1, 2, 0)
+        grid_imgs=grid_imgs[:, :, ::-1]
+        save_name = 'data/icml/cloth_drop.jpg'
+        print(save_name)
+        cv2.imwrite(save_name, grid_imgs)
 
 
 def test_random(env, N=5):
@@ -75,18 +115,4 @@ def test_random(env, N=5):
 
 
 if __name__ == '__main__':
-    num_picker = 2
-    env = ClothDropEnv(
-        observation_mode='key_point',
-        action_mode='picker',
-        num_picker=num_picker,
-        render=True,
-        headless=False,
-        horizon=1000,
-        action_repeat=1,
-        render_mode='cloth',
-        num_variations=1000,
-        use_cached_states=True,
-        deterministic=True)
-    # test_random(env)
-    test_picker(env)
+    run_heuristic(args.mode)
