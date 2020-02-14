@@ -10,14 +10,18 @@ from softgym.registered_env import env_arg_dict
 import argparse,sys
 
 args = argparse.ArgumentParser(sys.argv[0])
-args.add_argument("--mode", type=str, default='heuristic', help='heuristic or cem')
+args.add_argument("--mode", type=str, default='test')
+args.add_argument("--headless", type=int, default=1)
+args.add_argument("--obs_mode", type=str, default='cam_rgb')
 args = args.parse_args()
 
-def run_heuristic(mode='visual'):
+def run_heuristic(args):
+    mode = args.mode
     num_picker = 2
     env_name = 'ClothFold' if mode != 'visual' else 'ClothFoldGoal'
     dic = env_arg_dict[env_name]
-    dic['headless'] = True
+    dic['headless'] = args.headless
+    dic['observation_mode'] = args.obs_mode
     action_repeat = dic['action_repeat']
     horizon = dic['horizon']
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
@@ -61,7 +65,7 @@ def run_heuristic(mode='visual'):
             action[0, :3] = differ1 / steps / action_repeat
             action[1, :3] = differ2 / steps / action_repeat
 
-            _, reward, _, _ = env.step(action)
+            obs, reward, _, _ = env.step(action)
             total_reward += reward
             if mode == 'visual':
                 imgs.append(env.render('rgb_array'))
@@ -152,4 +156,4 @@ def test_random(env, N=5):
 
 
 if __name__ == '__main__':
-    run_heuristic(args.mode)
+    run_heuristic(args)

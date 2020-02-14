@@ -11,13 +11,17 @@ from softgym.registered_env import  env_arg_dict
 import argparse
 
 args = argparse.ArgumentParser(sys.argv[0])
-args.add_argument("--mode", type=str, default='heuristic', help='heuristic or cem')
+args.add_argument("--mode", type=str, default='test')
+args.add_argument("--headless", type=int, default=1)
+args.add_argument("--obs_mode", type=str, default='cam_rgb')
 args = args.parse_args()
 
-def run_heuristic(mode='visual'):
+def run_heuristic(args):
+    mode = args.mode
     env_name = 'RopeFlatten' if mode != 'visual' else "RopeManipulate"
     dic = env_arg_dict[env_name]
-    dic['headless'] = True
+    dic['headless'] = args.headless
+    dic['observation_mode'] = args.obs_mode
     action_repeat = dic.get('action_repeat', 8)
     horizon = dic['horizon']
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
@@ -48,7 +52,7 @@ def run_heuristic(mode='visual'):
         for i in range(steps):
             action = np.zeros((2, 4))
             action[:, 1] = 0.01
-            _, reward, _, _ = env.step(action)
+            obs, reward, _, _ = env.step(action)
             total_reward += reward
             if mode == 'visual':
                 imgs.append(env.render('rgb_array'))
@@ -125,4 +129,4 @@ def run_heuristic(mode='visual'):
         cv2.imwrite(save_name, grid_imgs)
 
 if __name__ == '__main__':
-    run_heuristic(args.mode)
+    run_heuristic(args)

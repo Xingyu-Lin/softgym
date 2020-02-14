@@ -12,24 +12,30 @@ import torch
 import cv2
 from matplotlib import pyplot as plt
 from softgym.registered_env import  env_arg_dict
+import os.path as osp
 
 
 args = argparse.ArgumentParser(sys.argv[0])
-args.add_argument("--mode", type=str, default='heuristic', help='heuristic or cem')
+args.add_argument("--mode", type=str, default='heuristic', help='visual: generate env images; otherwise, \
+        run heuristic policy and evaluate its performance')
+args.add_argument("--headless", type=int, default=0)
+args.add_argument("--obs_mode", type=str, default='cam_rgb')
 args = args.parse_args()
 
 def show(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
 
-def run_heuristic(mode='test'):
+def run_heuristic(args):
+    mode = args.mode
     if mode == 'visual':
         env_name = 'PourWaterGoal'
     else:
         env_name = "PourWater"
 
     dic = env_arg_dict[env_name]
-    dic['headless'] = True
+    dic['headless'] = args.headless
+    dic['observation_mode'] = args.obs_mode
     action_repeat = dic.get('action_repeat', 8)
     horizon = dic['horizon']
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
@@ -46,6 +52,9 @@ def run_heuristic(mode='test'):
         N = 1
     elif mode == 'test':
         N = 100
+    elif mode == 'animation':
+        N = 4
+
     for idx in range(N):
         total_reward = 0
         env.eval_flag = True
@@ -91,35 +100,11 @@ def run_heuristic(mode='test'):
         returns.append(total_reward)
         print("episode {} total reward {}".format(idx, total_reward))
 
-
-    print("returns mean {}".format(np.mean(returns)))
-    print("returns std {}".format(np.std(returns)))
-    print("final performances mean {}".format(np.mean(final_performances)))
-
-    if mode == 'visual':
-        num = 7
-        show_imgs = []
-        factor = len(imgs) // num
-        for i in range(num):
-            img = imgs[i * factor].transpose(2, 0, 1)
-            print(img.shape)
-            show_imgs.append(torch.from_numpy(img.copy()))
-
-        # goal_img = goal_img.transpose(2, 0, 1)
-        # show_imgs.append(torch.from_numpy(goal_img.copy()))
-        goal_img = goal_img[:, :, ::-1]
-        save_name = 'data/icml/pour_water_goal.jpg'
-        cv2.imwrite(save_name, goal_img)
-
-        grid_imgs = torchvision.utils.make_grid(show_imgs, padding=20, pad_value=120).data.cpu().numpy().transpose(1, 2, 0)
-        grid_imgs=grid_imgs[:, :, ::-1]
-        print('data/icml/pour_water.jpg')
-        cv2.imwrite('data/icml/pour_water.jpg', grid_imgs)
     env.close()
-
+    return returns, final_performances, imgs, goal_img
 
 if __name__ == '__main__':
-    run_heuristic(args.mode)
+    run_heuristic(args)
 
 # elif args.mode == 'cem':
 #     from algorithms.cem import CEMPolicy
