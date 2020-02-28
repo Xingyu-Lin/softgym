@@ -68,3 +68,26 @@ def save_numpy_as_gif(array, filename, fps=20, scale=1.0):
     clip.write_gif(filename, fps=fps)
     return clip
 
+
+def save_numpy_to_gif_matplotlib(array, filename, interval=50):
+    from matplotlib import animation
+    from matplotlib import pyplot as plt
+    
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(1,1,1)
+    def img_show(i):
+        plt.imshow(array[i])
+        print("showing image {}".format(i))
+        return 
+
+    ani=animation.FuncAnimation(fig, img_show, len(array), interval=interval)
+
+    ani.save('{}.mp4'.format(filename))
+
+    import ffmpy
+    ff = ffmpy.FFmpeg(
+        inputs = {"{}.mp4".format(filename) : None},
+        outputs = {"{}.gif".format(filename) : None})
+    
+    ff.run()
+    # plt.show()

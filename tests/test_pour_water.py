@@ -38,6 +38,11 @@ def run_heuristic(args):
     dic['observation_mode'] = args.obs_mode
     action_repeat = dic.get('action_repeat', 8)
     horizon = dic['horizon']
+    if args.mode == 'debug':
+        dic['save_cache_states'] = False
+        dic['use_cached_states'] = False
+        dic['num_variations'] = 5
+
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
 
     if mode == 'visual':
@@ -50,14 +55,15 @@ def run_heuristic(args):
     final_performances = []
     if mode == 'visual':
         N = 1
+    elif mode == 'debug':
+        N = 5
     elif mode == 'test':
         N = 100
-    elif mode == 'animation':
-        N = 4
 
+    goal_img = None
     for idx in range(N):
         total_reward = 0
-        env.eval_flag = True
+        # env.eval_flag = True
         if mode == 'visual':
             env.reset(config_id=5)
             env.set_to_goal(env.get_goal())

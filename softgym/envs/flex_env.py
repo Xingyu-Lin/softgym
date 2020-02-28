@@ -17,7 +17,8 @@ except ImportError as e:
 
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, num_variations=1,
-                 action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True, use_cached_states=True, **kwargs):
+                 action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True, use_cached_states=True, 
+                 save_cache_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
         self.record_video, self.video_path, self.video_name = False, None, None
@@ -39,6 +40,7 @@ class FlexEnv(gym.Env):
         self.delta_reward = delta_reward
         self.deterministic = deterministic
         self.use_cached_states = use_cached_states
+        self.save_cache_states = save_cache_states
         self.current_config = self.get_default_config()
         self.current_config_id = None
         self.cached_configs, self.cached_init_states = None, None
@@ -232,6 +234,7 @@ class FlexEnv(gym.Env):
                 else:
                     train_high = int(0.8 * len(self.cached_configs))
                     config_id = np.random.randint(low=0, high=train_high) if not self.deterministic else 0
+
             self.current_config = self.cached_configs[config_id]
             self.current_config_id = config_id
             self.set_scene(self.cached_configs[config_id], self.cached_init_states[config_id])
