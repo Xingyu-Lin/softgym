@@ -17,6 +17,8 @@ args.add_argument("--mode", type=str, default='test')
 args.add_argument("--headless", type=int, default=1)
 args.add_argument("--obs_mode", type=str, default='point_cloud')
 args.add_argument("--env_name", type=str, default='all')
+args.add_argument("--use_cached_states", type=int, default=1)
+args.add_argument("--imsize", type=int, default=256)
 args = args.parse_args()
 
 heuristic_funcs = {
@@ -28,10 +30,10 @@ heuristic_funcs = {
     "pass_water": pass_water_heuristic
 }
 
-def animation(all_frames, goal_image, save_dir='data/misc', save_name='pourwater'):
+def animation(all_frames, goal_image, save_dir='data/video', save_name='pourwater'):
     all_frames = np.asarray(all_frames)
     _, imwidth, imheight, imchannel = all_frames.shape
-    all_frames = np.asarray(all_frames).reshape((4, -1, imwidth, imheight, imchannel))
+    all_frames = np.asarray(all_frames).reshape((8, -1, imwidth, imheight, imchannel))
     all_frames = np.array(all_frames).transpose([1, 0, 4, 2, 3])
     grid_imgs = [torchvision.utils.make_grid(torch.from_numpy(frame), nrow=4).permute(1, 2, 0).data.cpu().numpy() for frame in all_frames]
 
@@ -45,7 +47,7 @@ def statistics(returns, final_performances):
     print("returns std {}".format(np.std(returns)))
     print("final performances mean {}".format(np.mean(final_performances)))
 
-def plot_snapshots(imgs, goal_img, savepath='data/misc/pour_water_goal.jpg'):
+def plot_snapshots(imgs, goal_img, savepath='data/video/pour_water_goal.jpg'):
     num = 7
     show_imgs = []
     factor = len(imgs) // num
@@ -67,12 +69,12 @@ def plot_snapshots(imgs, goal_img, savepath='data/misc/pour_water_goal.jpg'):
 
 def run_single_env(args):
     returns, final_performances, imgs, goal_img = heuristic_funcs[args.env_name](args)
-    if args.mode == 'test':
+    if args.mode == 'test': # return the statistics of the heuristic policy, mainly mean and std return
         statistics(returns, final_performances)
-    elif args.mode == 'visual':
+    elif args.mode == 'visual': # plot the snapshots of the heuristic trajectory and the goal image. 
         plot_snapshots(imgs, goal_img, savepath='data/icml/' + args.env_name + '.jpg')
-    elif args.mode == 'animation':
-        animation(imgs, goal_img, save_dir='data/misc', save_name=args.env_name)
+    elif args.mode == 'animation': # make a 1x4 animation of the heuristic policy, and goal image on the right.
+        animation(imgs, goal_img, save_dir='data/video', save_name=args.env_name + args.imsize)
 
 if args.env_name == 'all':
     for env_name in heuristic_funcs.keys():
