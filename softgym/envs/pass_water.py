@@ -180,7 +180,7 @@ class PassWater1DEnv(FluidEnv):
         particle_vel = pyflex.get_velocities()
         shape_position = pyflex.get_shape_states()
         return {'particle_pos': particle_pos, 'particle_vel': particle_vel, 'shape_pos': shape_position,
-                'glass_x': self.glass_x, 'glass_states': self.glass_states, 'glass_params': self.glass_params}
+                'glass_x': self.glass_x, 'glass_states': self.glass_states, 'glass_params': self.glass_params, 'config_id': self.current_config_id}
 
     def set_state(self, state_dic):
         '''

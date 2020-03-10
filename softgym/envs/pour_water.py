@@ -188,7 +188,7 @@ class PourWaterPosControlEnv(FluidEnv):
         return {'particle_pos': particle_pos, 'particle_vel': particle_vel, 'shape_pos': shape_position,
                 'glass_x': self.glass_x, 'glass_y': self.glass_y, 'glass_rotation': self.glass_rotation,
                 'glass_states': self.glass_states, 'poured_glass_states': self.poured_glass_states,
-                'glass_params': self.glass_params}
+                'glass_params': self.glass_params, 'config_id': self.current_config_id}
 
     def set_state(self, state_dic):
         '''

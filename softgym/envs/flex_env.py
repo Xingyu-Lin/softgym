@@ -190,7 +190,6 @@ class FlexEnv(gym.Env):
         shape_pos = pyflex.get_shape_states()
         phase = pyflex.get_phases()
         camera_params = copy.deepcopy(self.camera_params)
-
         return {'particle_pos': pos, 'particle_vel': vel, 'shape_pos': shape_pos, 'phase': phase, 'camera_params': camera_params,
                 'config_id': self.current_config_id}
 
