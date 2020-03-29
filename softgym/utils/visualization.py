@@ -32,6 +32,36 @@ from moviepy.editor import ImageSequenceClip
 #         for f in glob.glob(os.path.join(video_path, "render_*.tga")):
 #             os.remove(f)
 
+def make_grid(array, nrow=1, padding=0, pad_value=120):
+    """ numpy version of the make_grid function in torch. Dimension of array: NHWC """
+    if len(array.shape) == 3:  # In case there is only one channel
+        array = np.expand_dims(array, 3)
+    N, H, W, C = array.shape
+    assert N % nrow == 0
+    ncol = N // nrow
+    idx = 0
+    grid_img = None
+    for i in range(nrow):
+        row = np.pad(array[idx], [[padding if i == 0 else 0, padding], [padding, padding], [0, 0]], constant_values=pad_value)
+        for j in range(1, ncol):
+            cur_img = np.pad(array[idx], [[padding if i == 0 else 0, padding], [0, padding], [0, 0]], constant_values=pad_value)
+            row = np.hstack([row, cur_img])
+            idx += 1
+        if i == 0:
+            grid_img = row
+        else:
+            grid_img = np.vstack([grid_img, row])
+    return grid_img
+
+
+if __name__ == '__main__':
+    N = 12
+    H = W = 50
+    X = np.random.randint(0, 255, size=N * H * W* 3).reshape([N, H, W, 3])
+    grid_img = make_grid(X, nrow=3, padding=5)
+    cv2.imshow('name', grid_img / 255.)
+    cv2.waitKey()
+
 
 def save_numpy_as_gif(array, filename, fps=20, scale=1.0):
     """Creates a gif given a stack of images using moviepy
@@ -72,22 +102,23 @@ def save_numpy_as_gif(array, filename, fps=20, scale=1.0):
 def save_numpy_to_gif_matplotlib(array, filename, interval=50):
     from matplotlib import animation
     from matplotlib import pyplot as plt
-    
+
     fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(1,1,1)
+    ax = fig.add_subplot(1, 1, 1)
+
     def img_show(i):
         plt.imshow(array[i])
         print("showing image {}".format(i))
-        return 
+        return
 
-    ani=animation.FuncAnimation(fig, img_show, len(array), interval=interval)
+    ani = animation.FuncAnimation(fig, img_show, len(array), interval=interval)
 
     ani.save('{}.mp4'.format(filename))
 
     import ffmpy
     ff = ffmpy.FFmpeg(
-        inputs = {"{}.mp4".format(filename) : None},
-        outputs = {"{}.gif".format(filename) : None})
-    
+        inputs={"{}.mp4".format(filename): None},
+        outputs={"{}.gif".format(filename): None})
+
     ff.run()
     # plt.show()
