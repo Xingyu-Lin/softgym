@@ -28,6 +28,8 @@ def run_heuristic(args):
         env_name = "PassWaterGoal"
     else:
         env_name = "PassWater"
+    print(args.headless)
+    # exit()
     dic = env_arg_dict[env_name]
     dic['headless'] = args.headless
     dic['observation_mode'] = args.obs_mode
