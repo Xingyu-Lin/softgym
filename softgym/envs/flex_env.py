@@ -107,6 +107,8 @@ class FlexEnv(gym.Env):
         :param cached_states_path:
         :return:
         """
+        if cached_states_path is None:
+            return False
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
             cached_states_path = osp.join(cur_dir, cached_states_path)
@@ -115,7 +117,7 @@ class FlexEnv(gym.Env):
         with open(cached_states_path, "rb") as handle:
             self.cached_configs, self.cached_init_states = pickle.load(handle)
         print('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
-        assert len(self.cached_init_states) == self.num_variations
+
         return True
 
     def get_default_config(self):
