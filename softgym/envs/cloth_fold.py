@@ -185,10 +185,14 @@ class ClothFoldEnv(ClothEnv):
         pos = pyflex.get_positions()
         pos = pos.reshape((-1, 4))[:, :3]
         pos_group_a = pos[self.fold_group_a]
+        pos_group_b = pos[self.fold_group_b]
         pos_group_b_init = self.init_pos[self.fold_group_b]
-        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b_init, axis=1))
+        group_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
+        fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         return {
-            'performance': -curr_dist
+            'performance': -group_dist - 1.2 * fixation_dist,
+            'neg_group_dist': -group_dist,
+            'neg_fixation_dist': -fixation_dist
         }
 
     def _set_to_folded(self):
