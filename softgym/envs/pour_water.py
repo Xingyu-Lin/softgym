@@ -140,7 +140,7 @@ class PourWaterPosControlEnv(FluidEnv):
             config_variations[idx]['fluid']['dim_x'] = dim_x
             config_variations[idx]['fluid']['dim_y'] = dim_y
             config_variations[idx]['fluid']['dim_z'] = dim_z
-            config_variations[idx]['fluid']['viscosity'] = self.rand_float(2.0, 10.0)
+            # config_variations[idx]['fluid']['viscosity'] = self.rand_float(2.0, 10.0)
 
             config_variations[idx]['glass']['height'] = glass_height
             config_variations[idx]['glass']['poured_height'] = glass_height + np.random.rand() * 0.1
