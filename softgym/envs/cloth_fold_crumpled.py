@@ -125,7 +125,7 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
         pos_group_b = pos[self.fold_group_b]
         pos_group_b_init = self.init_pos[self.fold_group_b]
         curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + \
-                    0.2 * np.linalg.norm(np.mean(pos_group_b, axis=0) - np.mean(pos_group_b_init, axis=0))
+                    0.2 * np.linalg.norm(np.mean(pos_group_b, axis=0)[[0, 2]] - np.mean(pos_group_b_init, axis=0)[[0, 2]])
         if self.delta_reward:
             reward = self.prev_dist - curr_dist
             if set_prev_reward:
@@ -133,3 +133,18 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
         else:
             reward = -curr_dist
         return reward
+
+    def _get_info(self):
+        # Duplicate of the compute reward function!
+        pos = pyflex.get_positions()
+        pos = pos.reshape((-1, 4))[:, :3]
+        pos_group_a = pos[self.fold_group_a]
+        pos_group_b = pos[self.fold_group_b]
+        pos_group_b_init = self.init_pos[self.fold_group_b]
+        group_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
+        fixation_dist = np.linalg.norm(np.mean(pos_group_b, axis=0)[[0, 2]] - np.mean(pos_group_b_init, axis=0)[[0, 2]])
+        return {
+            'performance': -group_dist - 0.2 * fixation_dist,
+            'neg_group_dist': -group_dist,
+            'neg_fixation_dist': -fixation_dist
+        }
