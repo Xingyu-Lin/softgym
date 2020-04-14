@@ -1,8 +1,7 @@
 import gym
 import numpy as np
 import pyflex
-from softgym.envs.pour_water import PourWaterPosControlEnv
-from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
+from softgym.envs.pour_water_amount import PourWaterAmountPosControlEnv
 import os, argparse, sys
 import softgym
 from matplotlib import pyplot as plt
@@ -31,7 +30,7 @@ def run_heuristic(args):
     if mode == 'visual':
         env_name = 'PourWaterGoal'
     else:
-        env_name = "PourWater"
+        env_name = "PourWaterAmount"
 
     dic = env_arg_dict[env_name]
     dic['headless'] = args.headless

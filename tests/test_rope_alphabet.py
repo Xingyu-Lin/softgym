@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import pyflex
-from softgym.envs.rope_flatten import RopeFlattenEnv
+from softgym.envs.rope_alphabet import RopeAlphaBetEnv
 from softgym.envs.rope_manipulate import RopeManipulateEnv
 import os, argparse, sys
 import softgym
@@ -18,20 +18,20 @@ args = args.parse_args()
 
 def run_heuristic(args):
     mode = args.mode
-    env_name = 'RopeFlatten' if mode != 'visual' else "RopeManipulate"
+    env_name = 'RopeAlphaBet' if mode != 'visual' else "RopeManipulate"
     dic = env_arg_dict[env_name]
     dic['headless'] = args.headless
     dic['observation_mode'] = args.obs_mode
 
-    # if mode == 'debug':
-    #     print("here")
-    #     dic['use_cached_states'] = False
-    #     dic['save_cache_states'] = False
+    if mode == 'debug':
+        # dic['use_cached_states'] = False
+        # dic['save_cache_states'] = False
+        dic['num_variations'] = 20
 
     action_repeat = dic.get('action_repeat', 8)
     horizon = dic['horizon']
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
-    env = RopeFlattenEnv(**dic) if mode != 'visual' else RopeManipulateEnv(**dic)
+    env = RopeAlphaBetEnv(**dic) if mode != 'visual' else RopeManipulateEnv(**dic)
 
     N = 100 if mode != 'visual' else 1
     imgs = []
@@ -39,8 +39,15 @@ def run_heuristic(args):
     final_performances = []
     for idx in range(N):
         if mode != 'visual':
-            env.eval_flag = True
-            env.reset()
+            # env.eval_flag = True
+            obs = env.reset()
+            print(obs.shape)
+            current_image = obs[:, :, :3]
+            goal_image = obs[:, :, 3:]
+            new_image = np.concatenate([current_image, goal_image], axis=1)
+            plt.imshow(new_image)
+            plt.show()
+            # exit()
         else:
             idx = 6
             env.reset(config_id=idx)

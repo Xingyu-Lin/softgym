@@ -15,6 +15,7 @@ class RopeEnv(FlexEnv):
         assert action_mode in ['picker']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
+        self.num_picker = num_picker
 
         if action_mode == 'picker':
             self.action_tool = Picker(num_picker, picker_radius=picker_radius, picker_low=(-1.5, 0., -1.), picker_high=(4.5, 2.8, 4.))

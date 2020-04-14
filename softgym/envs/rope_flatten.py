@@ -24,16 +24,17 @@ class RopeFlattenEnv(RopeEnv):
             self.cached_states_path = osp.join(cur_dir, cached_states_path)
         else:
             self.cached_states_path = cached_states_path
-        success = self.get_cached_configs_and_states(cached_states_path)
-        if not success or not self.use_cached_states:
-            self.generate_env_variation(self.num_variations, save_to_file=True)
+
+        if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
+            config = self.get_default_config()
+            self.generate_env_variation(config, self.num_variations, save_to_file=self.save_cache_states)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
-    def generate_env_variation(self, num_variations=1, save_to_file=False, **kwargs):
+    def generate_env_variation(self, config=None, num_variations=1, save_to_file=False, **kwargs):
         """ Generate initial states. Note: This will also change the current states! """
         generated_configs, generated_states = [], []
-        default_config = self.get_default_config()
+        default_config = config
         for i in range(num_variations):
             config = deepcopy(default_config)
             self.set_scene(config)

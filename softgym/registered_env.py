@@ -1,6 +1,8 @@
 from softgym.envs.pour_water import PourWaterPosControlEnv
+from softgym.envs.pour_water_amount import PourWaterAmountPosControlEnv
 from softgym.envs.pass_water import PassWater1DEnv
 from softgym.envs.rope_flatten import RopeFlattenEnv
+from softgym.envs.rope_alphabet import RopeAlphaBetEnv
 from softgym.envs.cloth_flatten import ClothFlattenEnv
 from softgym.envs.cloth_fold import ClothFoldEnv
 from softgym.envs.cloth_drop import ClothDropEnv
@@ -25,12 +27,34 @@ env_arg_dict = {
                   'horizon': 100,
                   'delta_reward': False,
                   'camera_name': 'default_camera'},
+    'PourWaterAmount': {'observation_mode': 'cam_rgb',
+                  'action_mode': 'direct',
+                  'render_mode': 'fluid',
+                  'deterministic': False,
+                  'render': True,
+                  'headless': True,
+                  'num_variations': 1000,
+                  'horizon': 100,
+                  'delta_reward': False,
+                  'camera_name': 'default_camera'},
     'RopeFlatten': {'observation_mode': 'cam_rgb',
                     'action_mode': 'picker',
                     'num_picker': 2,
                     'render': True,
                     'headless': True,
                     'horizon': 75,
+                    'action_repeat': 8,
+                    'render_mode': 'cloth',
+                    'num_variations': 1000,
+                    'use_cached_states': True,
+                    'delta_reward': False,
+                    'deterministic': False},
+    'RopeAlphaBet': {'observation_mode': 'cam_rgb',
+                    'action_mode': 'picker',
+                    'num_picker': 2,
+                    'render': True,
+                    'headless': True,
+                    'horizon': 100, # this task is harder than just straigtening rope, therefore has larger horizon.
                     'action_repeat': 8,
                     'render_mode': 'cloth',
                     'num_variations': 1000,
@@ -107,6 +131,7 @@ env_arg_dict = {
                       delta_reward=False,
                       deterministic=False,
                       num_variations=1000),
+                      
     'PassWaterGoal': {
         "observation_mode": 'point_cloud',  # will be later wrapped by ImageEnv
         "horizon": 75,
@@ -188,12 +213,14 @@ env_arg_dict = {
 SOFTGYM_ENVS = OrderedDict({
     'ClothDrop': ClothDropEnv,
     'PourWater': PourWaterPosControlEnv,
+    'PourWaterAmount': PourWaterAmountPosControlEnv,
     'PassWater': PassWater1DEnv,
     'ClothFlatten': ClothFlattenEnv,
     'ClothFold': ClothFoldEnv,
     'ClothFoldCrumpled': ClothFoldCrumpledEnv,
     'ClothFoldDrop': ClothFoldDropEnv,
     'RopeFlatten': RopeFlattenEnv,
+    'RopeAlphaBet': RopeAlphaBetEnv,
     'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,
     'PassWaterGoal': PassWater1DGoalConditionedEnv,
     'ClothDropGoal': ClothDropGoalConditionedEnv,
