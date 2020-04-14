@@ -1,0 +1,53 @@
+# if given, will override the device setting in gym. 
+gpus: 1 # if list of int, will treat as list of device IDs. if int, will create list of int up to the given number as device IDs.
+scene_name: RL CMU Humanoid
+exp:
+  max_ep_len: 1000
+  frame_sampling:
+    mode: constant # geomtric or constant
+    mean: 1 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 1
+  screenWidth: 1600
+  screenHeight: 1024
+  msaaSamples: 4
+  device: 0
+scene:
+  NumAgents: 100
+  NumPerRow: 10
+
+  #solver:
+# 0 - PBD (XPBD) 
+# 1 - Jacobi (Newton) 
+# 2 - LDLT (Newton, CPU) 
+# 3 - PCG (Newton, CPU) 
+# 4 - PCG2 (Newton) 
+# 5 - PCR (Newton) 
+
+  SolverType: 5
+  NumSubsteps: 2
+  NumIterations: 5
+  NumInnerIterations: 40
+  WarmStart: 0.0
+
+  # XPBD Jacobi
+#  SolverType: 0
+#  NumSubsteps: 4
+#  NumIterations: 30
+
+  Pause: False
+  DoLearning: True
+  DoFlagrun: True
+  NumRenderSteps: 1
+  
+  Spacing: 10
+  PowerScale: 1.1
+  AngleResetNoise: 0.02
+  AngleVelocityResetNoise: 0.01
+  VelocityResetNoise: 0.01
+  PushFrequency: 200
+  ForceMagnitude: 2.0
+  TerminationZ: 0.65
+
+  UseStaticRewards: True # if True, rewards will include alive bonus and heading rew

@@ -1,0 +1,46 @@
+scene_name: RL Fetch Rope Push
+exp:
+  max_ep_len: 100
+  frame_sampling:
+    mode: constant 	# geomtric or constant
+    mean: 2 		# used for constant or as the geometric parameter (1/mean)
+    max: 5 		# used for geometric
+gym:
+  renderBackend: 1
+scene:
+  NumAgents: 50
+  NumPerRow: 7
+  Pause: False
+  DoLearning: True
+  NumRenderSteps: 1
+  Spacing: 4.5
+
+#solver
+# 0 - PBD (XPBD) 
+# 1 - Jacobi (Newton) 
+# 2 - LDLT (Newton, CPU) 
+# 3 - PCG (Newton, CPU) 
+# 4 - PCG2 (Newton) 
+# 5 - PCR (Newton)
+
+  SolverType: 0				# Use PBD for deformable objects for now
+  NumSubsteps: 4
+  NumIterations: 30
+  NumInnerIterations: 20
+  NumPostCollisionIterations: 20
+  WarmStart: 0.0
+
+  SampleInitStates: True
+  DoDeltaPlanarControl: True
+  DoGripperControl: True
+  DoWristRollControl: False
+  SparseRewards: False
+  RenderTarget: True
+  RelativeTarget: False
+  InitialGrasp: False			# This forces the agent to use a hardcoded policy to grasp the rope at the start of the episode
+  InitialGraspProbability: 1.0		# This sets the probability of performing the above mentioned grasp
+
+#Rope
+  RopeSegments: 9		# Number of links in the rope
+  TargetRopeShape: "I"		# "I", "O", "L", "V", or "U"
+  TargetRopeTheta: 0.05		# This sets the limits for randomization of target

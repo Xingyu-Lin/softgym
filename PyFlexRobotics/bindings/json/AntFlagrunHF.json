@@ -1,0 +1,38 @@
+{
+  "SceneName": "RL AntHF",
+  
+  "LoadPath": "../../data/ant.xml",
+  "NumAgents": 300,
+  "NumObservations": 50,
+  "NumActions": 8,
+  "MaxEpisodeLength": 1000,
+  "NumSubsteps": 4,
+  "NumIterations": 25,
+  "Pause": true,
+  "DoLearning": true,
+  "DoFlagrun": false,
+  "NumRenderSteps": 1,
+  "NumPerRow": 15,
+  "Spacing": 11.0,
+  
+  "PowerScale": 0.05,
+  "AngleResetNoise": 0.02,
+  "AngleVelocityResetNoise": 0.01,
+  "VelocityResetNoise": 0.02,
+  "PushFrequency": 250,
+  "ForceMagnitude": 0.005,
+
+  "PythonPath": "C:/Users/vmakoviychuk/AppData/Local/Continuum/Anaconda3/python.exe",
+  "ScriptDir": "C:/Deep_RL/baselines/baselines/ppo1",
+  "ScriptFile": "run_ppo.py",
+  
+  "OptimBatchSizePerAgent": 32,
+  "-agentName": "AntHF2_96",
+  "-resume": 1037,
+  "-logdir": "AntNew",
+  "-hid_size": 96,
+  "-timesteps_per_batch": 25600,
+  "-optim_schedule": "adaptive",
+  "-desired_kl": 0.01,
+  "-optim_epochs": 20
+}

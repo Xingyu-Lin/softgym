@@ -1,0 +1,19 @@
+scene_name: RL Allegro Object Relocation
+exp:
+  max_ep_len: 1000
+  frame_sampling:
+    mode: constant # geomtric or constant
+    mean: 1 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 1
+scene:
+  NumAgents: 100
+  NumSubsteps: 4
+  NumIterations: 40
+  Pause: False
+  DoLearning: True
+  NumRenderSteps: 1
+  NumPerRow: 25
+  Spacing: 3
+  SampleInitStates: True

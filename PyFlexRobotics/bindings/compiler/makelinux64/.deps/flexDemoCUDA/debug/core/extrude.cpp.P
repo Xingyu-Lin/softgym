@@ -1,0 +1,10 @@
+build/flexDemoCUDA_debug/core/extrude.cpp.o: ../../../core/extrude.cpp \
+ ../../../core/maths.h ../../../core/core.h ../../../core/types.h \
+ ../../../core/vec2.h ../../../core/vec3.h ../../../core/vec4.h \
+ ../../../core/quat.h ../../../core/point3.h ../../../core/mat22.h \
+ ../../../core/mat33.h ../../../core/mat44.h ../../../core/matnn.h
+../../../core/extrude.cpp :
+ ../../../core/maths.h ../../../core/core.h ../../../core/types.h :
+ ../../../core/vec2.h ../../../core/vec3.h ../../../core/vec4.h :
+ ../../../core/quat.h ../../../core/point3.h ../../../core/mat22.h :
+ ../../../core/mat33.h ../../../core/mat44.h ../../../core/matnn.h :

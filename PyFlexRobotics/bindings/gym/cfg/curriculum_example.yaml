@@ -1,0 +1,28 @@
+# Example config for curriculum learning on PPO1
+# List each conditions with a increasing numbered key. 
+# If multiple conditions are satisfied at once, conditions with higher numbers will have higher priority.
+
+# trigger_variable can be mean_rew, std_rew, time_elapsed, iters_so_far, timesteps_so_far, and episodes_so_far
+# trigger_function can be greater_than, less_than, or equal_to
+# if trigger_once is True, the condition will only be triggered once. 
+
+# increase the number of agents to 200 after 2 seconds
+0:
+  trigger_variable: time_elapsed
+  trigger_function: greater_than
+  trigger_value: 2
+  trigger_once: True
+  cfg:
+    scene:
+      NumAgents: 200
+      NumPerRow: 14
+# increase the number of agents to 400 after 2 iterations
+1:
+  trigger_variable: iters_so_far
+  trigger_function: greater_than
+  trigger_value: 2
+  trigger_once: True
+  cfg:
+    scene:
+      NumAgents: 400
+      NumPerRow: 20

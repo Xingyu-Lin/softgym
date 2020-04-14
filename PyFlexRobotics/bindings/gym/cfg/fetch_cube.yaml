@@ -1,0 +1,37 @@
+scene_name: RL Fetch Cube Grasping
+exp:
+  max_ep_len: 200
+  frame_sampling:
+    mode: constant # geomtric or constant
+    mean: 1 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 2
+scene:
+  NumAgents: 10
+  NumPerRow: 1
+  InitialGraspProbability: 1.0
+  DoWristRollControl: False
+#solver
+# 0 - PBD (XPBD) 
+# 1 - Jacobi (Newton) 
+# 2 - LDLT (Newton, CPU) 
+# 3 - PCG (Newton, CPU) 
+# 4 - PCG2 (Newton) 
+# 5 - PCR (Newton) 
+  SolverType: 5
+  NumSubsteps: 2
+  NumIterations: 4
+  NumInnerIterations: 15
+  NumPostCollisionIterations: 15
+  WarmStart: 0.0
+  Pause: False
+  DoLearning: True
+  NumRenderSteps: 1
+  NumPerRow: 20
+  Spacing: 4.5
+  SampleInitStates: True
+  DoDeltaPlanarControl: False
+  DoGripperControl: True
+  SparseRewards: True
+# SampleTableStates: True

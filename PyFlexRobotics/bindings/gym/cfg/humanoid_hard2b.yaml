@@ -1,0 +1,152 @@
+# if given, will override the device setting in gym. 
+gpus: 1 # if list of int, will treat as list of device IDs. if int, will create list of int up to the given number as device IDs.
+scene_name: RL Humanoid Hard Parkour
+exp:
+  max_ep_len: 1000
+  frame_sampling:
+    mode: constant # geomtric or constant
+    mean: 1 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 1
+  screenWidth: 1600
+  screenHeight: 1024
+  msaaSamples: 4
+  device: 0
+scene:
+  NumAgents: 400
+  NumPerRow: 20
+
+  #solver:
+# 0 - PBD (XPBD) 
+# 1 - Jacobi (Newton) 
+# 2 - LDLT (Newton, CPU) 
+# 3 - PCG (Newton, CPU) 
+# 4 - PCG2 (Newton) 
+# 5 - PCR (Newton) 
+
+  SolverType: 5
+  NumSubsteps: 2
+  NumIterations: 4
+  NumInnerIterations: 10
+  WarmStart: 0.0
+
+     #start distribution:
+# 0 - eStanding
+# 1 - eHalfHalf
+# 2 - eHard 
+# 3 - eGround
+
+  StartDistribution: 3
+
+  Pause: False
+  DoLearning: True
+  DoFlagrun: True
+  MaxStepsOnGround: 160
+  NumRenderSteps: 1
+  
+  Spacing: 16.0
+  PowerScale: 0.225
+  AngleResetNoise: 0.02
+  AngleVelocityResetNoise: 0.01
+  VelocityResetNoise: 0.01
+  PushFrequency: 280
+  ForceMagnitude: 6.0
+  StartOffsetAboveGround: 0.0
+  TerminationZ: 0.79
+  MaxCollisionsWithGround: 100
+
+  UseStaticRewards: True # if True, rewards will include alive bonus and heading rew
+
+  # Raycast Params
+  NumForwardRays: 15
+  NumSideRays: 11
+  RaysOffsetFront: 3 # 3 # positive values moves the raycast in the humanoid's forward direction
+  RaysOffsetSide: 0 # positive values moves the raycast in the humanoid's right direction
+  GridCellSize: 0.20
+  MaxRayHitDist: 4.0
+  RaycastHeightOffset: 0.5
+  SinglePointRays: False # if True, consider decreasing GridCellSize and increasing MaxRayHitDist
+  ForwardRayOffsetStart: 10 #8 # must be less than num forward rays!
+  ForwardRayOffsetScale: 0.075
+  UseRaycastHeight: True
+
+  # Gaps. All other spawn variables should be False if SpanGaps is True.
+  SpawnGaps: True
+  DownVelocityThreashold: -6.0
+  MinGap: 0.5
+  MaxGap: 1.4
+  MinHeight: 2.9
+  MaxHeight: 3.1
+  GapsMinAngle: -0.12
+  GapsMaxAngle: 0.12
+
+  # Ground obstalces
+  # the width, height, and length params of blocks are all *half* values
+  SpawnGroundObstacles: False
+  Density: 0.025
+  MinWidth: 1.5
+  MaxWidth: 6.0
+  MinHeight: 0.05
+  MaxHeight: 0.45
+  MinLength: 0.08
+  MaxLength: 0.12
+  # if both set to 0, blocks will only spawn orthogonal to positive z direction (forward running direction)
+  MinAngle: -0.05
+  MaxAngle: 0.05
+
+  # Floating obstacles
+  SpawnTopObstacles: False
+  TopMinHeightOffset: 0.5
+  TopMaxHeightOffset: 2.0
+  TopDensity: 0.02
+  TopMinWidth: 0.4
+  TopMaxWidth: 0.8
+  TopMinHeight: 0.05
+  TopMaxHeight: 0.4
+  TopMinLength: 0.05
+  TopMaxLength: 0.15
+  TopMinAngle: -1.57
+  TopMaxAngle: 1.57
+
+  # Terrain
+  SpawnTerrain: False
+  SizeX: 240.
+  SizeZ: 240.
+  NumSubdiv: 15
+  TerrainUpOffset: 0.25
+  TerrainUpOffsetRange: 0.02 # terrainUpOffset will be samped with this as the lower and upper bound off the mean given above
+  OctavesMin: 5
+  OctavesMax: 7
+  Persistance: 0.4
+  PersistanceRange: 0.02
+  XScale: 25.
+  ZScale: 25.
+  YScaleMin: 0.7
+  YScaleMax: 0.75
+
+  # Stairs
+  SpawnStairs: False
+  StairsMinWidth: 7.0
+  StairsMaxWidth: 7.0
+  StairsMinLength: 8.0
+  StairsMaxLength: 8.0
+  StairsMinStepLength: .35
+  StairsMaxStepLength: .5
+  StairsMinStepHeight: .15
+  StairsMaxStepHeight: .3
+  StairsMinNumSteps: 7
+  StairsMaxNumSteps: 15
+
+  # Pyramids
+  SpawnPyramids: False
+  StairsMinWidth: 8.0
+  StairsMaxWidth: 8.0
+  StairsMinLength: 8.0
+  StairsMaxLength: 8.0
+  StairsMinStepLength: .35
+  StairsMaxStepLength: .5
+  StairsMinStepHeight: .15
+  StairsMaxStepHeight: .3
+  StairsMinNumSteps: 7
+  StairsMaxNumSteps: 15

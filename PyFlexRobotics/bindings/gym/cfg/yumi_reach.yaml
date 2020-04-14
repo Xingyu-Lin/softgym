@@ -1,0 +1,34 @@
+scene_name: RL Yumi Reach
+exp:
+  max_ep_len: 100
+  frame_sampling:
+    mode: constant # geomtric or constant
+    mean: 5 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 1
+scene:
+  NumAgents: 300
+  SampleInitStates: False
+  SampleInitJoints: False
+  RobotFrequency: 100.0
+  Pause: False
+  DoLearning: True
+  NumPerRow: 10
+  Spacing: 3.
+  SimParamsStochastic: False
+  SimParamsPresampled: False
+  SimParamsMean: [0.0,0.0,0.0,0.0,0.0,0.0]
+  SimParamsCovInit: 0.0
+  ResetNumSteps: 100
+  #InitPosition: [-0.027727, -0.493535, 0.702561, 0.563854, -1.278152, -1.174275, 0.528319]
+  InitPosition: [0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  #InitPosition: [1.30, -2.00, 0.20, -1.00, 0.750, -0.30, -0.75]
+
+# 'yumi_joint_1_r', 'yumi_joint_2_r', 'yumi_joint_7_r', 'yumi_joint_3_r', 'yumi_joint_4_r', 'yumi_joint_5_r', 'yumi_joint_6_r']
+
+  SolverType: 0
+  NumSubsteps: 4
+  NumIterations: 50
+  NumInnerIterations: 20
+  NumPostCollisionIterations: 0

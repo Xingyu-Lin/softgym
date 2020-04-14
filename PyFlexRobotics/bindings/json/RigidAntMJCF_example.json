@@ -1,0 +1,32 @@
+{
+  "SceneName": "RL Ant",
+  "LoadPath": "../../data/ant.xml",
+  "NumAgents": 500,
+  "NumObservations": 39,
+  "NumActions": 8,
+  "MaxEpisodeLength": 1000,
+  "NumSubsteps": 4,
+  "NumIterations": 25,
+  "Pause": true,
+  "DoLearning": true,
+  "DoFlagrun": false,
+  "NumRenderSteps": 1,
+  "NumPerRow": 20,
+  "Spacing": 25.0,
+  "PowerScale": 0.05,
+  "AngleResetNoise": 0.02,
+  "AngleVelocityResetNoise": 0.02,
+  "VelocityResetNoise": 0.02,
+  "PushFrequency": 250,
+  "ForceMagnitude": 0.005,
+
+  "PythonPath": "C:/Python36/python.exe",
+  "ScriptDir": "D:/Projects/python/CheckParams",
+  "ScriptFile": "test.py",
+  
+  "OptimBatchSizePerAgent": 32,
+  
+  "-agentName": "Ant_64",
+  "-resume": 0,
+  "-logdir": "AntNew"
+}

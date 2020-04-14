@@ -1,0 +1,19 @@
+seed: 0
+learn:
+  n_epochs: 1000      # the number of training epochs to run
+  n_cycles: 10
+  n_rollouts: 1       # the number of rollout episodes (of length max_ep_len as defined in the environment config)
+  n_batches: 40
+  batch_size: 256
+  n_test_rollouts: 5  # the number of rollout episodes (of length max_ep_len as defined in the environment config)
+
+  policy_save_interval: 5   # the interval with which policy pickles are saved. If set to 0, only the best and latest policy will be pickled.
+  replay_strategy: 'future' # the HER replay strategy to be used. "future" uses HER, "none" disables HER.
+  replay_k: 4               # number of additional goals used for replay, only used if off_policy_data=future
+  clip_return: True         # whether or not returns should be clipped
+  resume: 900               # This parameter only matters when running her_test.py
+  
+# Network hyperparameters:
+  layers: 3
+  hidden_units: 256
+  activation: 'selu'        # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid

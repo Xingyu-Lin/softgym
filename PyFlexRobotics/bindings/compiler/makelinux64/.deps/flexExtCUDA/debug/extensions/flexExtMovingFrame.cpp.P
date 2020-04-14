@@ -1,0 +1,19 @@
+build/flexExtCUDA_debug/extensions/flexExtMovingFrame.cpp.o: \
+ ../../../extensions/flexExtMovingFrame.cpp \
+ ../../../extensions/../include/NvFlexExt.h \
+ ../../../extensions/../include/NvFlex.h \
+ ../../../extensions/../core/maths.h ../../../extensions/../core/core.h \
+ ../../../extensions/../core/types.h ../../../extensions/../core/vec2.h \
+ ../../../extensions/../core/vec3.h ../../../extensions/../core/vec4.h \
+ ../../../extensions/../core/quat.h ../../../extensions/../core/point3.h \
+ ../../../extensions/../core/mat22.h ../../../extensions/../core/mat33.h \
+ ../../../extensions/../core/mat44.h ../../../extensions/../core/matnn.h
+ ../../../extensions/flexExtMovingFrame.cpp :
+ ../../../extensions/../include/NvFlexExt.h :
+ ../../../extensions/../include/NvFlex.h :
+ ../../../extensions/../core/maths.h ../../../extensions/../core/core.h :
+ ../../../extensions/../core/types.h ../../../extensions/../core/vec2.h :
+ ../../../extensions/../core/vec3.h ../../../extensions/../core/vec4.h :
+ ../../../extensions/../core/quat.h ../../../extensions/../core/point3.h :
+ ../../../extensions/../core/mat22.h ../../../extensions/../core/mat33.h :
+ ../../../extensions/../core/mat44.h ../../../extensions/../core/matnn.h :

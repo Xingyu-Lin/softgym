@@ -1,0 +1,21 @@
+build/flexExtCUDA_release/extensions/flexExtSoft.cpp.o: \
+ ../../../extensions/flexExtSoft.cpp \
+ ../../../extensions/../include/NvFlexExt.h \
+ ../../../extensions/../include/NvFlex.h \
+ ../../../extensions/../core/core.h ../../../extensions/../core/types.h \
+ ../../../extensions/../core/maths.h ../../../extensions/../core/vec2.h \
+ ../../../extensions/../core/vec3.h ../../../extensions/../core/vec4.h \
+ ../../../extensions/../core/quat.h ../../../extensions/../core/point3.h \
+ ../../../extensions/../core/mat22.h ../../../extensions/../core/mat33.h \
+ ../../../extensions/../core/mat44.h ../../../extensions/../core/matnn.h \
+ ../../../extensions/../core/voxelize.h
+ ../../../extensions/flexExtSoft.cpp :
+ ../../../extensions/../include/NvFlexExt.h :
+ ../../../extensions/../include/NvFlex.h :
+ ../../../extensions/../core/core.h ../../../extensions/../core/types.h :
+ ../../../extensions/../core/maths.h ../../../extensions/../core/vec2.h :
+ ../../../extensions/../core/vec3.h ../../../extensions/../core/vec4.h :
+ ../../../extensions/../core/quat.h ../../../extensions/../core/point3.h :
+ ../../../extensions/../core/mat22.h ../../../extensions/../core/mat33.h :
+ ../../../extensions/../core/mat44.h ../../../extensions/../core/matnn.h :
+ ../../../extensions/../core/voxelize.h :

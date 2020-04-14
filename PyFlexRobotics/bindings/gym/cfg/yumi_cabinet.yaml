@@ -1,0 +1,51 @@
+scene_name: RL Yumi Cabinet
+exp:
+  max_ep_len: 150
+  frame_sampling:
+    mode: constant # geometric or constant
+    mean: 2 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 1
+scene:
+  RobotFrequency: 60.0
+  NumAgents: 200
+  ControlGripper: True
+  ResetNumSteps: 100
+  Pause: False
+  DoLearning: True
+  NumPerRow: 20
+  Spacing: 3.
+  InitPosition: [-0.027727, -0.493535, 0.702561, 0.563854, -1.278152, -1.174275, 0.528319]
+
+#  dist, angleDist, reg, handle_z_rew, forceRew, aroundHandleRew, fingerOutOfLimitPenalty
+  RewardWeights: [-0.5, -0.05, -0.005, -0.7, -0.0005, 0.005, -0.05]
+
+  SimParamsMean: [
+    -8.0, -8.0, -8.0, -8.0, -8.0, -8.0, -8.0, # compliance
+     3.0,  3.0,  3.0,  3.0,  3.0,  3.0,  3.0, # damping
+     0.4,  0.4,  0.4,  0.4,  0.4,  0.4,  0.4, # actionGain
+    0.0]
+    #-0.2,  0.5,  0.7]
+
+  SimParamsMin: [
+    -10.0, -10.0, -10.0, -10.0, -10.0, -10.0, -10.0, # compliance
+      1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0, # damping
+     0.05,  0.05,  0.05,  0.05,  0.05,  0.05,  0.05, # actionGain
+     0.0]
+
+  SimParamsMax: [
+    -5.0, -5.0, -5.0, -5.0, -5.0, -5.0, -5.0, # compliance
+     6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0, # damping
+     0.8,  0.8,  0.8,  0.8,  0.8,  0.8,  0.8, # actionGain
+     0.4]
+
+  SimParamsCovInit: [
+     0.5,  0.5,  0.5,  0.5,  0.5,  0.5,  0.5, # compliance
+     0.5,  0.5,  0.5,  0.5,  0.5,  0.5,  0.5, # damping
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, # actionGain
+    0.1]
+    # 0.05, 0.05, 0.05]
+
+  SimParamsStochastic: False
+  SimParamsPresampled: False

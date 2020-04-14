@@ -1,0 +1,4 @@
+build/flexDemoCUDA_debug/core/platform.cpp.o: ../../../core/platform.cpp \
+ ../../../core/core.h ../../../core/types.h ../../../core/platform.h
+../../../core/platform.cpp :
+ ../../../core/core.h ../../../core/types.h ../../../core/platform.h :

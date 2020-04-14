@@ -1,0 +1,4 @@
+build/flexGymCUDA_release/core/tga.cpp.o: ../../../core/tga.cpp \
+ ../../../core/tga.h ../../../core/types.h ../../../core/core.h
+../../../core/tga.cpp :
+ ../../../core/tga.h ../../../core/types.h ../../../core/core.h :

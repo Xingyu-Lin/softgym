@@ -1,0 +1,22 @@
+build/flexGymCUDA_debug/opengl/shader.cpp.o: ../../opengl/shader.cpp \
+ ../../opengl/shader.h ../../opengl/../../core/maths.h \
+ ../../opengl/../../core/core.h ../../opengl/../../core/types.h \
+ ../../opengl/../../core/vec2.h ../../opengl/../../core/vec3.h \
+ ../../opengl/../../core/vec4.h ../../opengl/../../core/quat.h \
+ ../../opengl/../../core/point3.h ../../opengl/../../core/mat22.h \
+ ../../opengl/../../core/mat33.h ../../opengl/../../core/mat44.h \
+ ../../opengl/../../core/matnn.h \
+ ../../opengl/../../external/glad/include/glad/glad.h \
+ ../../opengl/../../external/glad/include/glad/../KHR/khrplatform.h \
+ ../../opengl/../../core/platform.h ../../opengl/../../core/tga.h
+../../opengl/shader.cpp :
+ ../../opengl/shader.h ../../opengl/../../core/maths.h :
+ ../../opengl/../../core/core.h ../../opengl/../../core/types.h :
+ ../../opengl/../../core/vec2.h ../../opengl/../../core/vec3.h :
+ ../../opengl/../../core/vec4.h ../../opengl/../../core/quat.h :
+ ../../opengl/../../core/point3.h ../../opengl/../../core/mat22.h :
+ ../../opengl/../../core/mat33.h ../../opengl/../../core/mat44.h :
+ ../../opengl/../../core/matnn.h :
+ ../../opengl/../../external/glad/include/glad/glad.h :
+ ../../opengl/../../external/glad/include/glad/../KHR/khrplatform.h :
+ ../../opengl/../../core/platform.h ../../opengl/../../core/tga.h :

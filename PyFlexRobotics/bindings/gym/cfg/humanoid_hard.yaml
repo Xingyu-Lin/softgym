@@ -1,0 +1,57 @@
+# if given, will override the device setting in gym. 
+gpus: 1 # if list of int, will treat as list of device IDs. if int, will create list of int up to the given number as device IDs.
+scene_name: RL Hard Flagrun
+exp:
+  max_ep_len: 1000
+  frame_sampling:
+    mode: constant # geomtric or constant
+    mean: 1 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 1
+  screenWidth: 1600
+  screenHeight: 1024
+  msaaSamples: 4
+  device: 0
+scene:
+  NumAgents: 400
+  NumPerRow: 20
+
+  #solver:
+# 0 - PBD (XPBD) 
+# 1 - Jacobi (Newton) 
+# 2 - LDLT (Newton, CPU) 
+# 3 - PCG (Newton, CPU) 
+# 4 - PCG2 (Newton) 
+# 5 - PCR (Newton) 
+
+  SolverType: 5
+  NumSubsteps: 2
+  NumIterations: 4
+  NumInnerIterations: 10
+  WarmStart: 0.0
+
+   #start distribution:
+# 0 - eStanding 
+# 1 - eHard 
+# 2 - eGround
+
+  StartDistribution: 1 
+
+  Pause: False
+  DoLearning: True
+  DoFlagrun: True
+  MaxStepsOnGround: 160
+  NumRenderSteps: 1
+  
+  Spacing: 7
+  PowerScale: 0.225
+  AngleResetNoise: 0.02
+  AngleVelocityResetNoise: 0.01
+  VelocityResetNoise: 0.01
+  PushFrequency: 300
+  ForceMagnitude: 5.0
+  TerminationZ: 0.8
+
+  UseStaticRewards: True # if True, rewards will include alive bonus and heading rew
+  DoRoboschool: False

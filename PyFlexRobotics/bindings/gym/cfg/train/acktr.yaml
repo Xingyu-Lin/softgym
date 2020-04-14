@@ -1,0 +1,22 @@
+seed: 7
+policy:
+  activation: selu # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+  vf_hid_sizes: [128, 128]
+  pi_hid_sizes: [128, 128]
+learn:
+  agent_name: acktr_agent
+  resume: 0
+  top_n_saves: 5 # save the top n performing policies.
+  last_n_saves: 5 # save the last n policies
+
+  optim_epochs: 10
+  optim_batchsize: 64
+  optim_stepsize: 5e-4
+  lrschedule: adaptive
+
+  num_timesteps: 1e15
+  horizon: 512 # time steps per rollout per agent
+
+  desired_kl: 0.02
+  gamma: 0.99
+  lam: 0.95

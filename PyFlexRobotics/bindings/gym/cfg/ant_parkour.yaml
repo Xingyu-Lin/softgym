@@ -1,0 +1,43 @@
+scene_name: RL Ant Parkour
+exp:
+  max_ep_len: 1000
+  frame_sampling:
+    mode: constant # geomtric or constant
+    mean: 1 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 1
+  screenWidth: 1280
+  screenHeight: 720
+  msaaSamples: 4
+solver:
+ # Jacobi
+  SolverType: 0
+  NumSubsteps: 4
+  NumIterations: 25
+  WarmStart: 0.0
+
+  # PCG2
+#  NumAgents: 100
+#  NumPerRow: 10
+#  SolverType: 3 
+#  NumSubsteps: 2
+#  NumIterations: 5
+#  NumInnerIterations: 20
+scene:
+  LoadPath: ../../data/ant.xml
+ 
+  NumAgents: 100
+  NumPerRow: 10
+
+  Pause: False
+  DoLearning: True
+  DoFlagrun: False
+  NumRenderSteps: 1
+  Spacing: 12
+  PowerScale: 0.04
+  AngleResetNoise: 0.05
+  AngleVelocityResetNoise: 0.05
+  VelocityResetNoise: 0.05
+  PushFrequency: 240
+  ForceMagnitude: 0.006

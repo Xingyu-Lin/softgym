@@ -1,0 +1,378 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a1fa0/fast && /usr/bin/make -f CMakeFiles/cmTC_a1fa0.dir/build.make CMakeFiles/cmTC_a1fa0.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a1fa0.dir/src.c.o
+/usr/bin/cc   -fPIC -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_a1fa0.dir/src.c.o   -c /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_a1fa0
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a1fa0.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_a1fa0.dir/src.c.o  -o cmTC_a1fa0 
+CMakeFiles/cmTC_a1fa0.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x5b): undefined reference to `pthread_join'
+src.c:(.text+0x6f): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_a1fa0.dir/build.make:86: recipe for target 'cmTC_a1fa0' failed
+make[1]: *** [cmTC_a1fa0] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_a1fa0/fast' failed
+make: *** [cmTC_a1fa0/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b82df/fast && /usr/bin/make -f CMakeFiles/cmTC_b82df.dir/build.make CMakeFiles/cmTC_b82df.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b82df.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_b82df.dir/CheckFunctionExists.c.o   -c /home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/share/cmake-3.15/Modules/CheckFunctionExists.c
+Linking C executable cmTC_b82df
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b82df.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_b82df.dir/CheckFunctionExists.c.o  -o cmTC_b82df -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_b82df.dir/build.make:86: recipe for target 'cmTC_b82df' failed
+make[1]: *** [cmTC_b82df] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_b82df/fast' failed
+make: *** [cmTC_b82df/fast] Error 2
+
+
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2ab84/fast && /usr/bin/make -f CMakeFiles/cmTC_2ab84.dir/build.make CMakeFiles/cmTC_2ab84.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2ab84.dir/src.c.o
+/usr/bin/cc   -fPIC -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_2ab84.dir/src.c.o   -c /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_2ab84
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2ab84.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_2ab84.dir/src.c.o  -o cmTC_2ab84 
+CMakeFiles/cmTC_2ab84.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x5b): undefined reference to `pthread_join'
+src.c:(.text+0x6f): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_2ab84.dir/build.make:86: recipe for target 'cmTC_2ab84' failed
+make[1]: *** [cmTC_2ab84] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_2ab84/fast' failed
+make: *** [cmTC_2ab84/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_135d5/fast && /usr/bin/make -f CMakeFiles/cmTC_135d5.dir/build.make CMakeFiles/cmTC_135d5.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_135d5.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_135d5.dir/CheckFunctionExists.c.o   -c /home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/share/cmake-3.15/Modules/CheckFunctionExists.c
+Linking C executable cmTC_135d5
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_135d5.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_135d5.dir/CheckFunctionExists.c.o  -o cmTC_135d5 -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_135d5.dir/build.make:86: recipe for target 'cmTC_135d5' failed
+make[1]: *** [cmTC_135d5] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_135d5/fast' failed
+make: *** [cmTC_135d5/fast] Error 2
+
+
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_5b3b9/fast && /usr/bin/make -f CMakeFiles/cmTC_5b3b9.dir/build.make CMakeFiles/cmTC_5b3b9.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5b3b9.dir/src.c.o
+/usr/bin/cc   -fPIC -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_5b3b9.dir/src.c.o   -c /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_5b3b9
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5b3b9.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_5b3b9.dir/src.c.o  -o cmTC_5b3b9 
+CMakeFiles/cmTC_5b3b9.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x5b): undefined reference to `pthread_join'
+src.c:(.text+0x6f): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_5b3b9.dir/build.make:86: recipe for target 'cmTC_5b3b9' failed
+make[1]: *** [cmTC_5b3b9] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_5b3b9/fast' failed
+make: *** [cmTC_5b3b9/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_82a90/fast && /usr/bin/make -f CMakeFiles/cmTC_82a90.dir/build.make CMakeFiles/cmTC_82a90.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_82a90.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_82a90.dir/CheckFunctionExists.c.o   -c /home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/share/cmake-3.15/Modules/CheckFunctionExists.c
+Linking C executable cmTC_82a90
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_82a90.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_82a90.dir/CheckFunctionExists.c.o  -o cmTC_82a90 -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_82a90.dir/build.make:86: recipe for target 'cmTC_82a90' failed
+make[1]: *** [cmTC_82a90] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_82a90/fast' failed
+make: *** [cmTC_82a90/fast] Error 2
+
+
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_9208a/fast && /usr/bin/make -f CMakeFiles/cmTC_9208a.dir/build.make CMakeFiles/cmTC_9208a.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9208a.dir/src.c.o
+/usr/bin/cc   -fPIC -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_9208a.dir/src.c.o   -c /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_9208a
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9208a.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_9208a.dir/src.c.o  -o cmTC_9208a 
+CMakeFiles/cmTC_9208a.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x5b): undefined reference to `pthread_join'
+src.c:(.text+0x6f): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_9208a.dir/build.make:86: recipe for target 'cmTC_9208a' failed
+make[1]: *** [cmTC_9208a] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_9208a/fast' failed
+make: *** [cmTC_9208a/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_fc595/fast && /usr/bin/make -f CMakeFiles/cmTC_fc595.dir/build.make CMakeFiles/cmTC_fc595.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fc595.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_fc595.dir/CheckFunctionExists.c.o   -c /home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/share/cmake-3.15/Modules/CheckFunctionExists.c
+Linking C executable cmTC_fc595
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fc595.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_fc595.dir/CheckFunctionExists.c.o  -o cmTC_fc595 -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_fc595.dir/build.make:86: recipe for target 'cmTC_fc595' failed
+make[1]: *** [cmTC_fc595] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_fc595/fast' failed
+make: *** [cmTC_fc595/fast] Error 2
+
+
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_d976e/fast && /usr/bin/make -f CMakeFiles/cmTC_d976e.dir/build.make CMakeFiles/cmTC_d976e.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d976e.dir/src.c.o
+/usr/bin/cc   -fPIC -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_d976e.dir/src.c.o   -c /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_d976e
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d976e.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_d976e.dir/src.c.o  -o cmTC_d976e 
+CMakeFiles/cmTC_d976e.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x5b): undefined reference to `pthread_join'
+src.c:(.text+0x6f): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_d976e.dir/build.make:86: recipe for target 'cmTC_d976e' failed
+make[1]: *** [cmTC_d976e] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_d976e/fast' failed
+make: *** [cmTC_d976e/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_5e833/fast && /usr/bin/make -f CMakeFiles/cmTC_5e833.dir/build.make CMakeFiles/cmTC_5e833.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5e833.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_5e833.dir/CheckFunctionExists.c.o   -c /home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/share/cmake-3.15/Modules/CheckFunctionExists.c
+Linking C executable cmTC_5e833
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5e833.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_5e833.dir/CheckFunctionExists.c.o  -o cmTC_5e833 -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_5e833.dir/build.make:86: recipe for target 'cmTC_5e833' failed
+make[1]: *** [cmTC_5e833] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_5e833/fast' failed
+make: *** [cmTC_5e833/fast] Error 2
+
+
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b4551/fast && /usr/bin/make -f CMakeFiles/cmTC_b4551.dir/build.make CMakeFiles/cmTC_b4551.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b4551.dir/src.c.o
+/usr/bin/cc   -fPIC -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_b4551.dir/src.c.o   -c /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_b4551
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b4551.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_b4551.dir/src.c.o  -o cmTC_b4551 
+CMakeFiles/cmTC_b4551.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x5b): undefined reference to `pthread_join'
+src.c:(.text+0x6f): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_b4551.dir/build.make:86: recipe for target 'cmTC_b4551' failed
+make[1]: *** [cmTC_b4551] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_b4551/fast' failed
+make: *** [cmTC_b4551/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_fc77b/fast && /usr/bin/make -f CMakeFiles/cmTC_fc77b.dir/build.make CMakeFiles/cmTC_fc77b.dir/build
+make[1]: Entering directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fc77b.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_fc77b.dir/CheckFunctionExists.c.o   -c /home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/share/cmake-3.15/Modules/CheckFunctionExists.c
+Linking C executable cmTC_fc77b
+/home/xingyu/software/miniconda3/envs/softgym/lib/python3.6/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fc77b.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_fc77b.dir/CheckFunctionExists.c.o  -o cmTC_fc77b -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_fc77b.dir/build.make:86: recipe for target 'cmTC_fc77b' failed
+make[1]: *** [cmTC_fc77b] Error 1
+make[1]: Leaving directory '/home/xingyu/Projects/softagent/softgym/PyFlexRobotics/bindings/build/CMakeFiles/CMakeTmp'
+Makefile:121: recipe for target 'cmTC_fc77b/fast' failed
+make: *** [cmTC_fc77b/fast] Error 2
+
+
+

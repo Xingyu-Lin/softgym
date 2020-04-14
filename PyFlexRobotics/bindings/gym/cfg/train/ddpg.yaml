@@ -1,0 +1,51 @@
+seed: 7
+# for action/param noise. won't be used if noisy_net is True
+noise_type: normal_0.3 # choices are adaptive-param_xx, ou_xx, normal_xx, none
+policy:
+  activation: selu # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+  actor_hid_sizes: [128, 128]
+  critic_hid_sizes: [128, 128]
+  layer_norm: True
+  noisy_params:
+    noisy_net: &noisy_net False
+    factorized: False
+    sigma_init:
+      factorized: 1. # 0.5
+      unfactorized: 0.1 # 0.017
+learn:
+  agent_name: DDPG_agent
+  resume: 0
+  top_n_saves: 5 # save the top n performing policies.
+  last_n_saves: 5 # save the last n policies
+  noisy_net: *noisy_net
+
+  # replay params
+  prioritized_replay: True
+  prioritized_replay_alpha: 0.6
+  prioritized_replay_beta0: 0.4
+  prioritized_replay_eps: 1e-6
+
+  overwrite_memory: True
+  normalize_returns: False
+  normalize_observations: True
+
+  critic_l2_reg: 0
+  actor_lr: 2e-4
+  critic_lr: 1e-3
+
+  # TODO check
+  batch_size: 512
+
+  popart: True
+
+  gamma: 0.99
+  reward_scale: 1
+
+  clip_norm: 5
+
+  nb_epochs: 1000
+  nb_epoch_cycles: 10
+  nb_rollout_steps: 16
+  nb_train_steps: 50
+  nb_eval_steps: 200
+  n_step: 5

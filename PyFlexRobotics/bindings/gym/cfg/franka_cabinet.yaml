@@ -1,0 +1,118 @@
+scene_name: RL Franka Cabinet
+exp:
+  max_ep_len: 150
+  frame_sampling:
+    mode: constant # geometric or constant
+    mean: 2 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+gym:
+  renderBackend: 1
+scene:
+  NumSubsteps: 4
+  RobotFrequency: 60.0
+  NumAgents: 50
+  ControlGripper: True
+  ResetNumSteps: 100
+  Pause: False
+  DoLearning: True
+  NumPerRow: 20
+  Spacing: 3.
+  SampleInitStates: False
+  SampleInitJoints: False
+  InitPosition: [0.785398, -0.785398, 0.000000, -2.356194, -1.570796, 2.792527, 1.570796]
+
+  RewardWeights: [
+     -0.0, # distL1
+    -0.5, # distL2
+    -0.07, #-0.07, # angleDist
+    -0.005, # reg
+    -0.4,  # handle_z_rew
+    -0.00005, # forceRew
+    0.005,  # aroundHandleRew
+    -0.0, # fingerOutOfLimitPenalty
+    -0.001 # force diff between left and right fingers
+  ]
+
+  SimParamsMean: [
+    -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -9.0, # compliance
+     3.0,  3.0,  3.0,  3.0,  3.0,  3.0,  3.0, 0.0, # damping
+     0.4,  0.4,  0.4,  0.4,  0.4,  0.4,  0.4, # actionGain
+     0.05268, # cabinetPosX
+     -0.0353, # cabinetPosY
+     0.2036, # cabinetPosZ
+     1.0, # handleFriction
+     1.0, # handleRollingFriction
+     8.0, # drawerCompliance
+     1.0, # drawerDamping
+     0.0, # rewardOffsetX
+     0.0, # rewarOffsetY
+     -0.03 # rewardOffsetZ
+    ]
+
+  SimParamsMin: [
+    -10.0, -10.0, -10.0, -10.0, -10.0, -10.0, -10.0, -12.0, # compliance
+      1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0, 0.0, # damping
+     0.05,  0.05,  0.05,  0.05,  0.05,  0.05,  0.05, # actionGain
+     0.02, # cabinetPosX
+     -0.06, # cabinetPosY
+     0.17, # cabinetPosZ
+     0.1, # handleFriction
+     0.1, # handleRollingFriction
+     5.0, # drawerCompliance
+     -3.0, # drawerDamping
+     -0.1, # rewardOffsetX
+     -0.1, # rewarOffsetY
+     -0.1 # rewardOffsetZ
+    ]
+
+  SimParamsMax: [
+    -5.0, -5.0, -5.0, -5.0, -5.0, -5.0, -5.0, -1.0, # compliance
+     6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0,  6.0, # damping
+     0.8,  0.8,  0.8,  0.8,  0.8,  0.8,  0.8, # actionGain
+     0.08, # cabinetPosX
+     0.0, # cabinetPosY
+     0.23, # cabinetPosZ
+     10.0, # handleFriction
+     10.0, # handleRollingFriction
+     11.0, # drawerCompliance
+     5.0, # drawerDamping
+     0.1, # rewardOffsetX
+     0.1, # rewarOffsetY
+     0.1 # rewardOffsetZ
+  ]
+
+#  SimParamsCovInit: [
+#    0.5,  0.5,  0.5,  0.5,  0.5,  0.5,  0.5, 0.5 # compliance
+#    0.5,  0.5,  0.5,  0.5,  0.5,  0.5,  0.5, 0.5 # damping
+#    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, # actionGain
+#    0.001, # cabinetPosX
+#    0.001, # cabinetPosY
+#    0.001, # cabinetPosZ
+#    0.5, # handleFriction
+#    0.5, # handleRollingFriction
+#    1.0, # drawerCompliance
+#   0.5, # drawerDamping
+#    0.0, # rewardOffsetX
+#    0.0, # rewarOffsetY
+#    0.0 # rewardOffsetZ
+#  ]
+
+
+  SimParamsCovInit: [
+    0.0,  0.,  0.,  0.,  0.,  0.,  0., 0., # compliance
+    0.0,  0.,  0.,  0.,  0.,  0.,  0., 0.,  # damping
+    0.0,  0.,  0.,  0.,  0.,  0.,  0., # actionGain
+    0.0005, # cabinetPosX
+    0.0005, # cabinetPosY
+    0.0005, # cabinetPosZ
+    0., # handleFriction
+    0., # handleRollingFriction
+    0.0, # drawerCompliance
+    0., # drawerDamping
+    0.0, # rewardOffsetX
+    0.0, # rewarOffsetY
+    0.0 # rewardOffsetZ
+  ]
+
+  SimParamsStochastic: True
+  SimParamsPresampled: False

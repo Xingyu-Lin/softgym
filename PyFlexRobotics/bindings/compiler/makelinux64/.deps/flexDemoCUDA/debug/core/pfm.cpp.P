@@ -1,0 +1,4 @@
+build/flexDemoCUDA_debug/core/pfm.cpp.o: ../../../core/pfm.cpp \
+ ../../../core/pfm.h ../../../core/types.h
+../../../core/pfm.cpp :
+ ../../../core/pfm.h ../../../core/types.h :

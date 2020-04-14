@@ -1,0 +1,33 @@
+seed: 7
+policy_type: MlpPolicy # Can be MlpPolicy, MlpBetaPolicy, MlpPolicyParkour
+policy:
+  hid_size: 256
+  num_hid_layers: 2
+  noisy_nets: &noisy_nets False
+  ray_cast_size: 225 # only used for Parkour policy for now
+
+learn:
+  agent_name: humanoid_cmu_flagrun
+  resume: 0
+  load_prev_data: False # if True, will try to load prev data if resume > 0, and if # of agents match
+
+  # rollout params
+  max_iters: 10000
+  max_timesteps: 100000000000
+  timesteps_per_batch: 512
+
+  # policy params
+  noisy_nets: *noisy_nets
+  stochastic: True
+
+  # training params
+  clip_param: 0.2
+  ent_coef: 0.0
+  optim_epochs: 20
+  optim_batchsize_per_agent: 16
+  optim_stepsize: 1e-4
+  schedule: adaptive # could be adaptive, constan or linear
+  desired_kl: 0.02
+  gamma: 0.99
+  lam: 0.95
+

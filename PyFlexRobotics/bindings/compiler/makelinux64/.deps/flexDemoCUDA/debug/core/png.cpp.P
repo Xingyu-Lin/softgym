@@ -1,0 +1,6 @@
+build/flexDemoCUDA_debug/core/png.cpp.o: ../../../core/png.cpp \
+ ../../../core/png.h ../../../core/types.h \
+ ../../../core/../external/stb_image/stb_image.h
+../../../core/png.cpp :
+ ../../../core/png.h ../../../core/types.h :
+ ../../../core/../external/stb_image/stb_image.h :

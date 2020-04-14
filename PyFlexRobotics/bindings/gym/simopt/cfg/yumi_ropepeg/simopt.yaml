@@ -1,0 +1,44 @@
+learn:
+
+  # Number samples per iteration per GPU
+  num_samples: 400
+
+  # Number of iteration to optimize for.
+  num_iter: 3
+
+  # action sampling params
+  policy_stochastic: False
+  actions_real: True 
+  timesteps_per_batch: 4053
+
+  # REPS parameters
+  kl_threshold: 1.0
+  covariance_damping: 0.0
+  min_temperature: 0.001
+
+  max_cost: 500000
+
+  l1_weight: 0.5
+  l2_weight: 1.0
+
+  cost_gauss_std: 5
+  cost_gauss_truncate: 4.0
+
+  cost_weights: [
+    0.05, # Joint 0
+    0.05, # Joint 1
+    0.05, # Joint 2
+    0.05, # Joint 3
+    0.05, # Joint 4
+    0.05, # Joint 5
+    0.05, # Joint 6
+    0.0, # Target x
+    0.0, # Target y
+    0.0, # Target z
+    1.0, # Peg x
+    1.0, # Peg y
+    1.0, # Peg z
+    1.0, # Previous peg x
+    1.0, # Previous peg y
+    1.0  # Previous peg z
+  ]

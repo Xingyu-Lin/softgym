@@ -1,0 +1,35 @@
+scene_name: RL Humanoid
+exp:
+  max_ep_len: 1000
+  frame_sampling:
+    mode: constant # geomtric or constant
+    mean: 1 # used for constant or as the geometric parameter (1/mean)
+    max: 5 # used for geometric
+scene:
+  # PCG2
+  #NumAgents: 36
+  #NumPerRow: 6
+  #SolverType: 3
+  #NumSubsteps: 4
+  #NumIterations: 10
+  #NumInnerIterations: 40
+
+  # Jacobi
+  NumAgents: 500
+  NumPerRow: 20
+  SolverType: 0
+  NumSubsteps: 4
+  NumIterations: 30
+  Pause: False
+  DoLearning: True
+  DoFlagrun: True
+  NumRenderSteps: 1
+  
+  Spacing: 12
+  PowerScale: 0.205
+  AngleResetNoise: 0.1
+  AngleVelocityResetNoise: 0.1
+  VelocityResetNoise: 0.1
+  PushFrequency: 240
+  ForceMagnitude: 3.0
+  TerminationZ: 0.89

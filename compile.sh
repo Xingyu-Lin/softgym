@@ -1,4 +1,4 @@
-cd PyFlex/bindings
+cd ${PYFLEXROOT}/bindings
 rm -rf build
 mkdir build
 cd build

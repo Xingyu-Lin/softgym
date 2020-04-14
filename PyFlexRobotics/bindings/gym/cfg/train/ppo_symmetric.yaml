@@ -1,0 +1,71 @@
+seed: 7
+policy_type: SymmetricAC
+policy:
+  gt_dims_to_actor: 3
+  dims_to_pred_end: 6
+  pred_absolute: False
+  vf_hid_sizes: [128, 128]
+  pi_hid_sizes: [128, 128]
+  activation: selu # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+  mean_activation: tanh
+  clip_logstd: true
+  normalize_layers: False
+  raycast_params:
+    mlp:
+      vf_hid_sizes:
+        - [64, 64]
+        - 64
+        - [64]
+      pi_hid_sizes:
+        - [64, 64]
+        - 64
+        - [64]
+    cnn:
+      kernel_sizes: [4, 4, 4] # list of kernel sizes. [5, 6] means 2 layers, first w/ kernel sizes 5 x 5, the second with kernel sizes 6 x 6
+      num_filters: [16, 32, 64]
+      strides: [2, 2, 4]
+      paddings: ['same', 'same', 'valid']
+      pooling: true
+      vf_hid_sizes:
+        - 0 # layer to process non-raycast features before concat. if 0, this layer won't be created
+        - [64, 64] # layers to process concatenated input from both raycast CNN and other features
+      pi_hid_sizes:
+        - 0 # layer to process non-raycast features before concat. if 0, this layer won't be created
+        - [] # layers to process concatenated input from both raycast CNN and other features
+    grid:
+      normalize: false
+      forward: 64
+      side: 64
+      channels: 4
+  noisy_params:
+    factorized: False
+    noisy_vf: True
+    sigma_init:
+      factorized: 0.2
+      unfactorized: 0.1 # 0.017
+learn:
+  agent_name: ppo1_agent
+  resume: 0
+  top_n_saves: 0 # save the top n performing policies.
+  last_n_saves: 10000 # save the last n policies
+  load_prev_data: True # if True, will try to load prev data if resume > 0, and if # of agents match
+
+  # rollout params
+  max_iters: 10000
+  max_timesteps: 1e13
+  timesteps_per_batch: 128
+
+  # action sampling params
+  stochastic: True
+
+  # training params
+  clip_param: 0.15
+  ent_coef: 0.0
+  optim_epochs: 0
+  optim_batchsize_per_agent: 24
+  optim_stepsize: 5e-4
+  schedule: adaptive # could be adaptive or linear
+  desired_kl: 0.005
+  gamma: 0.99
+  lam: 0.95
+  adjust_factor: 1.1

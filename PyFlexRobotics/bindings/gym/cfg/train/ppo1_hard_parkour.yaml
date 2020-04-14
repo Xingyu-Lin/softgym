@@ -1,0 +1,61 @@
+seed: 7
+policy_type: MlpRaycastCNNPolicy # Can be MlpPolicy, MlpBetaPolicy, MlpNoisyPolicy, MlpRaycastPolicy, MlpRaycastCNNPolicy, 
+policy:
+  vf_hid_sizes: [256, 256]
+  pi_hid_sizes: [256, 256]
+  activation: selu # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+  normalize_layers: False
+  raycast_params:
+    mlp:
+      vf_hid_sizes:
+        raycast: [124, 64]
+        other: 0
+        concat: [256, 256]
+      pi_hid_sizes:
+        raycast: [124, 64]
+        other: 0
+        concat: [256, 256]
+    cnn:
+      kernel_sizes: [3, 3] # list of kernel sizes. [5, 6] means 2 layers, first w/ kernel sizes 5 x 5, the second with kernel sizes 6 x 6
+      num_filters: [16, 16]
+      vf_hid_sizes:
+        other: 0 # layer to process non-raycast features before concat. if 0, this layer won't be created
+        raycast: [256, 256] # layers to process concatenated input from both raycast CNN and other features
+      pi_hid_sizes:
+        other: 0 # layer to process non-raycast features before concat. if 0, this layer won't be created
+        raycast: [256, 256] # layers to process concatenated input from both raycast CNN and other features
+    grid: 
+      forward: 16
+      side: 11
+  noisy_params:
+    factorized: False
+    noisy_vf: True
+    sigma_init:
+      factorized: 1. # 0.5
+      unfactorized: 0.1 # 0.017
+learn:
+  agent_name: hard_parkour_ppo1
+  resume: 0
+  top_n_saves: 5 # save the top n performing policies.
+  last_n_saves: 5 # save the last n policies
+  load_prev_data: False # if True, will try to load prev data if resume > 0, and if # of agents match
+
+  # rollout params
+  max_iters: 10000
+  max_timesteps: 1e13
+  timesteps_per_batch: 512
+
+  # action sampling params
+  stochastic: True
+
+  # training params
+  clip_param: 0.2
+  ent_coef: 0
+  optim_epochs: 20
+  optim_batchsize_per_agent: 64
+  optim_stepsize: 5e-4
+  schedule: adaptive # could be adaptive or linear
+  desired_kl: 0.01
+  gamma: 0.99
+  lam: 0.95
+

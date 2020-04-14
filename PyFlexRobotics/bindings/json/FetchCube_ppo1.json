@@ -1,0 +1,29 @@
+{
+  "SceneName": "RL Fetch Cube Grasping",
+  
+  "LoadPath": "../../data/ant.xml",
+  "NumAgents": 100,
+  "NumObservations": 25,
+  "NumActions": 7,
+  "MaxEpisodeLength": 500,
+  "NumSubsteps": 4,
+  "NumIterations": 30,
+  "Pause": true,
+  "DoLearning": false,
+  "NumRenderSteps": 1,
+  "NumPerRow": 25,
+  "Spacing": 5.0,
+
+  "PythonPath": "C:/Users/vmakoviychuk/AppData/Local/Continuum/Anaconda3/python.exe",
+  "ScriptDir": "F:/DeepRL/baselines_merge/NvBaselines/baselines/ppo1",
+  "ScriptFile": "run_ppo_vecenv.py",
+  
+  "OptimBatchSizePerAgent": 32,
+  "-agentName": "Fetch",
+  "-resume": 0,
+  "-logdir": "FetchCube",
+  "-hid_size": 64,
+  "-timesteps_per_batch": 128,
+  "-optim_schedule": "adaptive",
+  "-optim_epochs": 10
+}

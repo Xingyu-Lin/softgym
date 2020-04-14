@@ -1,0 +1,14 @@
+build/flexGymCUDA_release/vr/vr.cpp.o: ../../vr/vr.cpp ../../vr/vr.h \
+ ../../vr/../../core/maths.h ../../vr/../../core/core.h \
+ ../../vr/../../core/types.h ../../vr/../../core/vec2.h \
+ ../../vr/../../core/vec3.h ../../vr/../../core/vec4.h \
+ ../../vr/../../core/quat.h ../../vr/../../core/point3.h \
+ ../../vr/../../core/mat22.h ../../vr/../../core/mat33.h \
+ ../../vr/../../core/mat44.h ../../vr/../../core/matnn.h
+../../vr/vr.cpp ../../vr/vr.h :
+ ../../vr/../../core/maths.h ../../vr/../../core/core.h :
+ ../../vr/../../core/types.h ../../vr/../../core/vec2.h :
+ ../../vr/../../core/vec3.h ../../vr/../../core/vec4.h :
+ ../../vr/../../core/quat.h ../../vr/../../core/point3.h :
+ ../../vr/../../core/mat22.h ../../vr/../../core/mat33.h :
+ ../../vr/../../core/mat44.h ../../vr/../../core/matnn.h :

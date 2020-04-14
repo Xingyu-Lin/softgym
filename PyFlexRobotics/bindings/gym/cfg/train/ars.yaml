@@ -1,0 +1,28 @@
+seed: &seed 7
+policy:
+  # for ARS V1 use filter = 'NoFilter'. 'MeanStdFilter'
+  ob_filter: MeanStdFilter
+  type: linear
+  rank: -1 # -1 is full rank
+learn:
+  resume: 0
+  top_n_saves: 5 # save the top n performing policies.
+  last_n_saves: 5 # save the last n policies
+
+  num_iters_per_eval: 10 # how many training iterations to run before each evaluation
+  num_iters: 400 # how many training iterations total before terminating
+  rollout_length: 300 # length of each individual rollout
+
+  # optimal parameters for ant
+  deltas_used: 0.3
+  step_size: 0.05 
+  delta_std: 0.02 
+
+  # optimal parameters for humanoid
+  # deltas_used: 0.5
+  # step_size: 0.02
+  # delta_std: 0.01
+
+  # for Ant/Humanoid, use 0 andt set UseStaticRewards to False in their env yamls
+  shift: 0
+  seed: *seed

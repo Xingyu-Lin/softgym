@@ -1,0 +1,27 @@
+seed: 7
+policy: # only works for MlpPolicy right now
+  vf_hid_sizes: [128, 128]
+  pi_hid_sizes: [128, 128]
+  activation: selu # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+learn:
+  agent_name: ppo2_agent
+  resume: 0
+  top_n_saves: 5 # save the top n performing policies.
+  last_n_saves: 5 # save the last n policies
+  save_interval: 1 # check for potential saves every this many iterations
+
+  # rollout params
+  max_timesteps: 1e7
+
+  # training params
+  cliprange: 0.2
+  ent_coef: 0
+  nsteps: 128
+  noptepochs: 8
+  nminibatches: 16 # this is per agent
+  optim_stepsize: 5e-4 # 3e-4 isefault for single agent training with constant schedule
+  schedule: adaptive # could be adaptive or linear
+  gamma: 0.99
+  lam: 0.95
+
+  log_interval: 1

@@ -1,0 +1,5 @@
+build/flexGymCUDA_release/external/tinyxml2/tinyxml2.cpp.o: \
+ ../../../external/tinyxml2/tinyxml2.cpp \
+ ../../../external/tinyxml2/tinyxml2.h
+ ../../../external/tinyxml2/tinyxml2.cpp :
+ ../../../external/tinyxml2/tinyxml2.h :

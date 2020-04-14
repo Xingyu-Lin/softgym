@@ -1,0 +1,20 @@
+scene_name: RL Minitaur
+exp:
+  max_ep_len: 1000
+  frame_sampling:
+         mode: constant # geomtric or constant
+         mean: 1 # used for constant or as the geometric parameter (1/mean)
+         max: 5 # used for geometric
+gym:
+  renderBackend: 1
+  vsync: False # If True, renders at 60fps max
+scene:
+  NumAgents: 1
+  NumPerRow: 10
+  SolverType: 5
+  NumSubsteps: 2
+  NumIterations: 4
+  NumInnerIterations: 15
+  Pause: False
+  DoLearning: True
+  TerminationZ: 0.15
