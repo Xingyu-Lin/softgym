@@ -18,7 +18,6 @@ public:
         float out = ptr[idx];
         return out;
     }
-
     //params ordering: xpos, ypos, zpos, xsize, zsize, stretch, bend, shear
     // render_type, cam_X, cam_y, cam_z, angle_x, angle_y, angle_z, width, height
 	void Initialize(py::array_t<float> scene_params, int thread_idx=0)
@@ -105,6 +104,7 @@ public:
         g_windStrength = 10.0f;
 //        cout << "finish init" << endl;
     }
+
 
     virtual void CenterCamera(void)
     {

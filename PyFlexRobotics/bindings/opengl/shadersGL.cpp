@@ -191,6 +191,13 @@ struct ShadowMap
 	GLuint framebuffer;
 };
 
+char font_path[100];
+
+char* make_path(char* full_path, std::string path) {
+    strcpy(full_path, getenv("PYFLEXROOT"));
+    strcat(full_path, path.c_str());
+    return full_path;
+}
 
 void InitRender(const RenderInitOptions& options)
 {
@@ -217,7 +224,7 @@ void InitRender(const RenderInitOptions& options)
 		printf("Could not initialize GL extensions\n");
 	}
 
-	imguiRenderGLInit(GetFilePathByPlatform("../../data/DroidSans.ttf").c_str());
+	imguiRenderGLInit(GetFilePathByPlatform(make_path(font_path, "/data/DroidSans.ttf")).c_str());
 
 	g_msaaSamples = msaaSamples;
 	g_window = window;

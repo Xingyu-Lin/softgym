@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w -D_FORCE_INLINES -fPIC -fpermissive -
 set(ROOT $ENV{PYFLEXROOT})
 set(EXAMPLE_BIN pyflex)
 
-set(SOURCES ${SOURCES} ${ROOT}/bindings/main.cpp)
+set(SOURCES ${SOURCES} ${ROOT}/bindings/pyflexrobotics.cpp)
 set(SOURCES ${SOURCES} ${ROOT}/bindings/BvhLoader.cpp)
 set(SOURCES ${SOURCES} ${ROOT}/bindings/imgui.cpp)
 set(SOURCES ${SOURCES} ${ROOT}/bindings/Skeleton.cpp)
@@ -39,6 +39,12 @@ set(SOURCES ${SOURCES} ${ROOT}/core/png.cpp)
 set(SOURCES ${SOURCES} ${ROOT}/core/sdf.cpp)
 set(SOURCES ${SOURCES} ${ROOT}/core/tga.cpp)
 set(SOURCES ${SOURCES} ${ROOT}/core/voxelize.cpp)
+set(SOURCES ${SOURCES} ${ROOT}/extensions/flexExtCloth.cpp)
+set(SOURCES ${SOURCES} ${ROOT}/extensions/flexExtContainer.cpp)
+set(SOURCES ${SOURCES} ${ROOT}/extensions/flexExtFEM.cpp)
+set(SOURCES ${SOURCES} ${ROOT}/extensions/flexExtMovingFrame.cpp)
+set(SOURCES ${SOURCES} ${ROOT}/extensions/flexExtRigid.cpp)
+set(SOURCES ${SOURCES} ${ROOT}/extensions/flexExtSoft.cpp)
 
 
 set(FLEXHEADERS ${ROOT})
