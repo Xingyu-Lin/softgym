@@ -173,7 +173,7 @@ inline float joyAxisFilter(int value, int stick)
 
 SDL_GameController* g_gamecontroller = NULL;
 
-int g_windowWidth = 72;
+int g_windowWidth = 720;
 int g_windowHeight = 720;
 int g_screenWidth = g_windowWidth;
 int g_screenHeight = g_windowHeight;
@@ -845,7 +845,7 @@ inline float sqr(float x)
 }
 
 class Scene;
-Scene* g_scene;
+Scene* g_scene = NULL;
 
 #ifdef NV_FLEX_GYM
 class RLFlexEnv;
@@ -888,32 +888,27 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
         MapBuffers(g_buffers);
         UnmapBuffers(g_buffers);
     }
-
     if (g_scene)
     {
         delete g_scene;
         g_scene = NULL;
     }
-
     if (g_solver)
     {
         if (g_buffers)
         {
             DestroyBuffers(g_buffers);
         }
-
 		if (g_render)
 		{
 			DestroyFluidRenderBuffers(g_fluidRenderBuffers);
 			DestroyDiffuseRenderBuffers(g_diffuseRenderBuffers);
 		}
-
         for (auto& iter : g_meshes)
         {
             NvFlexDestroyTriangleMesh(g_flexLib, iter.first);
             DestroyRenderMesh(iter.second);
         }
-
         for (auto& iter : g_fields)
         {
             NvFlexDestroyDistanceField(g_flexLib, iter.first);
@@ -938,7 +933,6 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
         NvFlexDestroySolver(g_solver);
         g_solver = NULL;
 	}
-
 	if (g_render == true)
 	{
         // destroy old sensors
@@ -973,7 +967,6 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
             g_renderMaterials.push_back(defaultMat);
         }
     }
-
     memset(&g_timersAvg, 0, sizeof(g_timersAvg));
     memset(&g_timersVar, 0, sizeof(g_timersVar));
     g_timersCount = 0;
@@ -1113,6 +1106,7 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
     // create scene
     StartGpuWork();
     g_scene = g_sceneFactories[scene].mFactory();
+    g_scene->Initialize(scene_params, thread_idx);
     g_scene->PrepareScene();
     EndGpuWork();
 
@@ -4684,274 +4678,274 @@ static json JsonFromString(const std::string& source) noexcept
         exit(-1);
     }
 }
-void pyflex_init_debug(bool headless=false, bool render=true, int camera_width=720, int camera_height=720) {
-    g_screenWidth = camera_width;
-    g_screenHeight = camera_height;
-
-    g_headless = headless;
-    g_render = render;
-    if (g_headless) {
-        g_interop = false;
-        g_pause = false;
-    }
-
-    RandInit();
-//	g_argc = argc;
-//	g_argv = argv;
-    RegisterPhysicsScenes();
-	RegisterExperimentScenes();
-
-	#ifndef ANDROID
-
-#if FLEX_DX
-    const char* title = "Flex Gym (Direct Compute)";
-#else
-    const char* title = "Flex Gym (CUDA)";
-#endif
-
-#if FLEX_VR
-    if (g_sceneFactories[g_sceneIndex].mIsVR)
-    {
-        g_vrSystem = VrSystem::Create(g_camPos, GetCameraRotationMatrix(), g_vrMoveScale);
-        if (!g_vrSystem)
-        {
-            printf("Error during VR initialization, terminating process");
-            exit(1);
-        }
-    }
-
-    if (g_vrSystem)
-    {
-        // Setting the same aspect for the window as for VR (not really necessary)
-        g_screenWidth = g_vrSystem->GetRecommendedRtWidth();
-        g_screenHeight = g_vrSystem->GetRecommendedRtHeight();
-
-        float vrAspect = static_cast<float>(g_screenWidth) / g_screenHeight;
-        g_windowWidth = static_cast<int>(vrAspect * g_windowHeight);
-    }
-    else
-#endif // #if FLEX_VR
-    {
-        g_screenWidth = g_windowWidth;
-        g_screenHeight = g_windowHeight;
-    }
-
-    if (!g_headless)
-    {
-        SDLInit(title);
-    }
-
-    RenderInitOptions options;
-    options.window = g_window;
-    options.numMsaaSamples = g_msaaSamples;
-    options.asyncComputeBenchmark = g_asyncComputeBenchmark;
-    options.defaultFontHeight = -1;
-    options.fullscreen = g_fullscreen;
-
-#if FLEX_DX
-    {
-        DemoContext* demoContext = nullptr;
-
-        if (g_d3d12)
-        {
-            // workaround for a driver issue with D3D12 with msaa, force it to off
-            options.numMsaaSamples = 1;
-
-            demoContext = CreateDemoContextD3D12();
-        }
-        else
-        {
-            demoContext = CreateDemoContextD3D11();
-        }
-        // Set the demo context
-        SetDemoContext(demoContext);
-    }
-#endif
-	if (!g_headless)
-	{
-		InitRender(options);
-
-		if (g_vrSystem)
-		{
-			g_vrSystem->InitGraphicalResources();
-		}
-
-		if (g_fullscreen)
-		{
-			SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-		}
-
-		ReshapeWindow(g_windowWidth, g_windowHeight);
-	}
-#endif // ifndef ANDROID
-
-#if !FLEX_DX
-
-#if 0
-
-    // use the PhysX GPU selected from the NVIDIA control panel
-    if (g_device == -1)
-    {
-        g_device = NvFlexDeviceGetSuggestedOrdinal();
-    }
-
-    // Create an optimized CUDA context for Flex and set it on the
-    // calling thread. This is an optional call, it is fine to use
-    // a regular CUDA context, although creating one through this API
-    // is recommended for best performance.
-    bool success = NvFlexDeviceCreateCudaContext(g_device);
-
-    if (!success)
-    {
-        printf("Error creating CUDA context.\n");
-        exit(-1);
-    }
-
-#endif // _WIN32
-
-#endif
-
-    NvFlexInitDesc desc;
-    desc.deviceIndex = g_device;
-    desc.enableExtensions = g_extensions;
-    desc.renderDevice = 0;
-    desc.renderContext = 0;
-    desc.computeContext = 0;
-    desc.computeType = eNvFlexCUDA;
-
-#if FLEX_DX
-
-    if (g_d3d12)
-    {
-        desc.computeType = eNvFlexD3D12;
-    }
-    else
-    {
-        desc.computeType = eNvFlexD3D11;
-    }
-
-    bool userSpecifiedGpuToUseForFlex = (g_device != -1);
-
-    if (userSpecifiedGpuToUseForFlex)
-    {
-        // Flex doesn't currently support interop between different D3DDevices.
-        // If the user specifies which physical device to use, then Flex always
-        // creates its own D3DDevice, even if graphics is on the same physical device.
-        // So specified physical device always means no interop.
-        g_interop = false;
-    }
-    else
-    {
-        // Ask Flex to run on the same GPU as rendering
-        GetRenderDevice(&desc.renderDevice,
-                        &desc.renderContext);
-    }
-
-    // Shared resources are unimplemented on D3D12,
-    // so disable it for now.
-    if (g_d3d12)
-    {
-        g_interop = false;
-    }
-
-    // Setting runOnRenderContext = true doesn't prevent async compute, it just
-    // makes Flex send compute and graphics to the GPU on the same queue.
-    //
-    // So to allow the user to toggle async compute, we set runOnRenderContext = false
-    // and provide a toggleable sync between compute and graphics in the app.
-    //
-    // Search for g_useAsyncCompute for details
-    desc.runOnRenderContext = false;
-#endif
-
-    // Init Flex library, note that no CUDA methods should be called before this
-    // point to ensure we get the device context we want
-    g_flexLib = NvFlexInit(NV_FLEX_VERSION, ErrorCallback, &desc);
-
-    if (g_error || g_flexLib == NULL)
-    {
-        printf("Could not initialize Flex, exiting.\n");
-        exit(-1);
-    }
-
-    // store device name
-    strcpy(g_deviceName, NvFlexGetDeviceName(g_flexLib));
-    printf("Compute Device: %s\n\n", g_deviceName);
-
-    if (g_benchmark)
-    {
-        g_sceneIndex = BenchmarkInit();
-    }
-
-	if (g_render == true)
-	{
-		// create shadow maps
-		g_shadowMap = ShadowCreate();
-
-		// create default render meshes
-		Mesh* sphere = CreateSphere(12, 24, 1.0f);
-		Mesh* cylinder = CreateCylinder(24, 1.0f, 1.0f);
-		Mesh* box = CreateCubeMesh();
-
-		g_sphereMesh = CreateRenderMesh(sphere);
-		g_cylinderMesh = CreateRenderMesh(cylinder);
-		g_boxMesh = CreateRenderMesh(box);
-
-		delete sphere;
-		delete cylinder;
-		delete box;
-	}
-
-	if (!g_experiment)
-	{
-		// to ensure D3D context is active
-		StartGpuWork();
-
-		// init default scene
-		InitScene(g_sceneIndex);
-
-		// release context
-		EndGpuWork();
-		if (g_headless == true)
-		{
-			HeadlessMainLoop();
-		}
-		else
-		{
-			SDLMainLoop();
-		}
-	}
-	else
-	{
-		RunExperiments(g_experimentFilter);
-		exit(0);
-	}
-
-	if (g_render == true)
-	{
-		DestroyFluidRenderer(g_fluidRenderer);
-		DestroyFluidRenderBuffers(g_fluidRenderBuffers);
-		DestroyDiffuseRenderBuffers(g_diffuseRenderBuffers);
-
-		ShadowDestroy(g_shadowMap);
-	}
-
-    Shutdown();
-
-	if (g_headless == false)
-	{
-		DestroyRender();
-
-		SDL_DestroyWindow(g_window);
-		SDL_Quit();
-	}
-
-    printf("Pyflex init done!\n");
-}
+//void pyflex_init_debug(bool headless=false, bool render=true, int camera_width=720, int camera_height=720) {
+//    g_screenWidth = camera_width;
+//    g_screenHeight = camera_height;
+//
+//    g_headless = headless;
+//    g_render = render;
+//    if (g_headless) {
+//        g_interop = false;
+//        g_pause = false;
+//    }
+//
+//    RandInit();
+////	g_argc = argc;
+////	g_argv = argv;
+//    RegisterPhysicsScenes();
+//	RegisterExperimentScenes();
+//
+//	#ifndef ANDROID
+//
+//#if FLEX_DX
+//    const char* title = "Flex Gym (Direct Compute)";
+//#else
+//    const char* title = "Flex Gym (CUDA)";
+//#endif
+//
+//#if FLEX_VR
+//    if (g_sceneFactories[g_sceneIndex].mIsVR)
+//    {
+//        g_vrSystem = VrSystem::Create(g_camPos, GetCameraRotationMatrix(), g_vrMoveScale);
+//        if (!g_vrSystem)
+//        {
+//            printf("Error during VR initialization, terminating process");
+//            exit(1);
+//        }
+//    }
+//
+//    if (g_vrSystem)
+//    {
+//        // Setting the same aspect for the window as for VR (not really necessary)
+//        g_screenWidth = g_vrSystem->GetRecommendedRtWidth();
+//        g_screenHeight = g_vrSystem->GetRecommendedRtHeight();
+//
+//        float vrAspect = static_cast<float>(g_screenWidth) / g_screenHeight;
+//        g_windowWidth = static_cast<int>(vrAspect * g_windowHeight);
+//    }
+//    else
+//#endif // #if FLEX_VR
+//    {
+//        g_screenWidth = g_windowWidth;
+//        g_screenHeight = g_windowHeight;
+//    }
+//
+//    if (!g_headless)
+//    {
+//        SDLInit(title);
+//    }
+//
+//    RenderInitOptions options;
+//    options.window = g_window;
+//    options.numMsaaSamples = g_msaaSamples;
+//    options.asyncComputeBenchmark = g_asyncComputeBenchmark;
+//    options.defaultFontHeight = -1;
+//    options.fullscreen = g_fullscreen;
+//
+//#if FLEX_DX
+//    {
+//        DemoContext* demoContext = nullptr;
+//
+//        if (g_d3d12)
+//        {
+//            // workaround for a driver issue with D3D12 with msaa, force it to off
+//            options.numMsaaSamples = 1;
+//
+//            demoContext = CreateDemoContextD3D12();
+//        }
+//        else
+//        {
+//            demoContext = CreateDemoContextD3D11();
+//        }
+//        // Set the demo context
+//        SetDemoContext(demoContext);
+//    }
+//#endif
+//	if (!g_headless)
+//	{
+//		InitRender(options);
+//
+//		if (g_vrSystem)
+//		{
+//			g_vrSystem->InitGraphicalResources();
+//		}
+//
+//		if (g_fullscreen)
+//		{
+//			SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+//		}
+//
+//		ReshapeWindow(g_windowWidth, g_windowHeight);
+//	}
+//#endif // ifndef ANDROID
+//
+//#if !FLEX_DX
+//
+//#if 0
+//
+//    // use the PhysX GPU selected from the NVIDIA control panel
+//    if (g_device == -1)
+//    {
+//        g_device = NvFlexDeviceGetSuggestedOrdinal();
+//    }
+//
+//    // Create an optimized CUDA context for Flex and set it on the
+//    // calling thread. This is an optional call, it is fine to use
+//    // a regular CUDA context, although creating one through this API
+//    // is recommended for best performance.
+//    bool success = NvFlexDeviceCreateCudaContext(g_device);
+//
+//    if (!success)
+//    {
+//        printf("Error creating CUDA context.\n");
+//        exit(-1);
+//    }
+//
+//#endif // _WIN32
+//
+//#endif
+//
+//    NvFlexInitDesc desc;
+//    desc.deviceIndex = g_device;
+//    desc.enableExtensions = g_extensions;
+//    desc.renderDevice = 0;
+//    desc.renderContext = 0;
+//    desc.computeContext = 0;
+//    desc.computeType = eNvFlexCUDA;
+//
+//#if FLEX_DX
+//
+//    if (g_d3d12)
+//    {
+//        desc.computeType = eNvFlexD3D12;
+//    }
+//    else
+//    {
+//        desc.computeType = eNvFlexD3D11;
+//    }
+//
+//    bool userSpecifiedGpuToUseForFlex = (g_device != -1);
+//
+//    if (userSpecifiedGpuToUseForFlex)
+//    {
+//        // Flex doesn't currently support interop between different D3DDevices.
+//        // If the user specifies which physical device to use, then Flex always
+//        // creates its own D3DDevice, even if graphics is on the same physical device.
+//        // So specified physical device always means no interop.
+//        g_interop = false;
+//    }
+//    else
+//    {
+//        // Ask Flex to run on the same GPU as rendering
+//        GetRenderDevice(&desc.renderDevice,
+//                        &desc.renderContext);
+//    }
+//
+//    // Shared resources are unimplemented on D3D12,
+//    // so disable it for now.
+//    if (g_d3d12)
+//    {
+//        g_interop = false;
+//    }
+//
+//    // Setting runOnRenderContext = true doesn't prevent async compute, it just
+//    // makes Flex send compute and graphics to the GPU on the same queue.
+//    //
+//    // So to allow the user to toggle async compute, we set runOnRenderContext = false
+//    // and provide a toggleable sync between compute and graphics in the app.
+//    //
+//    // Search for g_useAsyncCompute for details
+//    desc.runOnRenderContext = false;
+//#endif
+//
+//    // Init Flex library, note that no CUDA methods should be called before this
+//    // point to ensure we get the device context we want
+//    g_flexLib = NvFlexInit(NV_FLEX_VERSION, ErrorCallback, &desc);
+//
+//    if (g_error || g_flexLib == NULL)
+//    {
+//        printf("Could not initialize Flex, exiting.\n");
+//        exit(-1);
+//    }
+//
+//    // store device name
+//    strcpy(g_deviceName, NvFlexGetDeviceName(g_flexLib));
+//    printf("Compute Device: %s\n\n", g_deviceName);
+//
+//    if (g_benchmark)
+//    {
+//        g_sceneIndex = BenchmarkInit();
+//    }
+//
+//	if (g_render == true)
+//	{
+//		// create shadow maps
+//		g_shadowMap = ShadowCreate();
+//
+//		// create default render meshes
+//		Mesh* sphere = CreateSphere(12, 24, 1.0f);
+//		Mesh* cylinder = CreateCylinder(24, 1.0f, 1.0f);
+//		Mesh* box = CreateCubeMesh();
+//
+//		g_sphereMesh = CreateRenderMesh(sphere);
+//		g_cylinderMesh = CreateRenderMesh(cylinder);
+//		g_boxMesh = CreateRenderMesh(box);
+//
+//		delete sphere;
+//		delete cylinder;
+//		delete box;
+//	}
+//
+////	if (!g_experiment)
+////	{
+////		// to ensure D3D context is active
+////		StartGpuWork();
+////
+////		// init default scene
+////		InitScene(g_sceneIndex);
+////
+////		// release context
+////		EndGpuWork();
+////		if (g_headless == true)
+////		{
+////			HeadlessMainLoop();
+////		}
+////		else
+////		{
+////			SDLMainLoop();
+////		}
+////	}
+////	else
+////	{
+////		RunExperiments(g_experimentFilter);
+////		exit(0);
+////	}
+////
+////	if (g_render == true)
+////	{
+////		DestroyFluidRenderer(g_fluidRenderer);
+////		DestroyFluidRenderBuffers(g_fluidRenderBuffers);
+////		DestroyDiffuseRenderBuffers(g_diffuseRenderBuffers);
+////
+////		ShadowDestroy(g_shadowMap);
+////	}
+////
+////    Shutdown();
+////
+////	if (g_headless == false)
+////	{
+////		DestroyRender();
+////
+////		SDL_DestroyWindow(g_window);
+////		SDL_Quit();
+////	}
+//
+//    printf("Pyflex init done!\n");
+//}
 
 void pyflex_init(bool headless=false, bool render=true, int camera_width=720, int camera_height=720) {
-    g_screenWidth = camera_width;
-    g_screenHeight = camera_height;
+    g_screenWidth = g_windowWidth = camera_width;
+    g_screenHeight = g_windowHeight = camera_height;
 
     g_headless = headless;
     g_render = render;
@@ -5168,51 +5162,51 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
 		delete box;
 	}
 
-	if (!g_experiment)
-	{
-		// to ensure D3D context is active
-		StartGpuWork();
+//	if (!g_experiment)
+//	{
+//		// to ensure D3D context is active
+//		StartGpuWork();
+//
+//		// init default scene
+//		InitScene(g_sceneIndex);
+//
+//		// release context
+//		EndGpuWork();
+//		if (g_headless == true)
+//		{
+//			HeadlessMainLoop();
+//		}
+//		else
+//		{
+//			SDLMainLoop();
+//		}
+//	}
+//	else
+//	{
+//		RunExperiments(g_experimentFilter);
+//		exit(0);
+//	}
+//
+//	if (g_render == true)
+//	{
+//		DestroyFluidRenderer(g_fluidRenderer);
+//		DestroyFluidRenderBuffers(g_fluidRenderBuffers);
+//		DestroyDiffuseRenderBuffers(g_diffuseRenderBuffers);
+//
+//		ShadowDestroy(g_shadowMap);
+//	}
+//
+//    Shutdown();
+//
+//	if (g_headless == false)
+//	{
+//		DestroyRender();
+//
+//		SDL_DestroyWindow(g_window);
+//		SDL_Quit();
+//	}
 
-		// init default scene
-		InitScene(g_sceneIndex);
-
-		// release context
-		EndGpuWork();
-		if (g_headless == true)
-		{
-			HeadlessMainLoop();
-		}
-		else
-		{
-			SDLMainLoop();
-		}
-	}
-	else
-	{
-		RunExperiments(g_experimentFilter);
-		exit(0);
-	}
-
-	if (g_render == true)
-	{
-		DestroyFluidRenderer(g_fluidRenderer);
-		DestroyFluidRenderBuffers(g_fluidRenderBuffers);
-		DestroyDiffuseRenderBuffers(g_diffuseRenderBuffers);
-
-		ShadowDestroy(g_shadowMap);
-	}
-
-    Shutdown();
-
-	if (g_headless == false)
-	{
-		DestroyRender();
-
-		SDL_DestroyWindow(g_window);
-		SDL_Quit();
-	}
-
-    printf("Pyflex init done!\n");
+    printf("PyFlexRobotics init done!\n");
 }
 
 //int main(int argc, char* argv[])
@@ -5682,8 +5676,8 @@ float rand_float(float LO, float HI) {
 }
 
 void pyflex_set_scene(int scene_idx, py::array_t<float> scene_params, int thread_idx = 0) {
-    g_scene = scene_idx;
-    g_selectedScene = g_scene;
+    int g_sceneIdx = scene_idx;
+    g_selectedScene = g_sceneIdx;
     InitScene(g_selectedScene, scene_params, true, thread_idx);
 }
 
@@ -6509,43 +6503,42 @@ int main() {
 }
 
 PYBIND11_MODULE(pyflex, m) {
-//    m.def("main", &main);
-    m.def("init_debug", &pyflex_init_debug);
-//    m.def("init", &pyflex_init);
-//    m.def("set_scene", &pyflex_set_scene);
-//    m.def("clean", &pyflex_clean);
-//    m.def("step", &pyflex_step,
-//          py::arg("update_params") = nullptr,
-//          py::arg("capture") = 0,
-//          py::arg("path") = nullptr);
-//
-//    m.def("render", &pyflex_render,
-//          py::arg("capture") = 0,
-//          py::arg("path") = nullptr
-//        );
-//
-//    m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
-//    m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
-//
-//    m.def("add_box", &pyflex_add_box, "Add box to the scene");
-//    m.def("add_sphere", &pyflex_add_sphere, "Add sphere to the scene");
-//    m.def("add_capsule", &pyflex_add_capsule, "Add capsule to the scene");
-//
-//    m.def("pop_box", &pyflex_pop_box, "remove box from the scene");
-//
-//    m.def("get_n_particles", &pyflex_get_n_particles, "Get the number of particles");
-//    m.def("get_n_shapes", &pyflex_get_n_shapes, "Get the number of shapes");
-////    m.def("get_n_rigids", &pyflex_get_n_rigids, "Get the number of rigids");
-////    m.def("get_n_rigidPositions", &pyflex_get_n_rigidPositions, "Get the number of rigid positions");
-//
-//    m.def("get_phases", &pyflex_get_phases, "Get particle phases");
-//    m.def("set_phases", &pyflex_set_phases, "Set particle phases");
-//    m.def("get_groups", &pyflex_get_groups, "Get particle groups");
-//    m.def("set_groups", &pyflex_set_groups, "Set particle groups");
+    m.def("main", &main);
+    m.def("init", &pyflex_init);
+    m.def("set_scene", &pyflex_set_scene);
+    m.def("clean", &pyflex_clean);
+    m.def("step", &pyflex_step,
+          py::arg("update_params") = nullptr,
+          py::arg("capture") = 0,
+          py::arg("path") = nullptr);
+
+    m.def("render", &pyflex_render,
+          py::arg("capture") = 0,
+          py::arg("path") = nullptr
+        );
+
+    m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
+    m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
+
+    m.def("add_box", &pyflex_add_box, "Add box to the scene");
+    m.def("add_sphere", &pyflex_add_sphere, "Add sphere to the scene");
+    m.def("add_capsule", &pyflex_add_capsule, "Add capsule to the scene");
+
+    m.def("pop_box", &pyflex_pop_box, "remove box from the scene");
+
+    m.def("get_n_particles", &pyflex_get_n_particles, "Get the number of particles");
+    m.def("get_n_shapes", &pyflex_get_n_shapes, "Get the number of shapes");
+//    m.def("get_n_rigids", &pyflex_get_n_rigids, "Get the number of rigids");
+//    m.def("get_n_rigidPositions", &pyflex_get_n_rigidPositions, "Get the number of rigid positions");
+
+    m.def("get_phases", &pyflex_get_phases, "Get particle phases");
+    m.def("set_phases", &pyflex_set_phases, "Set particle phases");
+    m.def("get_groups", &pyflex_get_groups, "Get particle groups");
+    m.def("set_groups", &pyflex_set_groups, "Set particle groups");
 //    // TODO: Add keyword set_color for set_phases function and also in python code
-//    m.def("get_positions", &pyflex_get_positions, "Get particle positions");
-//    m.def("set_positions", &pyflex_set_positions, "Set particle positions");
-//    m.def("get_restPositions", &pyflex_get_restPositions, "Get particle restPositions");
+    m.def("get_positions", &pyflex_get_positions, "Get particle positions");
+    m.def("set_positions", &pyflex_set_positions, "Set particle positions");
+    m.def("get_restPositions", &pyflex_get_restPositions, "Get particle restPositions");
 ////    m.def("get_rigidOffsets", &pyflex_get_rigidOffsets, "Get rigid offsets");
 ////    m.def("get_rigidIndices", &pyflex_get_rigidIndices, "Get rigid indices");
 ////    m.def("get_rigidLocalPositions", &pyflex_get_rigidLocalPositions, "Get rigid local positions");
@@ -6555,15 +6548,15 @@ PYBIND11_MODULE(pyflex, m) {
 //
 ////    m.def("get_sceneParams", &pyflex_get_sceneParams, "Get scene parameters");
 //
-//    m.def("get_velocities", &pyflex_get_velocities, "Get particle velocities");
-//    m.def("set_velocities", &pyflex_set_velocities, "Set particle velocities");
-//
-//    m.def("get_shape_states", &pyflex_get_shape_states, "Get shape states");
-//    m.def("set_shape_states", &pyflex_set_shape_states, "Set shape states");
-//    m.def("clear_shapes", &ClearShapes, "Clear shapes");
-//
-//    m.def("get_scene_upper", &pyflex_get_sceneUpper);
-//    m.def("get_scene_lower", &pyflex_get_sceneLower);
-//
+    m.def("get_velocities", &pyflex_get_velocities, "Get particle velocities");
+    m.def("set_velocities", &pyflex_set_velocities, "Set particle velocities");
+
+    m.def("get_shape_states", &pyflex_get_shape_states, "Get shape states");
+    m.def("set_shape_states", &pyflex_set_shape_states, "Set shape states");
+    m.def("clear_shapes", &ClearShapes, "Clear shapes");
+
+    m.def("get_scene_upper", &pyflex_get_sceneUpper);
+    m.def("get_scene_lower", &pyflex_get_sceneLower);
+
 //    m.def("add_rigid_body", &pyflex_add_rigid_body);
 }

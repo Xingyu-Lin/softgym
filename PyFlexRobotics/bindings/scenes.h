@@ -41,7 +41,8 @@ public:
 	Scene() {}
 	virtual ~Scene() {}
 //    virtual void Initialize() {};
-	virtual void Initialize(py::array_t<float> scene_params = py::array_t<float>() , int thread_idx = 0) {};
+	virtual void Initialize(py::array_t<float> scene_params = py::array_t<float>() , int thread_idx = 0) {}
+
 	virtual void PostInitialize() {}
 
 	// Called immediately after scene constructor (used by RL scenes to load parameters and launch Python scripts)
@@ -97,10 +98,10 @@ inline void RegisterScene(const char* name, std::function<Scene*()> factory, boo
 	g_sceneFactories.push_back(SceneFactory(name, factory, isVR));
 }
 
-//#include "scenes/softgym_flatten.h"
+#include "scenes/softgym_flatten.h"
 #include "scenes/softgym_cloth.h"
-//#include "scenes/softgym_pourwater.h"
-//#include "scenes/softgym_softbody.h"
+#include "scenes/softgym_pourwater.h"
+#include "scenes/softgym_softbody.h"
 
 #include "scenes/adhesion.h"
 #include "scenes/armadilloshower.h"
@@ -201,9 +202,20 @@ inline void RegisterScene(const char* name, std::function<Scene*()> factory, boo
 
 inline void RegisterPhysicsScenes()
 {
+    // PlaceHolder scenes such that the index is compatible with those in the 1.0 version.
     RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-//    RegisterScene("SoftGym Cloth Flatten", []() { return new softgym_FlattenCloth(); });
-//    RegisterScene("SoftGym Water", []() { return new softgym_PourWater; });
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+
+    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
+    RegisterScene("SoftGym Cloth Flatten", []() { return new softgym_FlattenCloth(); });
+    RegisterScene("SoftGym Water", []() { return new softgym_PourWater; });
 
 	RegisterScene("RL Sawyer", []() { return new RLSawyerCup(); });
 //	RegisterScene("Rigid to Particles Attachments", []() { return new RigidParticleAttachment(); });

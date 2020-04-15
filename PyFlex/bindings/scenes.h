@@ -64,16 +64,6 @@ public:
 #include "scenes/softgym_pourwater.h"
 #include "scenes/softgym_softbody.h"
 
-#include "scenes/yz_bunnybath.h"
-#include "scenes/yz_boxbath.h"
-#include "scenes/yz_boxbathext.h"
-#include "scenes/yz_dambreak.h"
-#include "scenes/yz_rigidfall.h"
-#include "scenes/yz_ricefall.h"
-#include "scenes/yz_softbody.h"
-#include "scenes/yz_fluidshake.h"
-#include "scenes/yz_fluidiceshake.h"
-
 #include "scenes/adhesion.h"
 #include "scenes/armadilloshower.h"
 #include "scenes/bananas.h"
