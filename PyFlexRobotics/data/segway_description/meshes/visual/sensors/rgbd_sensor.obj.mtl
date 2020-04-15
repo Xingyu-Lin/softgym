@@ -1,0 +1,12 @@
+# File produced by Open Asset Import Library (http://www.assimp.sf.net)
+# (assimp v3.1.187496374)
+
+newmtl _1_-_Default-material
+Kd 0.6 0.6 0.6
+Ka 0.588235 0.588235 0.588235
+Ks 0.9 0.9 0.9
+Ke 0 0 0
+Ns 10
+illum 2
+map_Kd rgbd.jpg
+

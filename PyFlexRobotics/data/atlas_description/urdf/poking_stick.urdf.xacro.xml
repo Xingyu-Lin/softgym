@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<robot  name="poking_stick" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+  <xacro:property name="M_PI" value="3.1415926535897931" />
+  
+  <!--length is extending towards the negative x axis-->
+  <macro name="poking_stick_macro" params="parent prefix length *origin">
+  
+  <joint name="${prefix}_poking_stick_joint" type="fixed">
+    <insert_block name="origin"/>
+    <parent
+      link="${parent}" />
+    <child
+       link="${prefix}_poking_stick"/>
+  </joint>      
+
+  <link name="${prefix}_poking_stick">
+<!--   <inertial>
+     <origin xyz="0.05 0 0" rpy="0 0 0"/>
+     <mass value="0.2"/>
+     <inertia ixx="0.01"  ixy="0"  ixz="0" iyy="0.01" iyz="0" izz="0.01" />
+   </inertial>-->
+
+   <visual>
+     <origin xyz="${-length*0.5} 0 0" rpy="0 ${M_PI*0.5} 0" />
+     <geometry>
+       <cylinder radius="0.005" length="${length}" />
+     </geometry>
+     <material name="Grey">
+       <color rgba="0.4 0.4 0.4 1.0"/>
+     </material>
+   </visual>
+
+   <collision>
+     <origin xyz="${-length*0.5} 0 0" rpy="0 ${M_PI*0.5} 0" />
+     <geometry>
+       <cylinder radius="0.005" length="${length}" />
+     </geometry>
+   </collision>
+ </link>
+  
+  </macro>
+</robot>

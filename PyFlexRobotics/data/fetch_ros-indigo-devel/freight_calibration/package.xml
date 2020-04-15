@@ -1,0 +1,13 @@
+<package>
+  <name>freight_calibration</name>
+  <version>0.7.12</version>
+  <description>
+    Launch and configuration files for calibrating Freight using the 'robot_calibration' package.
+  </description>
+  <maintainer email="mferguson@fetchrobotics.com">Michael Ferguson</maintainer>
+  <maintainer email="narora@fetchrobotics.com">Niharika Arora</maintainer>
+  <license>Apache2</license>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>robot_calibration</run_depend>
+</package>

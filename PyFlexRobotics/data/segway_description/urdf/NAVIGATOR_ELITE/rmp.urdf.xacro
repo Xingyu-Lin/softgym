@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<!--
+Software License Agreement (BSD)
+
+\file      rmp.urdf.xacro
+\authors   Matt Harding, Patrick Hussey
+\copyright Copyright (c) 2015, Stanley Innovation, Inc., All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the
+   following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+   following disclaimer in the documentation and/or other materials provided with the distribution.
+ * Neither the name of Stanley Innovation nor the names of its contributors may be used to endorse or promote
+   products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WAR-
+RANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, IN-
+DIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<robot name="segway_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <!-- Included URDF/XACRO Files -->
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/battery.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/i2_wheel.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/std_gearbox_chassis.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/caster_assembly.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/single_spacer.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/navigator_ui.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/accessories.urdf.xacro" />
+
+    <xacro:property name="M_PI" value="3.14159"/>
+    
+    <!-- Wheel Mounting Positions -->
+    <xacro:property name="track" value="0.542391" />
+    <xacro:property name="wheel_vertical_offset" value="0.08255015" />
+
+    <!-- Wheel Properties -->
+    <xacro:property name="wheel_length" value="0.09224900" />
+    <xacro:property name="wheel_radius" value="0.2405681" />
+
+    <xacro:macro name="segway_robot">
+        <gazebo> 
+          <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"> 
+              <robotNamespace>/</robotNamespace>
+          </plugin> 
+        </gazebo>
+        
+        <!-- Base link is the center of the robot's chassis between the motors projected on the ground -->
+        <link name="base_link"/>
+        
+        <!--Chassis -->
+        <xacro:std_gearbox_chassis chassis_prefix="base" parent="base_link">
+            <origin xyz="0 0 ${-wheel_vertical_offset + wheel_radius}" rpy="0 0 0" />
+        </xacro:std_gearbox_chassis>
+        
+        <link name="inertial_collision_link">
+			<inertial>
+				<mass value="58.216824" />
+				<origin xyz="-0.002452 0.000023 0.23120" />
+				<inertia ixx="5.441713"  ixy="0.017871" ixz="-0.023004"
+                         iyx="0.017871"  iyy="4.732620" iyz="-0.000290"
+                         izx="-0.023004" izy="-0.000290" izz="1.951671" />
+			</inertial>
+            <collision>
+				<geometry>
+					<mesh filename="package://segway_description/meshes/collision/RMP220_chassis_collision.stl" />
+				</geometry>
+			</collision>
+		</link>
+		
+		<joint name="inertial_collision_joint" type="fixed" >
+		    <parent link="base_chassis_link" />
+		    <child link="inertial_collision_link" />
+		</joint>
+        
+        <!--Gearbox Spacers -->
+        <xacro:single_spacer spacer_prefix="left" parent="base_chassis_link">
+            <origin xyz="0 0.19582 0.00665015" rpy="0 0 0" />
+        </xacro:single_spacer>
+        <xacro:single_spacer spacer_prefix="right" parent="base_chassis_link">
+            <origin xyz="0 -0.19582 0.00665015" rpy="0 0 ${M_PI}" />
+        </xacro:single_spacer>         
+
+        <!-- Propulsion Batteries -->
+        <xacro:battery battery_prefix="mcu_1" parent="base_chassis_link">
+            <origin xyz="-0.09298 0 0" rpy="0 0 0" />
+        </xacro:battery>
+
+        <xacro:battery battery_prefix="mcu_0" parent="base_chassis_link">
+            <origin xyz="0.09298 0 0" rpy="0 0 ${M_PI}" />
+        </xacro:battery>
+
+        <!-- UI and sensor mount -->
+        <xacro:navigator_ui parent="base_chassis_link">
+            <origin xyz="$(optenv NAVIGATOR_ELITE_XYZ -0.1801 0 0.060625)" rpy="0 0 0" />
+        </xacro:navigator_ui>
+
+        <!-- Segway wheel macros -->
+        <xacro:i2_wheel wheel_prefix="left" parent="base_chassis_link" visual_rotation="0.0">
+            <origin xyz="0 ${track/2} ${wheel_vertical_offset}" rpy="0 0 0" />
+        </xacro:i2_wheel>
+        <xacro:i2_wheel wheel_prefix="right" parent="base_chassis_link" visual_rotation="${M_PI}">
+            <origin xyz="0 ${-track/2} ${wheel_vertical_offset}" rpy="0 0 0" />
+        </xacro:i2_wheel>
+        
+        <!-- Segway Caster Assembly-->
+        <xacro:if value="$(optenv SEGWAY_HAS_REAR_CASTER false)">
+            <xacro:caster_assembly caster_prefix="rear" parent="base_chassis_link">
+                <origin xyz="-0.31472057 0 0.02425235" rpy="0 0 0" />
+            </xacro:caster_assembly>
+        </xacro:if>
+
+        <xacro:if value="$(optenv SEGWAY_HAS_FRONT_CASTER false)">
+            <xacro:caster_assembly caster_prefix="front" parent="base_chassis_link">
+                <origin xyz="0.31472057 0 0.02425235" rpy="0 0 ${M_PI}" />
+            </xacro:caster_assembly>
+        </xacro:if>
+ 
+        <!-- Segway BSA Link (sign convention applied at embedded level)-->
+        <link name="bsa_link"/>
+        <joint name="bsa_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <parent link="$(optenv SEGWAY_PARENT_LINK base_chassis_link)" />
+            <child link="bsa_link" />
+        </joint>
+        <gazebo reference="bsa_link"/>
+        
+        <!-- Navigator elite accessories are in known locations -->
+        
+        <!-- CH Robotics UM7 Link-->
+        <link name="ext_imu_frame"/>
+        <joint name="ext_imu_joint" type="fixed">
+            <origin xyz="0.1845 0 0.273425" rpy="0 0 0" />
+            <parent link="navigator_ui_link" />
+            <child link="ext_imu_frame" />
+        </joint>
+        <gazebo>
+            <plugin name="imu_controller" filename="libhector_gazebo_ros_imu.so">
+                <alwaysOn>1</alwaysOn>
+                <updateRate>50.0</updateRate>
+                <bodyName>ext_imu_frame</bodyName>
+                <topicName>/segway/feedback/ext_imu</topicName>
+                <accelDrift>0.005 0.005 0.005</accelDrift>
+                <accelGaussianNoise>0.005 0.005 0.005</accelGaussianNoise>
+                <rateDrift>0.005 0.005 0.005 </rateDrift>
+                <rateGaussianNoise>0.005 0.005 0.005 </rateGaussianNoise>
+                <headingDrift>0.005</headingDrift>
+                <headingGaussianNoise>0.005</headingGaussianNoise>
+            </plugin>
+        </gazebo>
+
+        <!--GPS Link-->
+        <link name="gps_frame"/>
+        <joint name="gps_joint" type="fixed">
+            <origin xyz="0.10697555 0 0.32449842" rpy="0 0 0" />
+            <parent link="navigator_ui_link" />
+            <child link="gps_frame" />
+        </joint>
+        <gazebo>
+            <plugin name="gps_controller" filename="libhector_gazebo_ros_gps.so">
+                <alwaysOn>1</alwaysOn>
+                <updateRate>40</updateRate>
+                <bodyName>gps_frame</bodyName>
+                <topicName>/segway/feedback/gps/fix_2d</topicName>
+                <velocityTopicName>/segway/feedback/gps/vel</velocityTopicName>
+                <referenceLatitude>40.712784</referenceLatitude>
+                <referenceLongitude>-74.005941</referenceLongitude>
+                <referenceHeading>0</referenceHeading>
+                <referenceAltitude>0</referenceAltitude>
+                <drift>0.0001 0.0001 0.0001</drift>
+            </plugin>
+        </gazebo>
+
+        <!-- Velodyne VLP-16 Sensor -->
+        <xacro:velodyne_vlp16 parent="navigator_ui_link">
+            <origin xyz="0.2055 0 0.36698244" rpy="0 0 0" />
+        </xacro:velodyne_vlp16>
+        
+        <!-- PGR FLEA3 Sensor -->
+        <xacro:pgr_flea3 camera_prefix="camera" parent="navigator_ui_link" 
+                      image_format="R8G8B8" image_topic_name="image_raw"
+                      camera_info_topic_name="camera_info" hfov="90" focal_length="317.772992"
+                      hack_baseline="0" image_width="640" image_height="480">
+            <origin xyz="0.2319 0 0.29446250" rpy="0 0 0" />
+        </xacro:pgr_flea3>
+        
+    </xacro:macro>
+
+</robot>

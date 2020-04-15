@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<robot name="segway_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="robot_name" default="RMP_210"/>
+
+  <xacro:include filename="$(find segway_description)/urdf/$(arg robot_name)/rmp.urdf.xacro" />
+  <xacro:segway_robot />
+
+</robot>

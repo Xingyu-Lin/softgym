@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="left_null_gripper">
+  <xacro:include filename="$(find intera_tools_description)/urdf/null_gripper/null_gripper.xacro" />
+  <xacro:null_gripper side="left"/>
+</robot>

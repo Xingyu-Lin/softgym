@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<!--
+Software License Agreement (BSD)
+
+\file      sick_lms1xx.urdf.xacro
+\authors   Patrick Hussey
+\copyright Copyright (c) 2015, Stanley Innovation, Inc., All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the
+   following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+   following disclaimer in the documentation and/or other materials provided with the distribution.
+ * Neither the name of Stanley Innovation, Inc. nor the names of its contributors may be used to endorse or promote
+   products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WAR-
+RANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, IN-
+DIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="sick_tim">
+  
+    <xacro:macro name="sick_tim" params="laser_prefix parent *origin">
+        <joint name="${laser_prefix}_laser_joint" type="fixed">
+            <xacro:insert_block name="origin" />
+            <parent link="${parent}" />
+            <child link="${laser_prefix}_laser_link" />
+        </joint>
+
+        <link name="${laser_prefix}_laser_link">
+            <visual>
+                <geometry>
+                    <mesh filename="package://segway_description/meshes/visual/sensors/sick_tim.dae" />
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.1 0.1 0.1"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <gazebo reference="${laser_prefix}_laser_link">
+            <sensor type="ray" name="${laser_prefix}_hokuyo_laser">
+                <pose>0 0 0 0 0 0</pose>
+                <visualize>false</visualize>
+                <update_rate>50</update_rate>
+                <ray>
+                    <scan>
+                        <horizontal>
+                        <samples>720</samples>
+                        <resolution>1</resolution>
+                        <min_angle>-1.5708</min_angle>
+                        <max_angle>1.5708</max_angle>
+                        </horizontal>
+                    </scan>
+                    <range>
+                        <min>0.10</min>
+                        <max>20.0</max>
+                        <resolution>0.01</resolution>
+                    </range>
+                    <noise>
+                        <type>gaussian</type>
+                        <mean>0.0</mean>
+                        <stddev>0.01</stddev>
+                    </noise>
+                </ray>
+                <plugin name="hokuyo_node" filename="libgazebo_ros_laser.so">
+                    <topicName>/segway/${laser_prefix}_scan</topicName>
+                    <frameName>/segway/${laser_prefix}_laser_link</frameName>
+                </plugin>
+            </sensor>
+        </gazebo>
+    </xacro:macro>
+</robot>

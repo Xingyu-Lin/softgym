@@ -1,0 +1,5 @@
+<library path="libfetch_depth_layer">
+  <class type="costmap_2d::FetchDepthLayer" base_class_type="costmap_2d::Layer">
+    <description>A costmap layer that extracts ground plane and clears it.</description>
+  </class>
+</library>

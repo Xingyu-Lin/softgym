@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <name>fetch_maps</name>
+  <version>0.7.12</version>
+  <description>The fetch_maps package</description>
+
+  <maintainer email="mferguson@fetchrobotics.com">Michael Ferguson</maintainer>
+  <maintainer email="ablasdel@fetchrobotics.com">Aaron Blasdel</maintainer>
+  <author>Michael Gregg</author>
+  <author>Michael Ferguson</author>
+  <author>Aaron Blasdel</author>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

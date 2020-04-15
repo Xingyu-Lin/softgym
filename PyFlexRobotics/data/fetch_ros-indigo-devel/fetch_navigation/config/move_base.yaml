@@ -1,0 +1,50 @@
+# Planner selection
+base_global_planner: "navfn/NavfnROS"
+base_local_planner: "base_local_planner/TrajectoryPlannerROS"
+
+# Recovery behaviors are defined in robot folders
+
+# Oscillation
+oscillation_timeout: 10.0
+oscillation_distance: 0.5
+
+# Global planner
+planner_frequency: 0.0
+planner_patience: 5.0
+NavfnROS:
+  allow_unknown: true  # TODO: investigate this
+  default_tolerance: 0.0
+  # do not restrict planner
+  planner_window_x: 0.0
+  planner_window_y: 0.0
+  # debug
+  visualize_potential: false
+
+# Local planner
+controller_frequency: 25.0
+controller_patience: 15.0
+TrajectoryPlannerROS:
+  # base vel/accel profile is in robot folders
+  # tolerances (defaults)
+  yaw_goal_tolerance: 0.1
+  xy_goal_tolerance: 0.1
+  latch_xy_goal_tolerance: true
+  # forward simulation
+  sim_time: 1.0
+  sim_granularity: 0.025
+  angular_sim_granularity: 0.025
+  vx_samples: 3
+  vtheta_samples: 10
+  # scoring (defaults)
+  meter_scoring: true
+  pdist_scale: 8.0
+  gdist_scale: 12.0
+  occdist_scale: 0.1
+  heading_lookahead: 0.325
+  heading_scoring_timestep: 0.8
+  heading_scoring: true
+  dwa: false
+  # other
+  oscillation_reset_dist: 0.05
+  # debug
+  publish_cost_grid_pc: false

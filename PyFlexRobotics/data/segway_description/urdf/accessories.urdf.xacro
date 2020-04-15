@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<!--
+Software License Agreement (BSD)
+
+\file      accessories.urdf.xacro
+\authors   Patrick Hussey
+\copyright Copyright (c) 2015, Stanley Innovation, Inc., All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the
+   following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+   following disclaimer in the documentation and/or other materials provided with the distribution.
+ * Neither the name of Stanley Innovation, Inc. nor the names of its contributors may be used to endorse or promote
+   products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WAR-
+RANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, IN-
+DIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<robot name="segway_accessories" xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:include filename="$(find segway_description)/urdf/sensors/rgbd_sensor.urdf.xacro"/>
+    <xacro:include filename="$(find segway_description)/urdf/sensors/sick_tim.urdf.xacro"/>
+    <xacro:include filename="$(find segway_description)/urdf/sensors/hokuyo_ust20lx.urdf.xacro"/>
+    <xacro:include filename="$(find segway_description)/urdf/sensors/velodyne_vlp16.urdf.xacro"/>
+    <xacro:include filename="$(find segway_description)/urdf/sensors/pgr_flea3.urdf.xacro"/>
+    <xacro:include filename="$(find segway_description)/urdf/sensors/garmin_18x_lvc_gps.urdf.xacro"/>
+    
+    <xacro:property name="M_PI" value="3.14159"/>
+    
+    <xacro:macro name="segway_accessories">
+        <!-- CH Robotics UM7 Link-->
+        <xacro:if value="$(optenv SEGWAY_HAS_EXT_IMU false)">
+            <link name="ext_imu_frame"/>
+            <joint name="ext_imu_joint" type="fixed">
+                <origin xyz="$(optenv EXT_IMU_XYZ 0 0 0.30635)" rpy="$(optenv EXT_IMU_RPY 0 0 0)" />
+                <parent link="$(optenv SEGWAY_PARENT_LINK base_chassis_link)" />
+                <child link="ext_imu_frame" />
+            </joint>
+            <gazebo>
+                <plugin name="imu_controller" filename="libhector_gazebo_ros_imu.so">
+                    <alwaysOn>1</alwaysOn>
+                    <updateRate>50.0</updateRate>
+                    <bodyName>ext_imu_frame</bodyName>
+                    <topicName>/segway/feedback/ext_imu</topicName>
+                    <accelDrift>0.005 0.005 0.005</accelDrift>
+                    <accelGaussianNoise>0.005 0.005 0.005</accelGaussianNoise>
+                    <rateDrift>0.005 0.005 0.005 </rateDrift>
+                    <rateGaussianNoise>0.005 0.005 0.005 </rateGaussianNoise>
+                    <headingDrift>0.005</headingDrift>
+                    <headingGaussianNoise>0.005</headingGaussianNoise>
+                </plugin>
+            </gazebo>
+        </xacro:if>
+
+        <!--GPS Link-->
+        <xacro:if value="$(optenv SEGWAY_HAS_GPS false)">
+            <xacro:garmin_18x_lvc_gps parent="$(optenv SEGWAY_PARENT_LINK base_chassis_link)">
+                <origin xyz="$(optenv GPS_XYZ 0 0 1.0)" rpy="$(optenv GPS_RPY 0 0 3.1416)" />
+            </xacro:garmin_18x_lvc_gps>
+        </xacro:if>
+        
+        <!-- RGBD Sensor -->
+        <xacro:if value="$(optenv SEGWAY_HAS_KINECT false)">
+            <xacro:rgbd_sensor rgbd_prefix="rgbd" parent="$(optenv SEGWAY_PARENT_LINK base_chassis_link)">
+                <origin xyz="$(optenv RGBD_SENSOR_XYZ 0 0 1.0)" rpy="$(optenv RGBD_SENSOR_RPY 0 0 3.1416)" />
+            </xacro:rgbd_sensor>
+        </xacro:if>
+        
+        <!-- First laser Sensor -->
+        <xacro:if value="$(optenv SEGWAY_HAS_ONE_2D_LASER false)">
+            <!-- SICK TIM Sensor -->
+            <xacro:if value="$(optenv SEGWAY_LASER1_IS_SICK_TIM false)">
+                <xacro:sick_tim laser_prefix="$(optenv LASER1_PREFIX base)" parent="$(optenv SEGWAY_PARENT_LINK base_chassis_link)">
+                    <origin xyz="$(optenv LASER1_XYZ 0.35 0 0.2)" rpy="$(optenv LASER1_RPY 3.14159 0 0)" />
+                </xacro:sick_tim>
+            </xacro:if>
+            
+            <xacro:if value="$(optenv SEGWAY_LASER1_IS_HOKUYO false)">
+                <xacro:hokuyo_ust20lx laser_prefix="$(optenv LASER1_PREFIX base)" parent="$(optenv VECTOR_PARENT_LINK base_chassis_link)">
+                    <origin xyz="$(optenv LASER1_XYZ 0.35 0 0.2)" rpy="$(optenv LASER1_RPY 3.14159 0 0)" />
+                </xacro:hokuyo_ust20lx>
+            </xacro:if>
+        </xacro:if>
+        
+        
+        <!-- Second laser Sensor -->
+        <xacro:if value="$(optenv SEGWAY_HAS_SECOND_2D_LASER false)">
+            <!-- SICK TIM Sensor -->
+            <xacro:if value="$(optenv SEGWAY_LASER2_IS_SICK_TIM false)">
+                <xacro:sick_tim laser_prefix="$(optenv LASER2_PREFIX base)" parent="$(optenv SEGWAY_PARENT_LINK base_chassis_link)">
+                    <origin xyz="$(optenv LASER2_XYZ 0.35 0 0.2)" rpy="$(optenv LASER2_RPY 3.14159 0 0)" />
+                </xacro:sick_tim>
+            </xacro:if>
+            
+            <xacro:if value="$(optenv SEGWAY_LASER2_IS_HOKUYO false)">
+                <xacro:hokuyo_ust20lx laser_prefix="$(optenv LASER2_PREFIX base)" parent="$(optenv VECTOR_PARENT_LINK base_chassis_link)">
+                    <origin xyz="$(optenv LASER2_XYZ 0.35 0 0.2)" rpy="$(optenv LASER2_RPY 3.14159 0 0)" />
+                </xacro:hokuyo_ust20lx>
+            </xacro:if>
+        </xacro:if>
+        
+        <!-- Velodyne VLP-16 Sensor -->
+        <xacro:if value="$(optenv SEGWAY_HAS_VLP16 false)">
+            <xacro:velodyne_vlp16 parent="$(optenv SEGWAY_PARENT_LINK base_chassis_link)">
+                <origin xyz="$(optenv VLP16_XYZ 0 0 0.39991)" rpy="$(optenv VLP16_RPY 0 0 0)" />
+            </xacro:velodyne_vlp16>
+        </xacro:if>
+
+        <!-- PGR FLEA3 Sensor -->
+        <xacro:if value="$(optenv SEGWAY_HAS_FLEA3 false)">
+            <xacro:pgr_flea3 camera_prefix="camera" parent="$(optenv SEGWAY_PARENT_LINK base_chassis_link)" 
+                          image_format="R8G8B8" image_topic_name="image_raw"
+                          camera_info_topic_name="camera_info" hfov="90" focal_length="317.772992"
+                          hack_baseline="0" image_width="640" image_height="480">
+                <origin xyz="$(optenv FLEA3_XYZ 0 0 0.32739)" rpy="$(optenv FLEA3_RPY 0 0 0)" />
+            </xacro:pgr_flea3>
+        </xacro:if>
+
+    </xacro:macro>
+</robot>

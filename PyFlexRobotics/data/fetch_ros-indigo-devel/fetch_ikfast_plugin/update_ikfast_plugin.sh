@@ -1,0 +1,1 @@
+rosrun moveit_ikfast create_ikfast_moveit_plugin.py fetch arm fetch_ikfast_plugin /home/hanhong/indigo/src/fetch_ikfast_plugin/src/fetch_arm_ikfast_solver.cpp

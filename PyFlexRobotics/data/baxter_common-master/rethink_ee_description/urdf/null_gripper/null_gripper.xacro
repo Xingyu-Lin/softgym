@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="null_gripper">
+  <xacro:macro name="null_gripper" params="side">
+  <!-- This is not a URDF, it is a URDF fragment describing a default end effector
+     to be added to the robot URDF at run time.
+  -->
+  <link name="${side}_gripper_base">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      <mass value="0.0001"/>
+      <inertia ixx="1e-08" ixy="0" ixz="0" iyy="1e-08" iyz="0" izz="1e-08"/>
+    </inertial>
+  </link>
+  <link name="${side}_gripper">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      <mass value="0.0001"/>
+      <inertia ixx="1e-08" ixy="0" ixz="0" iyy="1e-08" iyz="0" izz="1e-08"/>
+    </inertial>
+  </link>
+  <joint name="${side}_gripper_base" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="${side}_hand"/>
+    <child link="${side}_gripper_base"/>
+  </joint>
+  <joint name="${side}_endpoint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="${side}_gripper_base"/>
+    <child link="${side}_gripper"/>
+  </joint>
+
+  </xacro:macro>
+</robot>

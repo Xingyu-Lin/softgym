@@ -1,5 +1,5 @@
 softgym/envs/*.pkl
-data
+./data
 __pycache__/
 .idea
 PyFlex/demo/compiler/makelinux64/.deps

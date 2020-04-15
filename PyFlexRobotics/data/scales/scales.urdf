@@ -1,0 +1,71 @@
+<?xml version="0.0" ?>
+<robot name="scales">
+  <link name="base">
+  
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0.12 0"/>
+      <geometry>
+        <box size="0.15 0.20 0.15"/>
+      </geometry>
+    </collision>
+  
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="base.obj"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="bowl">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value=".1"/>
+      <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0.0 0.0"/>
+      <geometry>
+        <!--<box size="0.25 0.05 0.25"/>-->
+        <mesh filename="bowl_low.obj" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="bowl.obj"/>
+      </geometry>
+    </visual>
+  </link>
+
+    <link name="needle">
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0.0 0.0"/>
+      <geometry>
+        <box size="0.01 0.05 0.01"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="needle.obj"/>
+      </geometry>
+    </visual>
+  </link>
+
+
+  <joint name="bowl_joint" type="prismatic">
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+    <parent link="base"/>
+    <child link="bowl"/>    
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="needle_joint" type="revolute">
+    <origin rpy="-0.4 0 0" xyz="0.0012 0.1335 0.055"/>
+    <parent link="base"/>
+    <child link="needle"/>    
+    <axis xyz="0 0 1"/>
+  </joint>
+
+</robot>

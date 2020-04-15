@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rethink_connector_plate">
+  <xacro:macro name="rethink_connector_plate" params="side gazebo">
+  <xacro:property name="rethink_connector_plate_length" value="0.0151" scope="global"/>
+  <link name="${side}_connector_plate_base">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.0" />
+      <inertia ixx="6.9922E-05"  ixy="6.1026E-08"  ixz="-1.7042E-06"
+               iyy="6.8188E-05"  iyz="-1.6118E-08" izz="0.00012392" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://intera_tools_description/meshes/connector_plate/connector_plate.STL" />
+      </geometry>
+      <material name="black">
+        <color rgba="0.05 0.05 0.05 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.0135" rpy="0 0 0" />
+        <geometry>
+          <cylinder length="${rethink_connector_plate_length*2.0}" radius="0.04"/>
+        </geometry>
+        <material name="darkred">
+          <color rgba=".5 .1 .1 1"/>
+        </material>
+    </collision>
+  </link>
+  <xacro:if value="${gazebo}">
+    <gazebo reference="${side}_connector_plate_base">
+      <material>Gazebo/FlatBlack</material>
+    </gazebo>
+  </xacro:if>
+  <link name="${side}_connector_plate_mount" />
+  <joint name="${side}_connector_plate_mount_joint" type="fixed">
+    <origin xyz="0 0 ${rethink_connector_plate_length+0.0025}" rpy="0 0 0" />
+    <parent link="${side}_connector_plate_base"  />
+    <child  link="${side}_connector_plate_mount" />
+  </joint>
+
+  </xacro:macro>
+</robot>

@@ -1,0 +1,7 @@
+free_thresh: 0.196
+image: 3_1_16_limit.png
+negate: 0
+mode: raw
+occupied_thresh: 0.65
+origin: [0.0, 0.0, 0.0]
+resolution: 0.05

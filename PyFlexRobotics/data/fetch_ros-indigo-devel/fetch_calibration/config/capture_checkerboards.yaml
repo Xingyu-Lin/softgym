@@ -1,0 +1,24 @@
+chains:
+  - name: arm
+    topic: /arm_controller/follow_joint_trajectory
+    joints:
+     - shoulder_pan_joint
+     - shoulder_lift_joint
+     - upperarm_roll_joint
+     - elbow_flex_joint
+     - forearm_roll_joint
+     - wrist_flex_joint
+     - wrist_roll_joint
+    planning_group: arm
+  - name: head
+    topic: /head_controller/follow_joint_trajectory
+    joints:
+     - head_pan_joint
+     - head_tilt_joint
+duration: 2.0
+features:
+  checkerboard_finder:
+    type: robot_calibration/CheckerboardFinder
+    topic: /head_camera/depth_registered/points
+    camera_sensor_name: camera
+    chain_sensor_name: arm

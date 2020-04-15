@@ -1,0 +1,12 @@
+- git:
+    local-name: intera_sdk
+    uri: https://github.com/RethinkRobotics/intera_sdk.git
+    version: master
+- git:
+    local-name: intera_common
+    uri: https://github.com/RethinkRobotics/intera_common.git
+    version: master
+- git:
+    local-name: sawyer_robot
+    uri: https://github.com/RethinkRobotics/sawyer_robot.git
+    version: master

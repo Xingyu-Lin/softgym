@@ -1,0 +1,50 @@
+chains:
+  - name: arm
+    topic: /arm_controller/follow_joint_trajectory
+    joints:
+     - shoulder_pan_joint
+     - shoulder_lift_joint
+     - upperarm_roll_joint
+     - elbow_flex_joint
+     - forearm_roll_joint
+     - wrist_flex_joint
+     - wrist_roll_joint
+    planning_group: arm
+  - name: head
+    topic: /head_controller/follow_joint_trajectory
+    joints:
+     - head_pan_joint
+     - head_tilt_joint
+duration: 2.0
+features:
+  led_finder:
+    type: robot_calibration/LedFinder
+    action: /gripper_controller/led_action
+    topic: /head_camera/depth_registered/points
+    camera_sensor_name: camera
+    chain_sensor_name: arm
+    threshold: 500.0
+    max_iterations: 25
+    debug_image: false
+    gripper_led_frame: wrist_roll_link
+    poses:
+      - code: 1
+        topic: led1
+        x: 0.1044
+        y: 0.0355
+        z: 0.0396
+      - code: 2
+        topic: led2
+        x: 0.0514
+        y: 0.0355
+        z: 0.0396
+      - code: 4
+        topic: led3
+        x: 0.0514
+        y: -0.0355
+        z: 0.0396
+      - code: 8
+        topic: led4
+        x: 0.1044
+        y: -0.0355
+        z: 0.0396

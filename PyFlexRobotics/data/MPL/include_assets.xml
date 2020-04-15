@@ -1,0 +1,34 @@
+<!-- ======================================================
+	This file is part of MuJoCo.     
+	Copyright 2009-2016 Roboti LLC.
+	
+	Model 		:: Modular Prosthetic Limb 
+		Source		: http://www.jhuapl.edu/prosthetics/scientists/mpl.asp
+		Downloaded	: 11Nov'14
+		
+	Mujoco		:: Advanced physics simulation engine
+		Source		: www.roboti.us
+		Version		: 1.31
+		Released 	: 23Apr16
+		
+	Author		:: Vikash Kumar, Emo Todorov
+		Contacts 	: kumar@roboti.us, todorov@roboti.us
+		Last edits 	: 30Apr'16, 15Dec'15
+====================================================== -->
+<mujoco>
+	<asset>
+		<texture file="wood.png"/>
+		<texture name="wood2d" type="2d" file="wood.png"/>
+		<texture file="square.png"/>
+		<texture name="foil" file="silverRaw.png"/>
+        <texture file="woodb.png"/>
+
+		<material name="MatFoil" texture="foil" specular="1" shininess=".3"  rgba=".9 .9 .9 1"/>
+		<material name="MatPlane" specular=".3" shininess=".3" rgba=".3 .3 .2 1"/>
+        <material name="MatWood" texture="wood" specular="0.4" shininess=".1" texrepeat="3 3"/>
+        <material name="MatSquare" texture="square" specular="1" shininess=".6"  rgba=".8 .8 .8 1"/>
+        <material name="MatWoodR" texture="wood" specular="1" shininess=".3"  rgba="1 0.5 0.5 1"/>
+        <material name="MatWoodG" texture="wood" specular="1" shininess=".3"  rgba="0.2 1 0.2 1"/>
+        <material name="MatWoodB" texture="woodb" specular="1" shininess=".3"/>
+	</asset>
+</mujoco>

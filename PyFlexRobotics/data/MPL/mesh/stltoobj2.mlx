@@ -1,0 +1,13 @@
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Merge Close Vertices">
+  <Param max="0.00135536" description="Merging distance" name="Threshold" min="0" tooltip="All the vertices that closer than this threshold are merged together. Use very small values, default values is 1/10000 of bounding box diagonal. " value="1.3554e-5" type="RichAbsPerc"/>
+ </filter>
+ <filter name="Re-Compute Vertex Normals">
+  <Param enum_val3="As defined by N. Max" description="Weighting Mode:" enum_val1="By Angle" name="weightMode" enum_val0="None (avg)" tooltip="" value="0" enum_cardinality="4" enum_val2="By Area" type="RichEnum"/>
+ </filter>
+ <filter name="Remove Zero Area Faces"/>
+ <filter name="Split Vertexes Incident on Non Manifold Faces">
+  <Param description="Vertex Displacement Ratio" name="VertDispRatio" tooltip="When a vertex is split it is moved along the average vector going from its position to the baricyenter of the FF connected faces sharing it" value="0" type="RichFloat"/>
+ </filter>
+</FilterScript>

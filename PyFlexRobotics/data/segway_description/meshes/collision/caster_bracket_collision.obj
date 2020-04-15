@@ -1,0 +1,41 @@
+# File produced by Open Asset Import Library (http://www.assimp.sf.net)
+# (assimp v3.1.187496374)
+
+mtllib caster_bracket_collision.obj.mtl
+
+# 8 vertex positions
+v  0.0327385 -0.045 -0.135
+v  0.0327385 0.045 -0.135
+v  0.0327385 -0.045 0
+v  0.0327385 0.045 0
+v  -0.0562615 -0.045 -0.135
+v  -0.0562615 -0.045 0
+v  -0.0562615 0.045 -0.135
+v  -0.0562615 0.045 0
+
+# 0 UV coordinates
+
+# 6 vertex normals
+vn 1 0 0
+vn -2.18302e-15 -1 0
+vn -1 0 0
+vn 2.18302e-15 1 0
+vn 0 0 -1
+vn 0 0 1
+
+# Mesh '<STL_BINARY>' with 12 faces
+g <STL_BINARY>
+usemtl DefaultMaterial
+f  1//1 2//1 3//1
+f  3//1 2//1 4//1
+f  5//2 1//2 6//2
+f  6//2 1//2 3//2
+f  7//3 5//3 8//3
+f  8//3 5//3 6//3
+f  2//4 7//4 4//4
+f  4//4 7//4 8//4
+f  5//5 7//5 1//5
+f  1//5 7//5 2//5
+f  8//6 6//6 4//6
+f  4//6 6//6 3//6
+

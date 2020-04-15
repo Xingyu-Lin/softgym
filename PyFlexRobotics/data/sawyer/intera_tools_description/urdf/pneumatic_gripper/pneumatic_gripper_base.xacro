@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="pneumatic_gripper_base">
+  <xacro:macro name="pneumatic_gripper_base" params="side">
+
+    <xacro:property name="tip_length" value="${0.03 + 0.02}" scope="local"/>
+
+    <!-- Base of end effector -->
+    <link name="${side}_gripper_base">
+      <visual>
+        <origin rpy="0 ${pi} ${pi}" xyz="0 0 0"/>
+        <geometry>
+          <mesh filename="package://intera_tools_description/meshes/pneumatic_gripper/pneumatic_gripper_base.DAE"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin rpy="0 ${pi} ${pi}" xyz="0.0 0.0 0.025"/>
+        <geometry>
+          <box size="0.044 0.078 0.038" />
+          <box length="0.08" radius="0.02"/>
+        </geometry>
+        <material name="darkred">
+          <color rgba=".5 .1 .1 1"/>
+        </material>
+      </collision>
+      <inertial>
+        <origin rpy="0 ${pi} ${pi}" xyz="0.0 0.0 0.0"/>
+        <mass value="0.1"/>
+        <inertia ixx="2e-08" ixy="0" ixz="0" iyy="3e-08" iyz="0" izz="2e-08"/>
+      </inertial>
+    </link>
+
+    <!-- Pneumatic Gripper Base Joint -->
+    <joint name="${side}_gripper_base" type="fixed">
+      <origin rpy="0 0 0" xyz="0 0 0.0"/>
+      <parent link="${side}_hand"/>
+      <child link="${side}_gripper_base"/>
+    </joint>
+    <!-- Pneumatic Gripper Tip joint -->
+    <joint name="${side}_endpoint" type="fixed">
+      <origin rpy="0 0 0" xyz="0 0 ${tip_length}"/>
+      <parent link="${side}_gripper_base"/>
+      <child link="${side}_gripper"/>
+    </joint>
+    <!-- Pneumatic Gripper Tip link -->
+    <link name="${side}_gripper">
+      <inertial>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <mass value="0.0001"/>
+        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0.0"/>
+      </inertial>
+    </link>
+
+  </xacro:macro>
+</robot>

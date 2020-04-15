@@ -1,0 +1,37 @@
+<package>
+
+  <name>fetch_moveit_config</name>
+  <version>0.7.12</version>
+  <description>
+     An automatically generated package with all the configuration and launch files for using the fetch_urdf with the MoveIt Motion Planning Framework
+  </description>
+  <author email="assistant@moveit.ros.org">MoveIt Setup Assistant</author>
+  <maintainer email="mferguson@fetchrobotics.com">Michael Ferguson</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://moveit.ros.org/</url>
+  <url type="bugtracker">https://github.com/ros-planning/moveit_setup_assistant/issues</url>
+  <url type="repository">https://github.com/ros-planning/moveit_setup_assistant</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>fetch_description</build_depend>
+
+  <run_depend>fetch_description</run_depend>
+  <run_depend>fetch_ikfast_plugin</run_depend>
+  <run_depend>joint_state_publisher</run_depend>
+  <run_depend>moveit_fake_controller_manager</run_depend>
+  <run_depend>moveit_kinematics</run_depend>
+  <run_depend>moveit_ros_move_group</run_depend>
+  <run_depend>moveit_planners_ompl</run_depend>
+  <run_depend>moveit_python</run_depend>
+  <run_depend>moveit_ros_visualization</run_depend>
+  <run_depend>moveit_simple_controller_manager</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>xacro</run_depend>
+
+  <test_depend>rostest</test_depend>
+  
+</package>

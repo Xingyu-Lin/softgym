@@ -1,0 +1,29 @@
+<package>
+  <name>fetch_teleop</name>
+  <version>0.7.12</version>
+  <description>
+    Teleoperation for fetch and freight.
+  </description>
+  <author>Michael Ferguson</author>
+  <maintainer email="mferguson@fetchrobotics.com">Michael Ferguson</maintainer>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/fetch_teleop</url>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>actionlib</build_depend>
+  <build_depend>control_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>topic_tools</build_depend>
+
+  <run_depend>actionlib</run_depend>
+  <run_depend>control_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>topic_tools</run_depend>
+</package>

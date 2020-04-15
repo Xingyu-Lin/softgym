@@ -1,0 +1,31 @@
+<!-- ======================================================
+	This file is part of MuJoCo.     
+	Copyright 2009-2016 Roboti LLC.
+	
+	Model 		:: Modular Prosthetic Limb 
+		Source		: http://www.jhuapl.edu/prosthetics/scientists/mpl.asp
+		Downloaded	: 11Nov'14
+		
+	Mujoco		:: Advanced physics simulation engine
+		Source		: www.roboti.us
+		Version		: 1.31
+		Released 	: 23Apr16
+		
+	Author		:: Vikash Kumar, Emo Todorov
+		Contacts 	: kumar@roboti.us, todorov@roboti.us
+		Last edits 	: 30Apr'16, 15Dec'15
+====================================================== -->
+<mujoco model="MPL handle(v1.31)">
+	<include file="include_MPL.xml"/>
+	<include file="include_assets.xml"/>
+
+	<worldbody>
+		<geom name="Wall" type="box" material="MatWood" pos="0 0.1 .15" size="0.07 0.01 0.1501"/>
+		
+		<body name="DoorHandle" pos="0 0.05 0.2">
+			<geom name="knob" type="capsule" material="MatFoil" size="0.007 0.03" euler="1.57 0 0" condim="3"/>
+			<geom name="Handle" type="capsule" material="MatFoil" pos="0.07 -0.03 0" size="0.009 0.07" euler="0 1.57 0" condim="3"/>
+			<joint name="Latch" type="hinge" axis="0 1 0" pos="0 0 0" limited="true" range="0 1.57" stiffness="2" damping="0.1" armature=".01"/>
+		</body>
+	</worldbody>
+</mujoco>

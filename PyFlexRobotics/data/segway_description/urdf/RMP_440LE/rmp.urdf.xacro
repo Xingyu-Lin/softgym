@@ -1,0 +1,254 @@
+<?xml version="1.0"?>
+<!--
+Software License Agreement (BSD)
+
+\file      rmp.urdf.xacro
+\authors   Matt Harding, Patrick Hussey
+\copyright Copyright (c) 2015, Stanley Innovation, Inc., All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the
+   following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+   following disclaimer in the documentation and/or other materials provided with the distribution.
+ * Neither the name of Stanley Innovation nor the names of its contributors may be used to endorse or promote
+   products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WAR-
+RANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, IN-
+DIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<robot name="segway_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <!-- Included URDF/XACRO Files -->
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/battery.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/x2_wheel.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/single_spacer.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/std_gearbox_chassis.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/inv_double_spacer.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/inv_gearbox_chassis.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/inv_gearbox_ext_spacer_chassis.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/eci_440_spacer.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/large_enclosure.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/rmp440_le_nave_brackets.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/accessories.urdf.xacro" />
+
+    <xacro:property name="M_PI" value="3.14159"/>
+
+    <!-- Wheel Mounting Positions -->
+
+    <xacro:property name="wheel_track" value="$(optenv SEGWAY_440LE_WHEEL_TRACK 0.66067)" />
+    <xacro:property name="wheel_vertical_offset" value="$(optenv SEGWAY_440LE_WHEEL_OFFSET 0.08255015)" />       
+    <xacro:property name="wheel_base" value="0.57150" />
+
+    <!-- Wheel Properties -->
+    <xacro:property name="wheel_radius" value="0.26670" />
+
+    <!-- Various Properties -->
+    <xacro:property name="battery_offset" value="0.09298" />
+
+    <xacro:macro name="segway_robot">
+        <gazebo> 
+          <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"> 
+              <robotNamespace>/</robotNamespace>
+          </plugin> 
+        </gazebo>
+
+        <!-- Base link is the center of the robot's chassis between the motors -->
+        <link name="base_link"/>
+
+        <!-- Base footprint is on the ground under the robot -->
+        <link name="base_chassis_link"/>
+        <joint name="base_chassis_joint" type="fixed">
+            <origin xyz="0 0 ${-wheel_vertical_offset + wheel_radius}" rpy="0 0 0" />
+            <parent link="base_link" />
+            <child link="base_chassis_link" />
+        </joint>
+        
+        <xacro:if value="$(optenv SEGWAY_440_LE_STD true)">
+            <link name="inertial_collision_link">
+			    <inertial>
+				    <mass value="91.028000" />
+				    <origin xyz="-0.033312 -0.001314 0.043167" rpy="${-M_PI / 2.0} 0 0"/>
+				    <inertia ixx="2.625517"  ixy="0.032260"  ixz="-0.019196"
+                             iyx="0.032260"  iyy="8.046165"  iyz="-0.006618"
+                             izx="-0.019196" izy="-0.006618" izz="9.655358" />
+			    </inertial>
+                <collision>
+                    <origin xyz="0 0 0" rpy="${-M_PI / 2.0} 0 0" />
+				    <geometry>
+					    <mesh filename="package://segway_description/meshes/collision/RMP440LE_chassis_collision.stl" />
+				    </geometry>
+			    </collision>
+		    </link>
+		</xacro:if>
+		
+        <xacro:if value="$(optenv SEGWAY_440_LE_HCG false)">
+            <link name="inertial_collision_link">
+			    <inertial>
+				    <mass value="91.028000" />
+				    <origin xyz="-0.033312 -0.001314 0.043167" rpy="${-M_PI / 2.0} 0 0"/>
+				    <inertia ixx="2.625517"  ixy="0.032260"  ixz="-0.019196"
+                             iyx="0.032260"  iyy="8.046165"  iyz="-0.006618"
+                             izx="-0.019196" izy="-0.006618" izz="9.655358" />
+			    </inertial>
+                <collision>
+                    <origin xyz="0 0 0" rpy="${-M_PI / 2.0} 0 0" />
+				    <geometry>
+					    <mesh filename="package://segway_description/meshes/collision/440LE_hcg_collision.stl" />
+				    </geometry>
+			    </collision>
+		    </link>
+		</xacro:if>
+
+        <xacro:if value="$(optenv SEGWAY_440_LE_ECI false)">
+            <link name="inertial_collision_link">
+			    <inertial>
+				    <mass value="91.028000" />
+				    <origin xyz="-0.033312 -0.001314 0.043167" rpy="${-M_PI / 2.0} 0 0"/>
+				    <inertia ixx="2.625517"  ixy="0.032260"  ixz="-0.019196"
+                             iyx="0.032260"  iyy="8.046165"  iyz="-0.006618"
+                             izx="-0.019196" izy="-0.006618" izz="9.655358" />
+			    </inertial>
+                <collision>
+                    <origin xyz="0 0 0" rpy="0 0 0" />
+				    <geometry>
+					    <mesh filename="package://segway_description/meshes/collision/440ECI_extented_chassis_collision.stl" />
+				    </geometry>
+			    </collision>
+		    </link>
+		</xacro:if>  
+
+		<joint name="inertial_collision_joint" type="fixed" >
+		    <parent link="base_chassis_link" />
+		    <child link="inertial_collision_link" />
+		</joint>
+        
+        <!--Chassis -->
+        <xacro:if value="$(optenv SEGWAY_440_LE_STD true)">
+            <xacro:std_gearbox_chassis chassis_prefix="front" parent="base_chassis_link">
+                <origin xyz="${wheel_base/2} 0 0" rpy="0 0 ${M_PI}" />
+            </xacro:std_gearbox_chassis>
+            <xacro:std_gearbox_chassis chassis_prefix="rear" parent="base_chassis_link">
+                <origin xyz="${-wheel_base/2} 0 0" rpy="0 0 0" />
+            </xacro:std_gearbox_chassis>
+        </xacro:if>
+        
+        <xacro:if value="$(optenv SEGWAY_440_LE_HCG false)">
+            <!--Chassis -->
+            <xacro:inv_gearbox_chassis chassis_prefix="front" parent="base_chassis_link">
+                <origin xyz="${wheel_base/2} 0 0" rpy="0 0 ${M_PI}" />
+            </xacro:inv_gearbox_chassis>
+            <xacro:inv_gearbox_chassis chassis_prefix="rear" parent="base_chassis_link">
+                <origin xyz="${-wheel_base/2} 0 0" rpy="0 0 0" />
+            </xacro:inv_gearbox_chassis>
+        </xacro:if>
+        
+        <xacro:if value="$(optenv SEGWAY_440_LE_ECI false)">
+            <!--Chassis -->
+            <xacro:inv_gearbox_ext_spacer_chassis chassis_prefix="front" parent="base_chassis_link">
+                <origin xyz="${wheel_base/2} 0 0" rpy="0 0 ${M_PI}" />
+            </xacro:inv_gearbox_ext_spacer_chassis>
+            <xacro:inv_gearbox_ext_spacer_chassis chassis_prefix="rear" parent="base_chassis_link">
+                <origin xyz="${-wheel_base/2} 0 0" rpy="0 0 0" />
+            </xacro:inv_gearbox_ext_spacer_chassis>
+        </xacro:if>
+        
+        <!-- Segway BSA Link (sign convention applied at embedded level)-->
+        <link name="bsa_link"/>
+        <joint name="bsa_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <parent link="front_chassis_link" />
+            <child link="bsa_link" />
+        </joint>
+        <gazebo reference="bsa_link"/>
+
+        <!-- Propulsion Batteries -->
+        <xacro:battery battery_prefix="mcu_0" parent="base_chassis_link">
+            <origin xyz="${wheel_base/2+battery_offset} 0 0" rpy="0 0 ${M_PI}" />
+        </xacro:battery>
+        <xacro:battery battery_prefix="mcu_1" parent="base_chassis_link">
+            <origin xyz="${wheel_base/2-battery_offset} 0 0" rpy="0 0 0" />
+        </xacro:battery>
+        <xacro:battery battery_prefix="mcu_2" parent="base_chassis_link">
+            <origin xyz="${-wheel_base/2+battery_offset} 0 0" rpy="0 0 ${M_PI}" />
+        </xacro:battery>
+        <xacro:battery battery_prefix="mcu_3" parent="base_chassis_link">
+            <origin xyz="${-wheel_base/2-battery_offset} 0 0" rpy="0 0 0" />
+        </xacro:battery>
+
+        <!--Gearbox Spacers -->
+        <xacro:if value="$(optenv SEGWAY_440_LE_STD true)">
+            <xacro:single_spacer spacer_prefix="front_left" parent="base_chassis_link">
+                <origin xyz="${wheel_base/2} 0.19582 0.00665" rpy="0 0 0" />
+            </xacro:single_spacer>
+            <xacro:single_spacer spacer_prefix="front_right" parent="base_chassis_link">
+                <origin xyz="${wheel_base/2} -0.19582 0.00665" rpy="0 0 ${M_PI}" />
+            </xacro:single_spacer>         
+            <xacro:single_spacer spacer_prefix="rear_left" parent="base_chassis_link">
+                <origin xyz="${-wheel_base/2} 0.19582 0.00665" rpy="0 0 0" />
+            </xacro:single_spacer>
+            <xacro:single_spacer spacer_prefix="rear_right" parent="base_chassis_link">
+                <origin xyz="${-wheel_base/2} -0.19582 0.00665" rpy="0 0 ${M_PI}" />
+            </xacro:single_spacer>
+        </xacro:if>
+        
+        <xacro:if value="$(optenv SEGWAY_440_LE_HCG false)">
+            <xacro:inv_double_spacer spacer_prefix="left" parent="base_chassis_link">
+                <origin xyz="0 0.19582 0" rpy="0 0 0" />
+            </xacro:inv_double_spacer>
+            <xacro:inv_double_spacer spacer_prefix="right" parent="base_chassis_link">
+                <origin xyz="0 -0.19582 0" rpy="0 0 ${M_PI}" />
+            </xacro:inv_double_spacer>   
+        </xacro:if>
+        
+
+        <xacro:if value="$(optenv SEGWAY_440_LE_ECI false)">
+            <xacro:eci_440_spacer parent="base_chassis_link">
+                <origin xyz="0 0 0" rpy="0 0 0" />
+            </xacro:eci_440_spacer>
+        </xacro:if>
+        
+        
+        <xacro:if value="$(optenv HAS_SEGWAY_440_NAVE_PACKAGE false)">
+            <xacro:rmp440_le_nave_brackets parent="base_chassis_link">
+                <origin xyz="0 0 0" rpy="0 0 0" />
+            </xacro:rmp440_le_nave_brackets>
+        </xacro:if>                     
+
+
+        <!-- UI Box -->
+        <xacro:large_enclosure parent="base_chassis_link">
+            <origin xyz="0 0 0.05797" rpy="0 0 0" />
+        </xacro:large_enclosure>
+
+        <!-- UI Batteries -->
+        <xacro:battery battery_prefix="aux" parent="base_chassis_link">
+            <origin xyz="0 0 0.03910" rpy="0 0 ${M_PI}" />
+        </xacro:battery>
+
+        <!-- Segway wheel macros -->
+        <xacro:x2_wheel wheel_prefix="front_left" parent="base_chassis_link" visual_rotation="0">
+            <origin xyz="${wheel_base / 2.0} ${wheel_track / 2.0} ${wheel_vertical_offset}" rpy="0 0 0" />
+        </xacro:x2_wheel>
+        <xacro:x2_wheel wheel_prefix="front_right" parent="base_chassis_link" visual_rotation="${M_PI}">
+            <origin xyz="${wheel_base / 2.0} ${-wheel_track / 2.0} ${wheel_vertical_offset}" rpy="0 0 0" />
+        </xacro:x2_wheel>
+        <xacro:x2_wheel wheel_prefix="rear_left" parent="base_chassis_link" visual_rotation="0">
+            <origin xyz="${-wheel_base / 2.0} ${wheel_track /2.0} ${wheel_vertical_offset}" rpy="0 0 0" />
+        </xacro:x2_wheel>
+        <xacro:x2_wheel wheel_prefix="rear_right" parent="base_chassis_link" visual_rotation="${M_PI}">
+            <origin xyz="${-wheel_base / 2.0} ${-wheel_track /2.0} ${wheel_vertical_offset}" rpy="0 0 0" />
+        </xacro:x2_wheel>
+
+        <!-- Setup any accessories defined in the environment -->
+        <xacro:segway_accessories />
+
+    </xacro:macro>
+
+</robot>

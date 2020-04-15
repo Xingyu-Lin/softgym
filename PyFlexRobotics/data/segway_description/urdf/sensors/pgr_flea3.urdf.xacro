@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<!--
+Software License Agreement (BSD)
+
+\file      sick_lms1xx.urdf.xacro
+\authors   Patrick Hussey
+\copyright Copyright (c) 2015, Stanley Innovation, Inc., All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the
+   following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+   following disclaimer in the documentation and/or other materials provided with the distribution.
+ * Neither the name of Stanley Innovation, Inc. nor the names of its contributors may be used to endorse or promote
+   products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WAR-
+RANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, IN-
+DIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="pgr_flea3">
+  
+    <xacro:macro name="pgr_flea3" params="camera_prefix parent *origin image_format image_topic_name camera_info_topic_name hfov focal_length hack_baseline image_width image_height">
+        <joint name="${camera_prefix}_optical_joint" type="fixed">
+            <xacro:insert_block name="origin" />
+            <parent link="${parent}" />
+            <child link="${camera_prefix}_optical_frame" />
+        </joint>
+
+        <link name="${camera_prefix}_optical_frame">
+            <inertial>
+                <mass value="0.107" />
+                <origin xyz="0 0 0" />
+                <inertia ixx="0.000080" ixy="0.0" ixz="0.0"
+                         iyx="0.0" iyy="0.000080" iyz="0.0"
+                         izx="0.0" izy="0.0"      izz="0.000019" />
+            </inertial>
+            <visual>
+                <origin rpy="${-M_PI / 2.0} 0 ${-M_PI / 2.0}" />
+                <geometry>
+                    <mesh filename="package://segway_description/meshes/visual/sensors/pgr_flea3.dae" />
+                </geometry>
+            </visual>
+            <collision>
+                <origin rpy="${-M_PI / 2.0} 0 ${-M_PI / 2.0}" />
+                <geometry>
+                    <mesh filename="package://segway_description/meshes/collision/sensors/pgr_flea3.stl" />
+                </geometry>
+            </collision>
+        </link>
+        
+        <gazebo reference="${camera_prefix}_optical_frame">
+            <sensor type="camera" name="flea3_camera_sensor">
+                <always_on>true</always_on>
+                <update_rate>30.0</update_rate>
+                <camera>
+                    <horizontal_fov>${90.4*M_PI/180.0}</horizontal_fov>
+                    <image>
+                        <format>${image_format}</format>
+                        <width>${image_width}</width>
+                        <height>${image_height}</height>
+                    </image>
+                    <clip>
+                        <near>0.5</near>
+                        <far>100</far>
+                    </clip>
+                </camera>
+                <plugin name="${camera_prefix}_controller" filename="libgazebo_ros_camera.so">
+                    <alwaysOn>true</alwaysOn>
+                    <updateRate>25.0</updateRate>
+                    <cameraName>${camera_prefix}</cameraName>
+                    <imageTopicName>${image_topic_name}</imageTopicName>
+                    <cameraInfoTopicName>${camera_info_topic_name}</cameraInfoTopicName>
+                    <frameName>/segway/${camera_prefix}_optical_frame</frameName>
+                    <hackBaseline>${hack_baseline}</hackBaseline>
+                    <CxPrime>${(image_width+1)/2}</CxPrime>
+                    <Cx>${(image_width+1)/2}</Cx>
+                    <Cy>${(image_height+1)/2}</Cy>
+                    <!-- image_width / (2*tan(hfov_radian /2)) -->
+                    <!-- 320 for wide and 772.55 for narrow stereo camera -->
+                    <focalLength>${focal_length}</focalLength>
+                    <distortionK1>0.0</distortionK1>
+                    <distortionK2>0.0</distortionK2>
+                    <distortionK3>0.0</distortionK3>
+                    <distortionT1>0.0</distortionT1>
+                    <distortionT2>0.0</distortionT2>
+                </plugin>
+            </sensor>
+        </gazebo>
+
+    </xacro:macro>
+</robot>

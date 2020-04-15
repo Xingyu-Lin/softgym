@@ -1,0 +1,43 @@
+<!-- ======================================================
+	This file is part of MuJoCo.     
+	Copyright 2009-2016 Roboti LLC.
+	
+	Model 		:: Modular Prosthetic Limb 
+		Source		: http://www.jhuapl.edu/prosthetics/scientists/mpl.asp
+		Downloaded	: 11Nov'14
+		
+	Mujoco		:: Advanced physics simulation engine
+		Source		: www.roboti.us
+		Version		: 1.31
+		Released 	: 23Apr16
+		
+	Author		:: Vikash Kumar, Emo Todorov
+		Contacts 	: kumar@roboti.us, todorov@roboti.us
+		Last edits 	: 30Apr'16, 15Dec'15
+====================================================== -->
+<mujoco model="MPL basic(v1.31)">
+	<include file="include_MPL.xml"/>
+	<include file="include_assets.xml"/>
+
+    <worldbody>
+		<geom type="plane" material="MatPlane" pos=".6 0 0.1" zaxis="-1 0 1" size=".1 .5 .025"/>
+		<geom type="plane" material="MatPlane" pos="-.6 0 0.1" zaxis="1 0 1" size=".1 .5 .025"/>
+		<geom type="plane" material="MatPlane" pos="0 .6 0.1" zaxis="0 -1 1" size=".5 .1 .025"/>
+		<geom type="plane" material="MatPlane" pos="0 -.6 0.1" zaxis="0 1 1" size=".5 .1 .025"/>
+
+        <body name="obj1" pos="0.2 0.2 .1">
+            <geom type="sphere" material="MatWood" size="0.04" condim="6" friction="1 .001 .001"/>
+            <joint class="free"/>
+        </body>
+
+        <body name="obj2" pos="0 0.2 .1">
+            <geom type="box" material="MatWoodB" size="0.02 0.04 0.06"/>
+            <joint class="free"/>
+        </body>
+
+        <body name="obj3" pos="-0.2 0.2 .1">
+            <geom type="ellipsoid" material="MatSquare" size="0.05 0.04 0.02" condim="6" friction="1 .001 .001"/>
+            <joint class="free"/>
+        </body>
+    </worldbody>
+</mujoco>

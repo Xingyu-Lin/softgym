@@ -1,0 +1,43 @@
+<!-- ======================================================
+	This file is part of MuJoCo.     
+	Copyright 2009-2016 Roboti LLC.
+	
+	Model 		:: Modular Prosthetic Limb 
+		Source		: http://www.jhuapl.edu/prosthetics/scientists/mpl.asp
+		Downloaded	: 11Nov'14
+		
+	Mujoco		:: Advanced physics simulation engine
+		Source		: www.roboti.us
+		Version		: 1.31
+		Released 	: 23Apr16
+		
+	Author		:: Vikash Kumar, Emo Todorov
+		Contacts 	: kumar@roboti.us, todorov@roboti.us
+		Last edits 	: 30Apr'16, 15Dec'15
+====================================================== -->
+<mujoco model="MPL coins(v1.31)">
+	<include file="include_MPL.xml"/>
+	<include file="include_assets.xml"/>
+
+	<worldbody>
+		<!--geom name="jbase" type="box" material="MatWood" size="0.04 0.04 0.005" pos="0 0 0.005" rgba="0 1 0 1" condim="4" friction="1 1 .001"/-->		
+		<geom name="jright" type="box" material="MatWood" size="0.005 0.035 0.05" pos="0.04 0 0.04"/>	
+		<geom name="jleft"  type="box" material="MatWood" size="0.005 0.035 0.05" pos="-.04 0 0.04"/>	
+		<geom name="jfront" type="box" material="MatWood" size="0.045 0.005 0.05" pos="0 0.04 0.04"/>	
+		<geom name="jback"  type="box" material="MatWood" size="0.045 0.005 0.05" pos="0 -.04 0.04"/>	
+		
+		<body name="Coin0" pos="0.10 -0.05 .15">
+			<geom type="cylinder" size="0.017 0.005" material="MatSquare"/>
+			<joint class="free" />
+		</body>
+		<body name="Coin1" pos="0.15 -0.05 .15">
+			<geom type="cylinder" size="0.017 0.005" material="MatSquare"/>
+			<joint class="free" />
+		</body>
+		<body name="Coin2" pos="0.20 -0.05 .15">
+			<geom type="cylinder" size="0.017 0.005" material="MatSquare"/>
+			<joint class="free" />
+		</body>
+	</worldbody>
+	
+</mujoco>

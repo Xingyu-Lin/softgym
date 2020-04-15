@@ -1,0 +1,26 @@
+verbose: true
+base_link: base_link
+models:
+ - name: cameraground
+   type: camera3d
+   frame: base_camera_optical_frame
+   topic: /base_camera/depth_downsample/points
+free_frames:
+ - name: base_camera_joint
+   x: false
+   y: false
+   z: false
+   roll: false
+   pitch: true
+   yaw: false
+error_blocks:
+ - name: ground_plane
+   type: camera3d_to_ground
+   camera: cameraground
+   ground: ground
+ - name: restrict_camera
+   type: outrageous
+   param: base_camera_joint
+   joint_scale: 0.0
+   position_scale: 0.1
+   rotation_scale: 0.1

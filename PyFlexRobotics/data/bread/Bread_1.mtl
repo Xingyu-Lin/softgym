@@ -1,0 +1,10 @@
+newmtl Bread_1
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Bread_1_COLOR.jpg
+bump Bread_1_BUMP.jpg -bm 0.08
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 18.00

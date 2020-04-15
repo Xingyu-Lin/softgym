@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<!--
+Software License Agreement (BSD)
+
+\file      rgbd_sensor.urdf.xacro
+\authors   Patrick Hussey
+\copyright Copyright (c) 2015, Stanley Innovation, Inc., All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the
+   following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+   following disclaimer in the documentation and/or other materials provided with the distribution.
+ * Neither the name of Stanley Innovation, Inc. nor the names of its contributors may be used to endorse or promote
+   products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WAR-
+RANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, IN-
+DIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="rgbd_sensor">
+
+	<xacro:macro name="rgbd_sensor" params="rgbd_prefix parent *origin">
+        <joint name="${rgbd_prefix}_joint" type="fixed">
+            <xacro:insert_block name="origin" />
+            <parent link="${parent}" />
+            <child link="${rgbd_prefix}_link" />
+        </joint>
+        <link name="${rgbd_prefix}_link">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 ${M_PI/2}"/>
+                <geometry>
+                    <mesh filename="package://segway_description/meshes/visual/sensors/rgbd_sensor.dae" />
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 ${M_PI/2}"/>
+                <geometry>
+                    <mesh filename="package://segway_description/meshes/collision/sensors/rgbd_sensor.stl" />
+                </geometry>
+            </collision>
+        </link>
+
+        <link name="${rgbd_prefix}_depth_frame"/>
+        <joint name="${rgbd_prefix}_depth_joint" type="fixed">
+            <parent link="${rgbd_prefix}_link"/>
+            <child link="${rgbd_prefix}_depth_frame" />
+            <origin xyz="0 -0.02  0" rpy="0 0 0"/>
+        </joint>
+
+        <link name="${rgbd_prefix}_rgb_frame"/>
+        <joint name="${rgbd_prefix}_rgb_joint" type="fixed">
+            <parent link="${rgbd_prefix}_link"/>
+            <child link="${rgbd_prefix}_rgb_frame" />
+            <origin xyz="0 -0.045  0" rpy="0 0 0"/>
+        </joint>
+
+        <link name="${rgbd_prefix}_depth_optical_frame"/>
+        <joint name="${rgbd_prefix}_depth_optical_joint" type="fixed">
+            <parent link="${rgbd_prefix}_depth_frame"/>
+            <child link="${rgbd_prefix}_depth_optical_frame" />
+            <origin xyz="0 0 0" rpy="${-M_PI / 2.0} 0 ${-M_PI / 2.0}"/>
+        </joint>
+        
+        <link name="${rgbd_prefix}_rgb_optical_frame"/>
+        <joint name="${rgbd_prefix}_rgb_optical_joint" type="fixed">
+            <parent link="${rgbd_prefix}_rgb_frame"/>
+            <child link="${rgbd_prefix}_rgb_optical_frame" />
+            <origin xyz="0 0 0" rpy="${-M_PI / 2.0} 0 ${-M_PI / 2.0}"/>
+        </joint>
+
+        <gazebo reference="${rgbd_prefix}_link">
+            <sensor type="depth" name="${rgbd_prefix}">
+                <always_on>true</always_on>
+                <update_rate>20.0</update_rate>
+                <camera>
+                    <horizontal_fov>${60.0*M_PI/180.0}</horizontal_fov>
+                    <image>
+                        <format>R8G8B8</format>
+                        <width>640</width>
+                        <height>480</height>
+                    </image>
+                    <clip>
+                        <near>0.05</near>
+                        <far>8.0</far>
+                    </clip>
+                </camera>
+                <plugin name="kinect_${rgbd_prefix}_controller" filename="libgazebo_ros_openni_kinect.so">
+                    <cameraName>${rgbd_prefix}</cameraName>
+                    <alwaysOn>true</alwaysOn>
+                    <updateRate>10</updateRate>
+                    <imageTopicName>rgb/image_raw</imageTopicName>
+                    <depthImageTopicName>depth/image_raw</depthImageTopicName>
+                    <pointCloudTopicName>depth/points</pointCloudTopicName>
+                    <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
+                    <depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
+                    <frameName>/segway/${rgbd_prefix}_rgb_optical_frame</frameName>
+                    <baseline>0.1</baseline>
+                    <distortion_k1>0.0</distortion_k1>
+                    <distortion_k2>0.0</distortion_k2>
+                    <distortion_k3>0.0</distortion_k3>
+                    <distortion_t1>0.0</distortion_t1>
+                    <distortion_t2>0.0</distortion_t2>
+                    <pointCloudCutoff>0.4</pointCloudCutoff>
+                    <pointCloudCutoffMax>5.0</pointCloudCutoffMax>
+                </plugin>
+            </sensor>
+        </gazebo>
+    </xacro:macro>
+</robot>

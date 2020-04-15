@@ -1,0 +1,14 @@
+obstacles:
+  observation_sources: base_scan
+  base_scan:
+    data_type: LaserScan
+    topic: base_scan
+    marking: true
+    clearing: true
+    obstacle_range: 4.0
+    raytrace_range: 5.0
+    min_obstacle_height: 0.25
+    max_obstacle_height: 0.3
+  z_voxels: 16
+  z_resolution: 0.125
+  max_obstacle_height: 2.0

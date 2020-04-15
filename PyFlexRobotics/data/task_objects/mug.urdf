@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<robot name="coffeemug">
+  <link name="base_link">
+    <visual>
+      <origin rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://gazebo_learning_planning/meshes/coffeemug.stl" scale=".2 .2 .2"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://gazebo_learning_planning/meshes/coffeemug.stl" scale=".2 .2 .2"/>
+      </geometry>
+    </collision>
+  </link>
+ <joint name="dummy_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="dummy_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="dummy_link" >
+    <inertial>
+      <origin xyz="0 0 0" /> 
+      <mass value="1.0" />
+      <inertia  ixx="0.001" ixy="0.0"  ixz="0.0"  iyy="0.001"  iyz="0.0"  izz="0.001" />
+    </inertial>
+  </link>
+</robot>

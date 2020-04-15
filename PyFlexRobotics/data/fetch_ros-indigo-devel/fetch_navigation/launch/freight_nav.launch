@@ -1,0 +1,34 @@
+<launch>
+
+  <!-- Navigation requires at least one map.
+       In addition, it is sometimes desirable to have a "keepout" map
+       which is used for costmaps, but not localization -->
+  <arg name="map_file" default="$(find fetch_maps)/maps/3_1_16_localization.yaml" />
+  <arg name="map_keepout_file" default="$(find fetch_maps)/maps/3_1_16_keepout.yaml" />
+  <arg name="use_keepout" default="false" />
+
+  <!-- Navigation parameter files -->
+  <arg name="move_base_include" default="$(find fetch_navigation)/launch/include/move_base.launch.xml" />
+  <arg name="amcl_include" default="$(find fetch_navigation)/launch/include/amcl.launch.xml" />
+
+  <!-- serve up a map -->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+  <!-- serve up a map with keepout zones -->
+  <group if="$(arg use_keepout)" >
+  <node name="map_keepout_server" pkg="map_server" type="map_server" args="$(arg map_keepout_file)" >
+    <remap from="map" to="map_keepout" />
+    <remap from="static_map" to="static_map_keepout" />
+  </node>
+  </group>
+
+  <!-- localize the robot -->
+  <include file="$(arg amcl_include)" />
+
+  <!-- move the robot -->
+  <include file="$(arg move_base_include)" >
+    <arg name="name" value="freight" />
+    <arg if="$(arg use_keepout)" name="map_topic" value="map_keepout" />
+  </include>
+
+</launch>

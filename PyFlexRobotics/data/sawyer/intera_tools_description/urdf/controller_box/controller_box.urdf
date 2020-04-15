@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<robot name="base_collision">
+  <link name="controller_box">
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.325 0 -0.38"/>
+      <geometry>
+        <box size="0.22 0.4 0.53"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="controller_box_fixed" type="fixed">
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+    <parent link="base" />
+    <child link="controller_box" />
+  </joint>
+
+  <link name="pedestal_feet">
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.1225 0 -0.758"/>
+      <geometry>
+        <box size="0.77 0.7 0.31"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="pedestal_feet_fixed" type="fixed">
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+    <parent link="base" />
+    <child link="pedestal_feet" />
+  </joint>
+</robot>

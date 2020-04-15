@@ -1,0 +1,199 @@
+<?xml version="1.0"?>
+<!--
+Software License Agreement (BSD)
+
+\file      rmp.urdf.xacro
+\authors   Matt Harding
+\copyright Copyright (c) 2015, Stanley Innovation, Inc., All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the
+   following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+   following disclaimer in the documentation and/or other materials provided with the distribution.
+ * Neither the name of Stanley Innovation nor the names of its contributors may be used to endorse or promote
+   products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WAR-
+RANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, IN-
+DIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<robot name="segway_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <!-- Included URDF/XACRO Files -->    
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/battery.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/omni_lf_rr_wheel.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/omni_lr_rf_wheel.urdf.xacro" />
+    
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/omni_structure.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/omni_flex_pivot.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/omni_ui_mount.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/inv_single_spacer.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/inv_gearbox_chassis.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/segway_components/ui_box.urdf.xacro" />
+    <xacro:include filename="$(find segway_description)/urdf/accessories.urdf.xacro" />
+
+    <xacro:property name="M_PI" value="3.14159"/>
+
+    <!-- Wheel Mounting Positions -->
+    <xacro:property name="wheel_track" value="0.693251" />
+    <xacro:property name="wheel_vertical_offset" value="0.08255015" />
+    <xacro:property name="wheel_base" value="0.693251" />
+
+    <!-- Wheel Properties -->
+    <xacro:property name="wheel_length" value="0.0976376" />
+    <xacro:property name="wheel_radius" value="0.127" />
+
+    <!-- Various Properties -->
+    <xacro:property name="battery_offset" value="0.09298" />
+
+    <xacro:macro name="segway_robot">
+
+
+        <!-- Base link is the center of the robot's chassis between the motors -->
+        <link name="base_link"/>
+
+        <gazebo>
+            <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"> 
+              <robotNamespace>/</robotNamespace>
+            </plugin> 
+            <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+                <commandTopic>/segway/cmd_vel</commandTopic>
+                <odometryTopic>/segway/odometry/local_filtered</odometryTopic>
+                <odometryFrame>odom</odometryFrame>
+                <odometryRate>100</odometryRate>
+                <robotBaseFrame>/segway/base_link</robotBaseFrame>
+            </plugin>
+        </gazebo>
+
+        <!-- Base footprint is on the ground under the robot -->
+        <link name="base_chassis_link"/>
+        <joint name="base_chassis_joint" type="fixed">
+            <origin xyz="0 0 ${wheel_vertical_offset + wheel_radius}" rpy="0 0 0" />
+            <parent link="base_link" />
+            <child link="base_chassis_link" />
+        </joint>
+		
+        <link name="inertial_collision_link">
+			<inertial>
+				<mass value="101.561195" />
+				<origin xyz="-0.000710 -0.000186 0.03813" rpy="0 0 0"/>
+				<inertia ixx="3.126061"  ixy="-0.032687" ixz="-0.086662"
+                         iyx="-0.032687" iyy="13.356772" iyz="0.000468"
+                         izx="-0.086662" izy="0.000468"  izz="15.218700" />
+			</inertial>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+				<geometry>
+					<mesh filename="package://segway_description/meshes/collision/RMP_OMNI_chassis_collision.stl" />
+				</geometry>
+			</collision>
+		</link>
+
+		<joint name="inertial_collision_joint" type="fixed" >
+		    <parent link="base_chassis_link" />
+		    <child link="inertial_collision_link" />
+		</joint>
+        
+        
+        <!--Rear Chassis -->
+        <xacro:inv_gearbox_chassis chassis_prefix="rear" parent="base_chassis_link">
+            <origin xyz="${-wheel_base/2} 0 0" rpy="0 0 0" />
+        </xacro:inv_gearbox_chassis>
+        
+        <!--Rear Gearbox Spacers -->
+        <xacro:inv_single_spacer spacer_prefix="left_rear" parent="rear_chassis_link">
+            <origin xyz="0 0.19582 0" rpy="0 0 0" />
+        </xacro:inv_single_spacer>
+        <xacro:inv_single_spacer spacer_prefix="right_rear" parent="rear_chassis_link">
+            <origin xyz="0 -0.19582 0" rpy="0 0 ${M_PI}" />
+        </xacro:inv_single_spacer>
+        
+        <!--Rear batteries-->
+        <xacro:battery battery_prefix="mcu_2" parent="rear_chassis_link">
+            <origin xyz="${battery_offset} 0 0" rpy="0 0 ${M_PI}" />
+        </xacro:battery>
+        <xacro:battery battery_prefix="mcu_3" parent="rear_chassis_link">
+            <origin xyz="${-battery_offset} 0 0" rpy="0 0 0" />
+        </xacro:battery>
+        
+        <!--Rear wheels-->
+        <xacro:omni_lr_rf_wheel wheel_prefix="left_rear" parent="rear_chassis_link">
+            <origin xyz="0 ${wheel_track/2} ${-wheel_vertical_offset}" rpy="0 0 0" />
+        </xacro:omni_lr_rf_wheel>
+        <xacro:omni_lf_rr_wheel wheel_prefix="right_rear" parent="rear_chassis_link">
+            <origin xyz="0 ${-wheel_track/2} ${-wheel_vertical_offset}" rpy="0 0 ${M_PI}" />
+        </xacro:omni_lf_rr_wheel>
+
+        
+        <!--Structure-->
+        <xacro:omni_structure parent="base_chassis_link">
+            <origin xyz="0 0 0.18762980" rpy="0 0 0" />
+        </xacro:omni_structure>
+        
+        <!--Flex joint-->
+        <xacro:omni_flex_pivot parent="base_chassis_link">
+            <origin xyz="0.3974313 0 0.1463548" rpy="0 0 0" />
+        </xacro:omni_flex_pivot>
+        
+        <!--Front Chassis -->
+        <xacro:inv_gearbox_chassis chassis_prefix="front" parent="omni_flex_pivot_link">
+            <origin xyz="-0.0535 0 -0.1463548" rpy="0 0 ${M_PI}" />
+        </xacro:inv_gearbox_chassis>
+
+        <!-- Segway BSA Link (sign convention applied at embedded level)-->
+        <link name="bsa_link"/>
+        <joint name="bsa_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <parent link="front_chassis_link" />
+            <child link="bsa_link" />
+        </joint>
+        <gazebo reference="bsa_link"/>
+        
+        <!--Front Gearbox Spacers -->
+        <xacro:inv_single_spacer spacer_prefix="left_front" parent="front_chassis_link">
+            <origin xyz="0 0.19582 0" rpy="0 0 0" />
+        </xacro:inv_single_spacer>
+        <xacro:inv_single_spacer spacer_prefix="right_front" parent="front_chassis_link">
+            <origin xyz="0 -0.19582 0" rpy="0 0 ${M_PI}" />
+        </xacro:inv_single_spacer>
+        
+        <!--Front batteries-->
+        <xacro:battery battery_prefix="mcu_0" parent="front_chassis_link">
+            <origin xyz="${battery_offset} 0 0" rpy="0 0 ${M_PI}" />
+        </xacro:battery>
+        <xacro:battery battery_prefix="mcu_1" parent="front_chassis_link">
+            <origin xyz="${-battery_offset} 0 0" rpy="0 0 0" />
+        </xacro:battery>
+        
+        <!--Front wheels-->
+        <xacro:omni_lf_rr_wheel wheel_prefix="left_front" parent="front_chassis_link">
+            <origin xyz="0 ${wheel_track/2} ${-wheel_vertical_offset}" rpy="0 0 0" />
+        </xacro:omni_lf_rr_wheel>
+        <xacro:omni_lr_rf_wheel wheel_prefix="right_front" parent="front_chassis_link">
+            <origin xyz="0 ${-wheel_track/2} ${-wheel_vertical_offset}" rpy="0 0 ${M_PI}" />
+        </xacro:omni_lr_rf_wheel>
+        
+
+        <!-- UI Box -->
+        <!--xacro:ui_box parent="base_chassis_link">
+            <origin xyz="-0.76354529 0 0.0098298" rpy="0 0 0" />
+        </xacro:ui_box>
+        <xacro:omni_ui_mount parent="ui_box_link">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:omni_ui_mount>
+        <xacro:battery battery_prefix="aux" parent="ui_box_link">
+            <origin xyz="0.02315 0 0.06597515" rpy="${M_PI} 0 0" />
+        </xacro:battery-->
+
+        <!-- Setup any accessories defined in the environment -->
+        <xacro:segway_accessories />
+
+    </xacro:macro>
+
+</robot>

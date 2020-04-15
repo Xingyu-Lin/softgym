@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!--Segway Robot Description Launch File-->
+<launch>
+  <arg name="robot_name" default="$(optenv SEGWAY_PLATFORM_NAME RMP_210)"/>
+  <arg name="use_gui" default="false"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(env SEGWAY_DESCRIPTION)'
+    robot_name:=$(arg robot_name)" />
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+    <param name="publish_frequency" type="double" value="100.0" />
+    <param name="tf_prefix" value="/segway"/>
+  </node>
+  
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+  	<!--rosparam param="source_list">[segway/rmp_joint_states]</rosparam-->
+  	<param name="use_gui" value="$(arg use_gui)" />
+  </node>
+  
+</launch>

@@ -1,0 +1,10 @@
+# Blender MTL File: 'finger.blend'
+# Material Count: 1
+
+newmtl None
+Ns 50
+Ka 0.0 0.0 0.0
+Kd 0.004 0.153 0.799
+Ks 0.8 0.8 0.8
+d 1
+illum 2

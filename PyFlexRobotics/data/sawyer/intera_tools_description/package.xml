@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package>
+  <name>intera_tools_description</name>
+  <version>5.2.0</version>
+  <description>
+    Description of End Effector for Robots from Rethink Robotics.
+    This package contains the URDF and meshes describing these tools.
+  </description>
+
+  <maintainer email="rsdk.support@rethinkrobotics.com">
+    Rethink Robotics Inc.
+  </maintainer>
+  <license>Apache 2.0</license>
+  <url type="website">http://sdk.rethinkrobotics.com/intera/</url>
+  <url type="repository">
+    https://github.com/RethinkRobotics/intera_common
+  </url>
+  <url type="bugtracker">
+    https://github.com/RethinkRobotics/intera_common/issues
+  </url>
+  <author>Rethink Robotics Inc.</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

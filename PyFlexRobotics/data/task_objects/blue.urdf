@@ -1,0 +1,34 @@
+<?xml version="0.0" ?>
+<robot name="urdf_robot">
+
+  <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material>
+
+  <link name="base_link">
+    <contact>
+      <lateral_friction value="1.0"/>
+      <spinning_friction value="0.3"/>
+      <inertia_scaling value="3.0"/>
+    </contact>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value=".1"/>
+      <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.025 0.025 0.025"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://task_objects/cube_meshes/blue.obj"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>
+

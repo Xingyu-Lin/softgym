@@ -1,0 +1,15 @@
+<package>
+  <name>fetch_calibration</name>
+  <version>0.7.12</version>
+  <description>
+    Launch and configuration files for calibrating Fetch using the 'robot_calibration' package.
+  </description>
+  <author>Michael Ferguson</author>
+  <maintainer email="mferguson@fetchrobotics.com">Michael Ferguson</maintainer>
+  <license>Apache2</license>
+  <url>http://ros.org/wiki/fetch_calibration</url>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend version_gte="0.5.1">robot_calibration</run_depend>
+</package>

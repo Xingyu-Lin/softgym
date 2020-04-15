@@ -1,0 +1,101 @@
+<robot name = "cableLimits">
+	<joint name = "joint2" type = "revolute">
+		<origin xyz = "2.182585 4.533686 -2.368449" rpy = "0 0 0"/>
+		<parent link = "world"/>
+		<child link = "wheel2"/>
+		<axis xyz = "-0.000000 0.000000 1.000000"/>
+		<limit lower = "-340282346638528860000000000000000000000.000000" upper = "340282346638528860000000000000000000000.000000"/>
+	</joint>
+	<joint name = "joint1" type = "revolute">
+		<origin xyz = "-2.116281 4.808598 -2.368449" rpy = "0 0 0"/>
+		<parent link = "world"/>
+		<child link = "wheel1"/>
+		<axis xyz = "-0.000000 -0.000000 1.000000"/>
+		<limit lower = "-340282346638528860000000000000000000000.000000" upper = "340282346638528860000000000000000000000.000000"/>
+	</joint>
+	<joint name = "joint1.001" type = "fixed">
+		<origin xyz = "-0.001138 0.411558 0.000000" rpy = "0 0 0"/>
+		<parent link = "wheel1"/>
+		<child link = "handle"/>
+	</joint>
+	<link name = "world" />
+	<link name = "handle">
+		<visual>
+			<origin xyz = "-0.002447 0.288252 -0.000011" rpy = "0.000000 -0.000000 0.000000"/>
+			<geometry>
+				<mesh>
+					<vertices count = "8">
+						<vertex id = "0" xyz = "-0.092609 -0.302277 0.127534"/>
+						<vertex id = "1" xyz = "-0.092609 0.302215 0.127534"/>
+						<vertex id = "2" xyz = "-0.092609 0.302215 -0.127513"/>
+						<vertex id = "3" xyz = "-0.092609 -0.302277 -0.127513"/>
+						<vertex id = "4" xyz = "0.092625 0.302215 0.127534"/>
+						<vertex id = "5" xyz = "0.092625 0.302215 -0.127513"/>
+						<vertex id = "6" xyz = "0.092625 -0.302277 0.127534"/>
+						<vertex id = "7" xyz = "0.092625 -0.302277 -0.127513"/>
+
+					</vertices>
+					<faces count = "6">
+						<face id = "0" indices ="0 1 2 3"/>
+						<face id = "1" indices ="1 4 5 2"/>
+						<face id = "2" indices ="4 6 7 5"/>
+						<face id = "3" indices ="6 0 3 7"/>
+						<face id = "4" indices ="3 2 5 7"/>
+						<face id = "5" indices ="6 4 1 0"/>
+
+					</faces>
+				</mesh>
+			</geometry>
+		</visual>
+	</link>
+	<link name = "wheel2">
+		<visual>
+			<origin xyz = "-0.000000 -0.000000 -0.000001" rpy = "0.000000 -0.000000 0.000000"/>
+			<geometry>
+				<cylinder radius = "0.503643" length = "0.343719"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name = "wheel1">
+		<visual>
+			<origin xyz = "0.000000 -0.000000 -0.000002" rpy = "0.000000 -0.000000 0.000000"/>
+			<geometry>
+				<cylinder radius = "0.503643" length = "0.343719"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name = "weight">
+		<visual>
+			<origin xyz = "2.789986 3.135520 -2.410209" rpy = "0.000000 -0.000000 0.000000"/>
+			<geometry>
+				<mesh>
+					<vertices count = "8">
+						<vertex id = "0" xyz = "-0.356500 0.356503 -0.356503"/>
+						<vertex id = "1" xyz = "0.356502 0.356503 -0.356503"/>
+						<vertex id = "2" xyz = "0.356502 -0.356499 -0.356503"/>
+						<vertex id = "3" xyz = "-0.356500 -0.356499 -0.356503"/>
+						<vertex id = "4" xyz = "0.356502 0.356503 0.356500"/>
+						<vertex id = "5" xyz = "0.356502 -0.356499 0.356500"/>
+						<vertex id = "6" xyz = "-0.356500 0.356503 0.356500"/>
+						<vertex id = "7" xyz = "-0.356500 -0.356499 0.356500"/>
+
+					</vertices>
+					<faces count = "6">
+						<face id = "0" indices ="0 1 2 3"/>
+						<face id = "1" indices ="1 4 5 2"/>
+						<face id = "2" indices ="4 6 7 5"/>
+						<face id = "3" indices ="6 0 3 7"/>
+						<face id = "4" indices ="3 2 5 7"/>
+						<face id = "5" indices ="6 4 1 0"/>
+
+					</faces>
+				</mesh>
+			</geometry>
+		</visual>
+	</link>
+	<cable name = "cable" cyclic = "false" stretchingCompliance = "0.000000" compressionCompliance = "-1.000000">
+		<link type = "rolling" body = "wheel1" normal = "0.000000 0.000000 -1.000000" d = "-2.449177" extraLength = "1.000000"/>
+		<link type = "rolling" body = "wheel2" normal = "0.000000 0.000000 -1.000000" d = "-2.434790"/>
+		<link type = "fixed" body = "weight" pos = "2.795110 3.406535 -2.431672"/>
+	</cable>
+</robot>

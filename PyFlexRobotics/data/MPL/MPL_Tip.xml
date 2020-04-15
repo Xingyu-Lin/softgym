@@ -1,0 +1,43 @@
+<!-- ======================================================
+	This file is part of MuJoCo.     
+	Copyright 2009-2015 Roboti LLC.
+	
+	Model 		:: Modular Prosthetic Limb 
+		Source		: http://www.jhuapl.edu/prosthetics/scientists/mpl.asp
+		Downloaded	: 11Nov'14
+		
+	Mujoco		:: Advanced physics simulation engine
+		Source		: www.roboti.us
+		Version		: 1.22
+		Released 	: 26Nov15
+		
+	Author		:: Vikash Kumar, Emo Todorov
+		Contacts 	: kumar@roboti.us, todorov@roboti.us
+		Last edits 	: 15Dec'15
+====================================================== -->
+<mujoco model="MPL tip(v1.31)">
+	<include file="include_MPL.xml"/>
+	<include file="include_assets.xml"/>
+
+	<default>
+		<default class="board">
+			<geom type="box" material="MatWood"/>
+		</default>
+	</default>
+
+	<worldbody>
+		<body childclass="board" pos="0 0 0.009">
+			<geom name="farr" pos="0 0.18 0"  size="0.05 0.07 0.01"/>
+			<geom name="midf" pos="0 0.0 0"   size="0.05 0.08 0.01" />
+			<geom name="near" pos="0 -0.18 0" size="0.05 0.07 0.01"/>
+			<geom name="left" pos="-.15 0 0"  size="0.10 0.25 0.01" />
+			<geom name="righ" pos="0.15 0 0"  size="0.10 0.25 0.01" />
+			<geom name="topp" pos="0 0 0.03"  size="0.25 .005 .02" />
+		</body>
+		
+		<body name="Object" pos="0 .095 .25">
+			<geom name="box" type="box" material="MatWoodB" size="0.045 0.01 0.045" condim="3" friction="1 .001 .001"/>
+			<joint class="free"/>
+		</body>
+	</worldbody>
+</mujoco>

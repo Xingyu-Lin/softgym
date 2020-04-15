@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>yumi_description</name>
+  <version>0.0.4</version>
+  <description>The yumi_description package</description>
+
+  <maintainer email="robert.krug@oru.se">Robert Krug</maintainer>
+
+  <license>BSD</license>
+
+  <author email="robert.krug@oru.se">Robert Krug</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>xacro</exec_depend>
+</package>

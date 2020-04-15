@@ -1,0 +1,147 @@
+<robot name="drc_skeleton">
+  <transmission name="head_hokuyo_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <joint name="hokuyo_joint"/>
+    <actuator name="hokuyo_motor"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="back_lbz_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <joint name="back_lbz"/>
+    <actuator name="back_lbz_motor"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="back_mby_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="back_mby_motor"/>
+    <joint name="back_mby"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="back_ubx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="back_ubx_motor"/>
+    <joint name="back_ubx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_arm_elx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_arm_elx_motor"/>
+    <joint name="l_arm_elx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_arm_ely_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_arm_ely_motor"/>
+    <joint name="l_arm_ely"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_arm_mwx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_arm_mwx_motor"/>
+    <joint name="l_arm_mwx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_arm_shx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_arm_shx_motor"/>
+    <joint name="l_arm_shx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_arm_usy_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_arm_usy_motor"/>
+    <joint name="l_arm_usy"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_arm_uwy_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_arm_uwy_motor"/>
+    <joint name="l_arm_uwy"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_leg_kny_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_leg_kny_motor"/>
+    <joint name="l_leg_kny"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_leg_lax_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_leg_lax_motor"/>
+    <joint name="l_leg_lax"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_leg_lhy_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_leg_lhy_motor"/>
+    <joint name="l_leg_lhy"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_leg_mhx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_leg_mhx_motor"/>
+    <joint name="l_leg_mhx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_leg_uay_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_leg_uay_motor"/>
+    <joint name="l_leg_uay"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="l_leg_uhz_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="l_leg_uhz_motor"/>
+    <joint name="l_leg_uhz"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="neck_ay_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="neck_ay_motor"/>
+    <joint name="neck_ay"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_arm_elx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_arm_elx_motor"/>
+    <joint name="r_arm_elx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_arm_ely_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_arm_ely_motor"/>
+    <joint name="r_arm_ely"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_arm_mwx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_arm_mwx_motor"/>
+    <joint name="r_arm_mwx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_arm_shx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_arm_shx_motor"/>
+    <joint name="r_arm_shx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_arm_usy_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_arm_usy_motor"/>
+    <joint name="r_arm_usy"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_arm_uwy_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_arm_uwy_motor"/>
+    <joint name="r_arm_uwy"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_leg_kny_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_leg_kny_motor"/>
+    <joint name="r_leg_kny"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_leg_lax_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_leg_lax_motor"/>
+    <joint name="r_leg_lax"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_leg_lhy_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_leg_lhy_motor"/>
+    <joint name="r_leg_lhy"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_leg_mhx_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_leg_mhx_motor"/>
+    <joint name="r_leg_mhx"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_leg_uay_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_leg_uay_motor"/>
+    <joint name="r_leg_uay"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+  <transmission name="r_leg_uhz_trans" type="pr2_mechanism_model/SimpleTransmission">
+    <actuator name="r_leg_uhz_motor"/>
+    <joint name="r_leg_uhz"/>
+    <mechanicalReduction>1</mechanicalReduction>
+  </transmission>
+</robot>

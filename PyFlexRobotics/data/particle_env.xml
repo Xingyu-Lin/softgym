@@ -1,0 +1,30 @@
+<mujoco model="MuJoCo Model">
+    <compiler angle="radian" meshdir="/Users/woj/projects/gpr/cache/s3/stls/" texturedir="/Users/woj/projects/gpr/cache/s3/textures/" />
+    <option timestep="0.005" />
+    <size njmax="500" nconmax="100" />
+    <visual>
+        <global offwidth="2880" offheight="1530" />
+    </visual>
+    <worldbody>
+        <geom name="floor0" size="2 2 1" pos="2 2 0" type="plane" />
+        <body name="floor0" pos="2 2 0">
+            <inertial pos="2 2 0" mass="0" diaginertia="0 0 0" />
+            <site name="target" pos="0 0 0.05" size="0.1" rgba="0 0 1 1" />
+        </body>
+        <body name="robot0:particle" pos="0.15 0.15 0.15">
+            <inertial pos="0 0 0" mass="1" diaginertia="0.009 0.009 0.009" />
+            <joint name="robot0:slide0" pos="0 0 0" axis="1 0 0" type="slide" damping="0.1" />
+            <joint name="robot0:slide1" pos="0 0 0" axis="0 1 0" type="slide" damping="0.1" />
+            <joint name="robot0:slide2" pos="0 0 0" axis="0 0 1" type="slide" damping="10000" />
+            <geom size="0.15" rgba="1 0 0 1" />
+            <site name="object" pos="0 0 0" size="0.1" rgba="0 0 1 1" />
+            <camera name="rgb" pos="0 0 2.5" fovy="40" />
+        </body>
+    </worldbody>
+    <actuator>
+        <general joint="robot0:slide0" gear="100 0 0 0 0 0" />
+        <general joint="robot0:slide1" gear="100 0 0 0 0 0" />
+    </actuator>
+</mujoco>
+
+

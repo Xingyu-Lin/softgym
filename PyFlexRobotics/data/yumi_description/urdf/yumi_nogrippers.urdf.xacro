@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<robot name="yumi" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find yumi_description)/urdf/materials.xacro" />
+  <!-- Import utilities -->
+  <xacro:include filename="$(find yumi_description)/urdf/utilities.xacro" />
+  <!--Import the yumi macro -->
+  <xacro:include filename="$(find yumi_description)/urdf/yumi.xacro"/>
+ <!-- Import Gazebo plugins -->
+  <xacro:include filename="$(find yumi_description)/gazebo/gazebo.urdf.xacro"/>
+
+  <!-- Fix to world just for testing -->
+  <link name="world"/>
+
+  <!--yumi-->
+  <xacro:yumi name="yumi" hardware_interface="$(arg prefix)" parent="world">
+    <origin xyz="0 0 0.1" rpy="0 0 0" />
+  </xacro:yumi>
+
+</robot>

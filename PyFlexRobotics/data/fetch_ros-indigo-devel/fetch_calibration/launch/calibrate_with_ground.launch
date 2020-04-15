@@ -1,0 +1,9 @@
+<launch>
+
+  <node pkg="robot_calibration" type="calibrate" name="calibrate"
+        args="--from-bag /tmp/fetch_calibration/calibration_data.bag"
+        output="screen" required="true">
+    <rosparam file="$(find fetch_calibration)/config/calibrate_with_ground.yaml" command="load" />
+  </node>
+  
+</launch>

@@ -1,0 +1,13 @@
+<launch>
+
+  <!-- Set the file describing which sensor(s) to use to build the octomap  -->
+  <arg name="moveit_octomap_sensor_params_file" default="$(find fetch_moveit_config)/config/sensors.yaml" />
+
+  <!-- Params for the octomap monitor -->
+  <param name="octomap_frame" type="string" value="base_link" />
+  <param name="octomap_resolution" type="double" value="0.05" />
+
+  <!-- sensors used to update the map -->
+  <rosparam command="load" file="$(arg moveit_octomap_sensor_params_file)" />
+
+</launch>
