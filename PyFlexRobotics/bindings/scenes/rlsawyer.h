@@ -3,6 +3,9 @@
 #include <vector>
 #include "rlbase.h"
 #include "../urdf.h"
+char sawyerUrdfPath[100];
+char cupMeshPath[100];
+char* make_path(char* full_path, std::string path);
 
 // Collision settings: robot, table have group 0 and filter 0
 class RLSawyerBase : public FlexGymBase2
@@ -81,7 +84,7 @@ public:
 
 		mDoLearning = g_doLearning;
 		doStats = true;
-		g_pause = true;
+		g_pause = false;
 		g_drawPoints = false;
 		g_drawCloth = true;  
 	}
@@ -155,7 +158,7 @@ public:
 
 		// hide collision shapes
 		hiddenMaterial = AddRenderMaterial(0.0f, 0.0f, 0.0f, true);
-		urdf = new URDFImporter("../../data/sawyer", "/sawyer_description/urdf/sawyer_with_gripper.urdf");
+		urdf = new URDFImporter(make_path(sawyerUrdfPath, "/data/sawyer"), "/sawyer_description/urdf/sawyer_with_gripper.urdf");
 		
         powers.clear();
         
@@ -746,7 +749,7 @@ public:
 	{
         float density = 2000.0f;
         float scale = 1.f;
-        Mesh* cupMesh = ImportMesh("../../data/cups/cup2_low.obj");
+        Mesh* cupMesh = ImportMesh(make_path(cupMeshPath, "/data/cups/cup2_low.obj"));
         cupMesh->Transform(ScaleMatrix(scale));
         NvFlexTriangleMeshId shapeId = CreateTriangleMesh(cupMesh, 0.001f);
         NvFlexRigidShape shape;

@@ -218,6 +218,9 @@ inline void RegisterPhysicsScenes()
     RegisterScene("SoftGym Water", []() { return new softgym_PourWater; });
 
 	RegisterScene("RL Sawyer", []() { return new RLSawyerCup(); });
+    RegisterScene("RL Franka Reach", []() { return new RLFrankaReach(); });
+
+//	RegisterScene("RL Sawyer", []() { return new RLSawyerCup(); });
 //	RegisterScene("Rigid to Particles Attachments", []() { return new RigidParticleAttachment(); });
 //	RegisterScene("Soft Snake", []() { return new SoftSnake(""); });
 //

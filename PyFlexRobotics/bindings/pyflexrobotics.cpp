@@ -5723,6 +5723,8 @@ void pyflex_step(py::array_t<float> update_params, int capture, char *path) {
     }
 }
 
+void pyflex_loop() { SDLMainLoop();}
+
 float rand_float(float LO, float HI) {
     return LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
 }
@@ -6563,7 +6565,7 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("update_params") = nullptr,
           py::arg("capture") = 0,
           py::arg("path") = nullptr);
-
+    m.def("loop", &pyflex_loop);
     m.def("render", &pyflex_render,
           py::arg("capture") = 0,
           py::arg("path") = nullptr

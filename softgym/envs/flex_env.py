@@ -107,6 +107,8 @@ class FlexEnv(gym.Env):
         :param cached_states_path:
         :return:
         """
+        if self.cached_configs is not None and self.cached_init_states is not None:
+            return True
         if cached_states_path is None:
             return False
         if not cached_states_path.startswith('/'):

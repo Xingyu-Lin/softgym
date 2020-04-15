@@ -27,6 +27,11 @@
 #define RL_JSON_REWARD_WEIGHTS "RewardWeights"
 #define RL_JSON_CONTROL_GRIPPER "ControlGripper"
 
+char frankaUrdfPath[100];
+char pegHolderMeshPath[100];
+char pegMeshPath[100];
+char* make_path(char* full_path, std::string path);
+
 //struct normal_random_variable
 //{
 //    normal_random_variable() {}
@@ -401,7 +406,7 @@ public:
 	    int slicesPerCylinder = 20;
 	    bool useSphereIfNoCollision = true;
 
-	    urdf = new URDFImporter("../../data/", "franka_description/robots/franka_panda.urdf",
+	    urdf = new URDFImporter(make_path(frankaUrdfPath, "/data"), "franka_description/robots/franka_panda.urdf",
 	    	useObjForCollision,
 	    	dilation,
 	    	thickness,
@@ -1903,7 +1908,7 @@ public:
 		g_buffers->rigidShapes.push_back(table);
 
 		// Create target peg holder
-		Mesh* pegHolderMesh = ImportMesh("../../data/peg_holder_top.obj");//"../../data/peg_holder.obj");
+		Mesh* pegHolderMesh = ImportMesh(make_path(pegHolderMeshPath,"/data/peg_holder_top.obj"));
 		pegHolderMesh->Transform(ScaleMatrix(Vec3(pegHolderScaleX[ai], pegHolderScaleY[ai], pegHolderScaleZ[ai])));
 
 		NvFlexTriangleMeshId pegHolderMeshId = CreateTriangleMesh(pegHolderMesh, 0.005f);
@@ -1998,7 +2003,7 @@ public:
 		}
 
 		// Peg
-		Mesh* pegMesh = ImportMesh("../../data/cylinder.obj");
+		Mesh* pegMesh = ImportMesh(make_path(pegMeshPath, "/data/cylinder.obj"));
 		pegMesh->Transform(ScaleMatrix(Vec3(pegScaleX[ai], pegScaleY[ai], pegScaleZ[ai])));
 
 		NvFlexTriangleMeshId pegId = CreateTriangleMesh(pegMesh, 0.005f);
