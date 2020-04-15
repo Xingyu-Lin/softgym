@@ -101,7 +101,7 @@ public:
         g_drawCloth = (render_type & 2) >>1;
         g_drawSprings = false;
         g_windFrequency *= 2.0f;
-        g_windStrength = 10.0f;
+        g_windStrength = 0.0f;
 //        cout << "finish init" << endl;
     }
 

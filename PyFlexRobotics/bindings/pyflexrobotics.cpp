@@ -4484,6 +4484,60 @@ void SDLInit(const char* title, bool resizableWindow = true)
     g_windowId = SDL_GetWindowID(g_window);
 }
 
+void SDL_EventFunc() {
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        switch (e.type) {
+            case SDL_QUIT:
+                break;
+
+            case SDL_KEYDOWN:
+                InputArrowKeysDown(e.key.keysym.sym, 0, 0);
+                InputKeyboardDown(e.key.keysym.sym, 0, 0);
+                break;
+
+            case SDL_KEYUP:
+                if (e.key.keysym.sym < 256 && (e.key.keysym.mod == 0 || (e.key.keysym.mod & KMOD_NUM)))
+                    InputKeyboardUp(e.key.keysym.sym, 0, 0);
+                InputArrowKeysUp(e.key.keysym.sym, 0, 0);
+                break;
+
+            case SDL_MOUSEMOTION:
+                if (e.motion.state)
+                    MouseMotionFunc(e.motion.state, e.motion.x, e.motion.y);
+                else
+                    MousePassiveMotionFunc(e.motion.x, e.motion.y);
+                break;
+
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+                MouseFunc(e.button.button, e.button.state, e.motion.x, e.motion.y);
+                break;
+
+            case SDL_WINDOWEVENT:
+                if (e.window.windowID == g_windowId) {
+                    if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                        ReshapeWindow(e.window.data1, e.window.data2);
+                }
+                break;
+
+            case SDL_WINDOWEVENT_LEAVE:
+                g_camVel = Vec3(0.0f, 0.0f, 0.0f);
+                break;
+
+            case SDL_CONTROLLERBUTTONUP:
+            case SDL_CONTROLLERBUTTONDOWN:
+                ControllerButtonEvent(e.cbutton);
+                break;
+
+            case SDL_JOYDEVICEADDED:
+            case SDL_JOYDEVICEREMOVED:
+                ControllerDeviceUpdate();
+                break;
+        }
+    }
+}
+
 void SDLMainLoop()
 {
     bool quit = false;
@@ -5660,10 +5714,8 @@ void pyflex_step(py::array_t<float> update_params, int capture, char *path) {
         g_capture = true;
         g_ffmpeg = fopen(path, "wb");
     }
-
     UpdateFrame(update_params);
-    SDLMainLoop();
-
+    SDL_EventFunc();
     if (capture == 1) {
         g_capture = false;
         fclose(g_ffmpeg);
@@ -6483,7 +6535,7 @@ py::array_t<int> pyflex_render(int capture, char *path) {
         // Init(g_scene);
     }
 
-    SDLMainLoop();
+    SDL_EventFunc();
 
     if (capture == 1) {
         g_capture = false;
@@ -6546,7 +6598,7 @@ PYBIND11_MODULE(pyflex, m) {
 ////    m.def("get_rigidRotations", &pyflex_get_rigidRotations, "Get rigid rotations");
 ////    m.def("get_rigidTranslations", &pyflex_get_rigidTranslations, "Get rigid translations");
 //
-////    m.def("get_sceneParams", &pyflex_get_sceneParams, "Get scene parameters");
+//    m.def("get_sceneParams", &pyflex_get_sceneParams, "Get scene parameters");
 //
     m.def("get_velocities", &pyflex_get_velocities, "Get particle velocities");
     m.def("set_velocities", &pyflex_set_velocities, "Set particle velocities");
