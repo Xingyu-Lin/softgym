@@ -280,9 +280,10 @@ class PickerPickPlace(Picker):
                 delta = end_pos - curr_pos
             super().step(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
             pyflex.step()
-            if np.alltrue(dist < self.delta_move):
-                break
             if self.env is not None and self.env.recording:
                 self.env.video_frames.append(self.env.render(mode='rgb_array'))
+            if np.alltrue(dist < self.delta_move):
+                break
+
 
 
