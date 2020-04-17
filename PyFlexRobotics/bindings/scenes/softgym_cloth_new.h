@@ -140,7 +140,7 @@ public:
 		// table
         NvFlexRigidShape table;
         // Half x, y, z
-        NvFlexMakeRigidBoxShape(&table, -1, 0.5f, 0.15f, 0.3f, NvFlexMakeRigidPose(Vec3(0.f, 0.0f, 0.0f), Quat()));
+        NvFlexMakeRigidBoxShape(&table, -1, 0.27f, 0.15f, 0.3f, NvFlexMakeRigidPose(Vec3(-0.04f, 0.0f, 0.0f), Quat()));
         table.filter = 0;
         table.material.friction = 0.95f;
 		table.user = UnionCast<void*>(AddRenderMaterial(Vec3(0.35f, 0.45f, 0.65f)));
@@ -170,7 +170,7 @@ public:
         box.thickness = 0.00125f;
 
         NvFlexRigidBody boxBody;
-        NvFlexMakeRigidBody(g_flexLib, &boxBody, Vec3(0.2f, 0.3f, -0.1f), Quat(), &box, &density, 1);
+        NvFlexMakeRigidBody(g_flexLib, &boxBody, Vec3(0.21f, 0.3f, -0.1375f), Quat(), &box, &density, 1);
 
         g_buffers->rigidBodies.push_back(boxBody);
         g_buffers->rigidShapes.push_back(box);
@@ -288,7 +288,7 @@ public:
 		float bendStiffness = ptr[6]; //1.0f;
 		float shearStiffness = ptr[7]; //0.9f;
 		int phase = NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseSelfCollideFilter);
-		float mass = 0.5f/(dimx*dimz);	// avg bath towel is 500-700g
+		float mass = float(ptr[17])/(dimx*dimz);	// avg bath towel is 500-700g
 	    CreateSpringGrid(Vec3(initX, -initY, initZ), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness, shearStiffness, 0.0f, 1.0f/mass);
 //
 //

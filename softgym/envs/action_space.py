@@ -266,13 +266,19 @@ class PickerPickPlace(Picker):
         the pick/drop state while moving towards x, y, x.
         """
         action = action.reshape(-1, 4)
+        curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
+        end_pos = action[:, :3]
+        dist = np.linalg.norm(curr_pos - end_pos, axis=1)
+        num_step = np.max(dist/self.delta_move)
+        delta = (end_pos - curr_pos) / num_step
+        norm_delta = np.linalg.norm(delta)
         while True:
             curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
             end_pos = action[:, :3]
-            dist = np.linalg.norm(curr_pos - end_pos, axis=0)
-
-            move = np.clip(end_pos - curr_pos, -self.delta_move, self.delta_move)
-            super().step(np.hstack([move, action[:, 3].reshape(-1, 1)]))
+            dist = np.linalg.norm(end_pos - curr_pos, axis=1)
+            if np.alltrue(dist < norm_delta):
+                delta = end_pos - curr_pos
+            super().step(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
             pyflex.step()
             if np.alltrue(dist < self.delta_move):
                 break
