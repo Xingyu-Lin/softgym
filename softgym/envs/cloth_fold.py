@@ -42,15 +42,17 @@ class ClothFoldEnv(ClothEnv):
     def _sample_cloth_size(self):
         return np.random.randint(10, 64), np.random.randint(10, 40)
 
-    def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True):
+    def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.001  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
-        default_config = self.get_default_config()
+        if config is None:
+            default_config = self.get_default_config()
+        else:
+            default_config = config
 
         for i in range(num_variations):
-            print(i)
             config = deepcopy(default_config)
             self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
             if vary_cloth_size:
@@ -61,10 +63,13 @@ class ClothFoldEnv(ClothEnv):
             self.set_scene(config)
             self.action_tool.reset([0., -1., 0.])
 
-            for _ in range(max_wait_step):
+            for _ in range(5): # In case if the cloth starts in the air
+                pyflex.step()
+
+            for wait_i in range(max_wait_step):
                 pyflex.step()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < stable_vel_threshold):
+                if np.alltrue(np.abs(curr_vel) < stable_vel_threshold):
                     break
 
             self._center_object()

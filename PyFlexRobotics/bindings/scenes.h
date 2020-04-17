@@ -102,6 +102,7 @@ inline void RegisterScene(const char* name, std::function<Scene*()> factory, boo
 #include "scenes/softgym_cloth.h"
 #include "scenes/softgym_pourwater.h"
 #include "scenes/softgym_softbody.h"
+#include "scenes/softgym_cloth_new.h"
 
 #include "scenes/adhesion.h"
 #include "scenes/armadilloshower.h"
@@ -219,6 +220,7 @@ inline void RegisterPhysicsScenes()
 
 	RegisterScene("RL Sawyer", []() { return new RLSawyerCup(); });
     RegisterScene("RL Franka Reach", []() { return new RLFrankaReach(); });
+    RegisterScene("SoftGym Cloth New", []() { return new softgymCloth(softgymCloth::eCloth); });
 
 //	RegisterScene("RL Sawyer", []() { return new RLSawyerCup(); });
 //	RegisterScene("Rigid to Particles Attachments", []() { return new RigidParticleAttachment(); });

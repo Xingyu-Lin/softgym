@@ -255,40 +255,28 @@ class Picker(ActionToolBase):
 
 
 class PickerPickPlace(Picker):
-    def __init__(self, num_picker, **kwargs):
+    def __init__(self, num_picker, env = None, **kwargs):
         super().__init__(num_picker=num_picker, **kwargs)
-        self.delta_move = np.array([0.02] * 3)
+        self.delta_move = 0.005
+        self.env = env
 
     def step(self, action):
-        init_pos = action[:, :3]
-        end_pos = action[:, 3:6]
+        """
+        action: Array of pick_num x 4. For each picker, the action should be [x, y, z, pick/drop]. The picker will then first pick/drop, and keep
+        the pick/drop state while moving towards x, y, x.
+        """
+        action = action.reshape(-1, 4)
+        while True:
+            curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
+            end_pos = action[:, :3]
+            dist = np.linalg.norm(curr_pos - end_pos, axis=0)
 
-        last_dist = np.zeros_like(init_pos)
-        while 1:
-            picker_pos, _ = self._get_pos()
-            dist = init_pos - picker_pos
-            if np.sum(np.abs(dist)) < 1e-5 or (dist == last_dist).all():
-                break
-
-            move = np.clip(dist, a_min=-0.01, a_max=0.01)
-            action = np.zeros((self.num_picker, 4))
-            action[:, :3] = move
-            action[:, -1] = 0
-            super().step(action)
+            move = np.clip(end_pos - curr_pos, -self.delta_move, self.delta_move)
+            super().step(np.hstack([move, action[:, 3].reshape(-1, 1)]))
             pyflex.step()
-            last_dist = dist
-
-        last_dist = np.zeros_like(init_pos)
-        while 1:
-            picker_pos, _ = self._get_pos()
-            dist = end_pos - picker_pos
-            if np.sum(np.abs(dist)) < 1e-5 or (dist == last_dist).all():
+            if np.alltrue(dist < self.delta_move):
                 break
+            if self.env is not None and self.env.recording:
+                self.env.video_frames.append(self.env.render(mode='rgb_array'))
 
-            move = np.clip(dist, a_min=-0.01, a_max=0.01)
-            action = np.zeros((self.num_picker, 4))
-            action[:, :3] = move
-            action[:, -1] = 1
-            super().step(action)
-            pyflex.step()
-            last_dist = dist
+

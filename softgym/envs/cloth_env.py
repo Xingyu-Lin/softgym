@@ -7,7 +7,7 @@ from copy import deepcopy
 
 
 class ClothEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.07, **kwargs):
+    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.07, particle_radius=0.05, **kwargs):
         self.render_mode = render_mode
         super().__init__(**kwargs)
 
@@ -15,7 +15,7 @@ class ClothEnv(FlexEnv):
         assert action_mode in ['sphere', 'picker', 'pickerpickplace']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
-        self.cloth_particle_radius = 0.05  # Hardcoded radius
+        self.cloth_particle_radius = particle_radius
 
         if action_mode.startswith('key_point'):
             space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
@@ -25,11 +25,10 @@ class ClothEnv(FlexEnv):
             self.action_tool = ParallelGripper(gripper_type='sphere')
             self.action_space = self.action_tool.action_space
         elif action_mode == 'picker':
-            self.action_tool = Picker(num_picker, picker_radius=picker_radius,
-                                      particle_radius=0.05)  # TODO: should make radius a controllable parameter
+            self.action_tool = Picker(num_picker, picker_radius=picker_radius, particle_radius=particle_radius)
             self.action_space = self.action_tool.action_space
         elif action_mode == 'pickerpickplace':
-            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=0.05)  # TODO: should make radius a controllable parameter
+            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self)
             self.action_space = self.action_tool.action_space
 
         if observation_mode in ['key_point', 'point_cloud']:
@@ -56,7 +55,7 @@ class ClothEnv(FlexEnv):
         config = {
             'ClothPos': [-1.6, 2.0, -0.8],
             'ClothSize': [64, 32],
-            'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear
+            'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear, Before ICML rebuttal
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
                                   {'pos': np.array([0, 4., 1]),
@@ -112,9 +111,9 @@ class ClothEnv(FlexEnv):
         camera_params = config['camera_params'][config['camera_name']]
         params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
                            *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height']])
-
+        env_idx = 9 if 'env_idx' not in config else config['env_idx']
         self.params = params  # YF NOTE: need to save the params for sampling goals
-        pyflex.set_scene(9, params, 0)
+        pyflex.set_scene(env_idx, params, 0)
         if state is not None:
             self.set_state(state)
         self.current_config = deepcopy(config)
