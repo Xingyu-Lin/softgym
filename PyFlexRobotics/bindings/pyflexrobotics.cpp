@@ -5732,7 +5732,7 @@ float rand_float(float LO, float HI) {
 void pyflex_set_scene(int scene_idx, py::array_t<float> scene_params, int thread_idx = 0, py::array_t<float> robot_params = py::array_t<float>()) {
     int g_sceneIdx = scene_idx;
     g_selectedScene = g_sceneIdx;
-    InitScene(g_selectedScene, scene_params, true, thread_idx, scene_params);
+    InitScene(g_selectedScene, scene_params, true, thread_idx, robot_params);
 }
 
 void pyflex_MapShapeBuffers(SimBuffers *buffers) {

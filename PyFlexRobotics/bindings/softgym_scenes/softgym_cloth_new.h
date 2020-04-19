@@ -24,37 +24,10 @@ public:
     char urdfPath[100];
     SoftgymSawyer* ptrRobot = NULL;
 
-	SoftgymCloth()
-    {
-//		if (mode == eRopeParticles)
-//		{
-//			// Rope object (particles)
-//
-//			const float radius = 0.025f;
-//			g_params.radius = radius;	// some overlap between particles for more robust self collision
-//			g_params.dynamicFriction = 1.0f;
-//			g_params.collisionDistance = radius*0.5f;
-//
-//			// do not allow fingers to close more than this to prevent pushing through grippers
-//			fingerWidthMin = g_params.collisionDistance;
-//
-//			const int segments = 64;
-//
-//			const float stretchStiffness = 0.9f;
-//			const float bendStiffness = 0.8f;
-//
-//			const float mass = 0.5f;///segments;	// assume 1kg rope
-//
-//			Rope r;
-//			CreateRope(r, Vec3(-0.3f, 0.5f, 0.45f), Vec3(1.0f, 0.0f, 0.0f), stretchStiffness, bendStiffness, segments, segments*radius*0.5f, NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseSelfCollideFilter), 0.0f, 1.0f/mass);
-//
-//			g_ropes.push_back(r);
-//		}
-        g_params.gravity[1] = -9.81f;
-    }
+	SoftgymCloth(){}
 
     SoftgymSawyer* getPtrRobot() {return ptrRobot;}
-    
+
     void Initialize(py::array_t<float> scene_params = py::array_t<float>(),
                     py::array_t<float> robot_params = py::array_t<float>(), int thread_idx = 0)
     {
@@ -79,9 +52,11 @@ public:
         cam_width = int(ptr[15]);
         cam_height = int(ptr[16]);
 
+        // Load robot
         auto ptrRobotParams = (float *) robot_params.request().ptr;
-        if (ptrRobotParams!=NULL) // Use robot
+        if (ptrRobotParams!=NULL &&  robot_params.size()>0) // Use robot
         {
+            cout<<robot_params.size();
             ptrRobot = new SoftgymSawyer();
             ptrRobot->Initialize(robot_params); // XY: For some reason this has to be before creation of other rigid body
         }

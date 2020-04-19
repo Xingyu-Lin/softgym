@@ -7,6 +7,7 @@ import time
 import copy
 import os
 from softgym.envs.util import quatFromAxisAngle
+from softgym.envs.robot_env import RobotBase
 from pyquaternion import Quaternion
 import random
 import yaml, pickle
@@ -24,7 +25,6 @@ class PassWater1DEnv(FluidEnv):
         TODO: add more description of the task.
         '''
         assert observation_mode in ['cam_rgb', 'point_cloud', 'key_point']
-        assert action_mode in ['direct']
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
@@ -69,6 +69,8 @@ class PassWater1DEnv(FluidEnv):
             action_low = np.array([-0.025])
             action_high = np.array([0.025])
             self.action_space = Box(action_low, action_high, dtype=np.float32)
+        elif action_mode in ['sawyer', 'franka']:
+            self.action_tool = RobotBase(action_mode)
         else:
             raise NotImplementedError
 

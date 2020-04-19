@@ -50,7 +50,9 @@ class FluidEnv(FlexEnv):
 
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
-        pyflex.set_scene(11, scene_params, 0)
+        robot_params = [0]
+        self.params = (scene_params, robot_params)
+        pyflex.set_scene(11, scene_params, 0, robot_params)
         self.particle_num = pyflex.get_n_particles()
 
     def rand_float(self, lo, hi):

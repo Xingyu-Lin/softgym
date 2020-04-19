@@ -1,4 +1,4 @@
-
+#include "softgym_sawyer.h"
 class softgym_PourWater : public Scene
 {
 public:
@@ -30,7 +30,8 @@ public:
 	    *b = tmp;
 	}
 
-	void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
+	void Initialize(py::array_t<float> scene_params = py::array_t<float>(),
+                    py::array_t<float> robot_params = py::array_t<float>(), int thread_idx = 0)
 	{
 	    // scene_params
 
@@ -61,6 +62,29 @@ public:
 		cam_height = int(ptr[21]);
 		int render = int(ptr[22]);
 
+        auto ptrRobotParams = (float *) robot_params.request().ptr;
+        if (ptrRobotParams!=NULL &&  robot_params.size()>0) // Use robot
+        {
+            cout<<robot_params.size();
+            ptrRobot = new SoftgymSawyer();
+            ptrRobot->Initialize(robot_params); // XY: For some reason this has to be before creation of other rigid body
+
+            // For SoftGym 1.0 release, only have table when there is a robot
+            // table
+            NvFlexRigidShape table;
+            // Half x, y, z
+            NvFlexMakeRigidBoxShape(&table, -1, 0.55f, 0.55f, 0.34f, NvFlexMakeRigidPose(Vec3(-0.04f, 0.0f, 0.0f), Quat()));
+            table.filter = 0;
+            table.material.friction = 0.95f;
+            table.user = UnionCast<void*>(AddRenderMaterial(Vec3(0.35f, 0.45f, 0.65f)));
+
+            float density = 1000.0f;
+            NvFlexRigidBody body;
+            NvFlexMakeRigidBody(g_flexLib, &body, Vec3(1.0f, 1.0f, 0.0f), Quat(), &table, &density, 1);
+
+            g_buffers->rigidShapes.push_back(table);
+            g_buffers->rigidBodies.push_back(body);
+        }
 
 		/*
 		The main particle radius is set via NvFlexParams::radius, which is the “interaction radius”.

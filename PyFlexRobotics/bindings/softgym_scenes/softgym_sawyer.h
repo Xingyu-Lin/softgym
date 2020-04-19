@@ -169,59 +169,59 @@ public:
         g_buffers->rigidJoints[fingerRight].targets[eNvFlexRigidJointAxisX] = fingerWidth;
     }
 
-    virtual void DoStats()
-    {
-        int numSamples = 200;
-
-        int start = Max(int(forceLeft.size())-numSamples, 0);
-        int end = Min(start + numSamples, int(forceLeft.size()));
-
-        // convert from position changes to forces
-        float units = -1.0f/Sqr(g_dt/g_numSubsteps);
-
-        float height = 50.0f;
-        float maxForce = 10.0f;
-
-        float dx = 1.0f;
-        float sy = height/maxForce;
-
-        float lineHeight = 10.0f;
-
-        float rectMargin = 10.0f;
-        float rectWidth = dx * float(numSamples) + rectMargin * 4.0f;
-
-        float x = float(g_screenWidth) - rectWidth - 20.0f;
-        float y = 300.0f;
-
-        DrawRect(x, y - height - rectMargin, rectWidth, 2.0f * height + rectMargin * 3.0f, Vec4(0.0f, 0.0f, 0.0f, 0.5f));
-
-        x += rectMargin * 3.0f;
-
-        DrawImguiString(int(x + dx * float(numSamples)), int(y + 55.0f), Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Gripper Force (N)");
-
-        DrawLine(x, y, x + float(numSamples) * dx, y, 1.0f, Vec3(1.0f));
-        DrawLine(x, y -50.0f, x, y + 50.0f, 1.0f, Vec3(1.0f));
-
-        float margin = 5.0f;
-
-        DrawImguiString(int(x - margin), int(y), Vec3(1.0f), IMGUI_ALIGN_RIGHT, "0");
-        DrawImguiString(int(x - margin), int(y + height - lineHeight), Vec3(1.0f), IMGUI_ALIGN_RIGHT, " %.0f", maxForce);
-        DrawImguiString(int(x - margin), int(y - height), Vec3(1.0f), IMGUI_ALIGN_RIGHT, "-%.0f", maxForce);
-
-        for (int i = start; i < end - 1; ++i)
-        {
-        	float fl0 = Clamp(forceLeft[i]*units, -maxForce, maxForce)*sy;
-        	float fr0 = Clamp(forceRight[i]*units, -maxForce, maxForce)*sy;
-
-        	float fl1 = Clamp(forceLeft[i+1]*units, -maxForce, maxForce)*sy;
-        	float fr1 = Clamp(forceRight[i+1]*units, -maxForce, maxForce)*sy;
-
-        	DrawLine(x, y + fl0, x + dx, y + fl1, 1.0f, Vec3(1.0f, 0.0f, 0.0f));
-        	DrawLine(x, y + fr0, x + dx, y + fr1, 1.0f, Vec3(0.0f, 1.0f, 0.0f));
-
-        	x += dx;
-        }
-    }
+//    virtual void DoStats()
+//    {
+//        int numSamples = 200;
+//
+//        int start = Max(int(forceLeft.size())-numSamples, 0);
+//        int end = Min(start + numSamples, int(forceLeft.size()));
+//
+//        // convert from position changes to forces
+//        float units = -1.0f/Sqr(g_dt/g_numSubsteps);
+//
+//        float height = 50.0f;
+//        float maxForce = 10.0f;
+//
+//        float dx = 1.0f;
+//        float sy = height/maxForce;
+//
+//        float lineHeight = 10.0f;
+//
+//        float rectMargin = 10.0f;
+//        float rectWidth = dx * float(numSamples) + rectMargin * 4.0f;
+//
+//        float x = float(g_screenWidth) - rectWidth - 20.0f;
+//        float y = 300.0f;
+//
+//        DrawRect(x, y - height - rectMargin, rectWidth, 2.0f * height + rectMargin * 3.0f, Vec4(0.0f, 0.0f, 0.0f, 0.5f));
+//
+//        x += rectMargin * 3.0f;
+//
+//        DrawImguiString(int(x + dx * float(numSamples)), int(y + 55.0f), Vec3(1.0f), IMGUI_ALIGN_RIGHT, "Gripper Force (N)");
+//
+//        DrawLine(x, y, x + float(numSamples) * dx, y, 1.0f, Vec3(1.0f));
+//        DrawLine(x, y -50.0f, x, y + 50.0f, 1.0f, Vec3(1.0f));
+//
+//        float margin = 5.0f;
+//
+//        DrawImguiString(int(x - margin), int(y), Vec3(1.0f), IMGUI_ALIGN_RIGHT, "0");
+//        DrawImguiString(int(x - margin), int(y + height - lineHeight), Vec3(1.0f), IMGUI_ALIGN_RIGHT, " %.0f", maxForce);
+//        DrawImguiString(int(x - margin), int(y - height), Vec3(1.0f), IMGUI_ALIGN_RIGHT, "-%.0f", maxForce);
+//
+//        for (int i = start; i < end - 1; ++i)
+//        {
+//        	float fl0 = Clamp(forceLeft[i]*units, -maxForce, maxForce)*sy;
+//        	float fr0 = Clamp(forceRight[i]*units, -maxForce, maxForce)*sy;
+//
+//        	float fl1 = Clamp(forceLeft[i+1]*units, -maxForce, maxForce)*sy;
+//        	float fr1 = Clamp(forceRight[i+1]*units, -maxForce, maxForce)*sy;
+//
+//        	DrawLine(x, y + fl0, x + dx, y + fl1, 1.0f, Vec3(1.0f, 0.0f, 0.0f));
+//        	DrawLine(x, y + fr0, x + dx, y + fr1, 1.0f, Vec3(0.0f, 1.0f, 0.0f));
+//
+//        	x += dx;
+//        }
+//    }
 
 
     virtual void Update()
