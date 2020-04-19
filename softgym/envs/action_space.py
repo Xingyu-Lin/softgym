@@ -8,6 +8,7 @@ import time
 import copy
 
 
+# TODO: Change the name to robot
 class ActionToolBase(metaclass=abc.ABCMeta):
     def __init__(self):
         pass
@@ -19,6 +20,11 @@ class ActionToolBase(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def step(self, action):
         """ Step funciton to change the action space states. Does not call pyflex.step() """
+
+    @property
+    def action_space(self):
+        """ Action space of the robot"""
+        return None
 
 
 class ParallelGripper(ActionToolBase):
@@ -255,7 +261,7 @@ class Picker(ActionToolBase):
 
 
 class PickerPickPlace(Picker):
-    def __init__(self, num_picker, env = None, **kwargs):
+    def __init__(self, num_picker, env=None, **kwargs):
         super().__init__(num_picker=num_picker, **kwargs)
         self.delta_move = 0.005
         self.env = env
@@ -269,7 +275,7 @@ class PickerPickPlace(Picker):
         curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
         end_pos = action[:, :3]
         dist = np.linalg.norm(curr_pos - end_pos, axis=1)
-        num_step = np.max(dist/self.delta_move)
+        num_step = np.max(dist / self.delta_move)
         delta = (end_pos - curr_pos) / num_step
         norm_delta = np.linalg.norm(delta)
         while True:
@@ -284,6 +290,3 @@ class PickerPickPlace(Picker):
                 self.env.video_frames.append(self.env.render(mode='rgb_array'))
             if np.alltrue(dist < self.delta_move):
                 break
-
-
-

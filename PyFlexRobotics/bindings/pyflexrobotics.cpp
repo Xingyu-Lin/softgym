@@ -696,7 +696,7 @@ bool g_pause = false;
 bool g_step = false;
 bool g_capture = false;
 bool g_showHelp = false; // Open Help here
-bool g_tweakPanel = false; // Open tweak here
+bool g_tweakPanel = true; // Open tweak here
 bool g_fullscreen = false;
 bool g_wireframe = false;
 bool g_debug = false;
@@ -874,7 +874,7 @@ inline Matrix44 GetCameraRotationMatrix(bool getInversed = false)
 }
 
 
-void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, int thread_idx)
+void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, int thread_idx, py::array_t<float> robot_params = py::array_t<float>())
 {
     if (g_sceneFactories[scene].mIsVR && !g_vrSystem)
     {
@@ -1106,7 +1106,7 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
     // create scene
     StartGpuWork();
     g_scene = g_sceneFactories[scene].mFactory();
-    g_scene->Initialize(scene_params, thread_idx);
+    g_scene->Initialize(scene_params, robot_params, thread_idx);
     g_scene->PrepareScene();
     EndGpuWork();
 
@@ -5729,10 +5729,10 @@ float rand_float(float LO, float HI) {
     return LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
 }
 
-void pyflex_set_scene(int scene_idx, py::array_t<float> scene_params, int thread_idx = 0) {
+void pyflex_set_scene(int scene_idx, py::array_t<float> scene_params, int thread_idx = 0, py::array_t<float> robot_params = py::array_t<float>()) {
     int g_sceneIdx = scene_idx;
     g_selectedScene = g_sceneIdx;
-    InitScene(g_selectedScene, scene_params, true, thread_idx);
+    InitScene(g_selectedScene, scene_params, true, thread_idx, scene_params);
 }
 
 void pyflex_MapShapeBuffers(SimBuffers *buffers) {
@@ -6559,7 +6559,11 @@ int main() {
 PYBIND11_MODULE(pyflex, m) {
     m.def("main", &main);
     m.def("init", &pyflex_init);
-    m.def("set_scene", &pyflex_set_scene);
+    m.def("set_scene", &pyflex_set_scene,
+          py::arg("scene_idx"),
+          py::arg("scene_params") = nullptr,
+          py::arg("thread_idx") = 0,
+          py::arg("robot_params") = nullptr);
     m.def("clean", &pyflex_clean);
     m.def("step", &pyflex_step,
           py::arg("update_params") = nullptr,

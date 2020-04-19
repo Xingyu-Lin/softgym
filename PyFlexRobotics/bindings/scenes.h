@@ -34,14 +34,19 @@
 
 //py::array_t<float> tmp_scene_params;
 
+#include "softgym_scenes/softgym_robot.h"
 class Scene
 {
+protected:
+    SoftgymRobotBase* ptrRobot=NULL;
 public:
-
 	Scene() {}
 	virtual ~Scene() {}
-//    virtual void Initialize() {};
-	virtual void Initialize(py::array_t<float> scene_params = py::array_t<float>() , int thread_idx = 0) {}
+
+    virtual SoftgymRobotBase* getPtrRobot() {return ptrRobot;}
+
+	virtual void Initialize(py::array_t<float> scene_params = py::array_t<float>(),
+	                        py::array_t<float> robot_params = py::array_t<float>(), int thread_idx = 0) {}
 
 	virtual void PostInitialize() {}
 
@@ -49,18 +54,18 @@ public:
 	virtual void PrepareScene() {}
 
 	// update any buffers (all guaranteed to be mapped here)
-	virtual void Update() {}
+	virtual void Update() {if (getPtrRobot()!=NULL) getPtrRobot()->Update();}
 
 	// called after update, can be used to read back any additional information that is not read back by the main application
-	virtual void PostUpdate() {}
+	virtual void PostUpdate() {if (getPtrRobot()!=NULL) getPtrRobot()->PostUpdate();}
 
 	// send any changes to flex (all buffers guaranteed to be unmapped here)
 	virtual void Sync() {}
 
 	virtual void Draw(int pass) {}
 	virtual void KeyDown(int key) {}
-	virtual void DoGui() {}
-	virtual void DoStats() {} // draw on-screen graphs, text, etc
+	virtual void DoGui() {if (getPtrRobot()!=NULL) getPtrRobot()->DoGui();}
+	virtual void DoStats() {if (getPtrRobot()!=NULL) getPtrRobot()->DoStats();} // draw on-screen graphs, text, etc
 
 	virtual void CenterCamera() {}
 
@@ -98,11 +103,11 @@ inline void RegisterScene(const char* name, std::function<Scene*()> factory, boo
 	g_sceneFactories.push_back(SceneFactory(name, factory, isVR));
 }
 
-#include "scenes/softgym_flatten.h"
-#include "scenes/softgym_cloth.h"
-#include "scenes/softgym_pourwater.h"
-#include "scenes/softgym_softbody.h"
-#include "scenes/softgym_cloth_new.h"
+#include "softgym_scenes/softgym_flatten.h"
+#include "softgym_scenes/softgym_cloth.h"
+#include "softgym_scenes/softgym_pourwater.h"
+#include "softgym_scenes/softgym_softbody.h"
+#include "softgym_scenes/softgym_cloth_new.h"
 
 #include "scenes/adhesion.h"
 #include "scenes/armadilloshower.h"
@@ -220,7 +225,8 @@ inline void RegisterPhysicsScenes()
 
 	RegisterScene("RL Sawyer", []() { return new RLSawyerCup(); });
     RegisterScene("RL Franka Reach", []() { return new RLFrankaReach(); });
-    RegisterScene("SoftGym Cloth New", []() { return new softgymCloth(softgymCloth::eCloth); });
+    RegisterScene("SoftGym Cloth New", []() { return new SoftgymCloth(); });
+    RegisterScene("Rigid Sawyer", []() { return new RigidSawyer(RigidSawyer::eCloth); });
 
 //	RegisterScene("RL Sawyer", []() { return new RLSawyerCup(); });
 //	RegisterScene("Rigid to Particles Attachments", []() { return new RigidParticleAttachment(); });

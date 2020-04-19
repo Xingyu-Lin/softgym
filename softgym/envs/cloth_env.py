@@ -3,6 +3,7 @@ from gym.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
 from softgym.envs.action_space import ParallelGripper, Picker, PickerPickPlace
+from softgym.envs.robot_env import RobotBase
 from copy import deepcopy
 
 
@@ -12,7 +13,7 @@ class ClothEnv(FlexEnv):
         super().__init__(**kwargs)
 
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['sphere', 'picker', 'pickerpickplace']
+        assert action_mode in ['sphere', 'picker', 'pickerpickplace', 'sawyer', 'franka']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.cloth_particle_radius = particle_radius
@@ -30,6 +31,8 @@ class ClothEnv(FlexEnv):
         elif action_mode == 'pickerpickplace':
             self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self)
             self.action_space = self.action_tool.action_space
+        elif action_mode in ['sawyer', 'franka']:
+            self.action_tool = RobotBase(action_mode)
 
         if observation_mode in ['key_point', 'point_cloud']:
             if observation_mode == 'key_point':
@@ -111,11 +114,12 @@ class ClothEnv(FlexEnv):
         camera_params = config['camera_params'][config['camera_name']]
         env_idx = 9 if 'env_idx' not in config else config['env_idx']
         mass = config['mass'] if 'mass' in config else 0.5
-        params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
-                           *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass])
+        scene_params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
+                                 *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass])
+        robot_params = []
 
-        self.params = params  # YF NOTE: need to save the params for sampling goals
-        pyflex.set_scene(env_idx, params, 0)
+        self.params = (scene_params, robot_params)
+        pyflex.set_scene(env_idx, scene_params, 0, robot_params)
         if state is not None:
             self.set_state(state)
         self.current_config = deepcopy(config)
