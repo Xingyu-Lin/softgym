@@ -1,11 +1,13 @@
+#include "softgym_sawyer.h"
+char* make_path(char* full_path, std::string path);
 
-
-class softgym_SoftBody : public Scene
+class SoftgymSoftBody : public Scene
 {
 
 public:
-	softgym_SoftBody() :
-		mRadius(0.1f),
+
+	SoftgymSoftBody() :
+		mRadius(0.02f),
 		mRelaxationFactor(1.0f),
 		mPlinth(false),
 		plasticDeformation(false)
@@ -127,9 +129,25 @@ public:
 		}
 	}
 
-	virtual void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
+	SoftgymSawyer* ptrRobot = NULL;
+
+	SoftgymCloth(){}
+
+    SoftgymSawyer* getPtrRobot() {return ptrRobot;}
+
+    void Initialize(py::array_t<float> scene_params = py::array_t<float>(),
+                    py::array_t<float> robot_params = py::array_t<float>(), int thread_idx = 0)
 	{
-		float radius = mRadius;
+	    auto ptrRobotParams = (float *) robot_params.request().ptr;
+        if (ptrRobotParams!=NULL &&  robot_params.size()>0) // Use robot
+        {
+            cout<<robot_params.size();
+            ptrRobot = new SoftgymSawyer();
+            ptrRobot->Initialize(robot_params); // XY: For some reason this has to be before creation of other rigid body
+        }
+	    cout<<"Softbody initialize"<<endl;
+	    cout<<scene_params.size()<<endl;
+	    float radius = mRadius;
 		auto ptr = (float *) scene_params.request().ptr;
 		int paramNum = (int)ptr[0];
 
@@ -387,182 +405,20 @@ public:
 };
 
 
+class SoftgymSoftRope : public SoftgymSoftBody
+{
+public:
+    char ropeObjPath[100];
+	SoftgymSoftRope()
+	{
+	    Instance rope(make_path(ropeObjPath, "/data/rope.obj"));
+		rope.mScale = Vec3(10.0f);
+		rope.mClusterSpacing = 1.5f;
+		rope.mClusterRadius = 0.0f;
+		rope.mClusterStiffness = 0.55f;
 
-//class SoftOctopus : public SoftBody
-//{
-//public:
-//
-//	SoftOctopus()
-//	{
-//		Instance octopus("../../data/softs/octopus.obj");
-//		octopus.mScale = Vec3(32.0f);
-//		octopus.mClusterSpacing = 2.75f;
-//		octopus.mClusterRadius = 3.0f;
-//		octopus.mClusterStiffness = 0.15f;
-//		octopus.mSurfaceSampling = 1.0f;
-//
-//		AddStack(octopus, 1, 3, 1);
-//
-//		Initialize();
-//	}
-//};
+		AddInstance(rope);
 
-//class SoftRope : public SoftBody
-//{
-//public:
-//
-//	SoftRope()
-//	{
-//	    Instance rope("../../data/rope.obj");
-//		rope.mScale = Vec3(50.0f);
-//		rope.mClusterSpacing = 1.5f;
-//		rope.mClusterRadius = 0.0f;
-//		rope.mClusterStiffness = 0.55f;
-//
-//		AddInstance(rope);
-//
 //		Initialize();
-//	}
-//};
-
-//
-//class SoftCloth : public SoftBody
-//{
-//public:
-//
-//	SoftCloth()
-//	{
-//	    Instance cloth("../../data/box_ultra_high.ply");
-//		cloth.mScale = Vec3(20.0f, 0.2f, 20.0f);
-//		cloth.mClusterSpacing = 1.0f;
-//		cloth.mClusterRadius = 2.0f;
-//		cloth.mClusterStiffness = 0.2f;
-//		cloth.mLinkRadius = 2.0f;
-//		cloth.mLinkStiffness = 1.0f;
-//		cloth.mSkinningFalloff = 1.0f;
-//		cloth.mSkinningMaxDistance = 100.f;
-//
-//		mRadius = 0.05f;
-//		AddInstance(cloth);
-//
-//		Initialize();
-//	}
-//};
-//
-//class SoftTeapot : public SoftBody
-//{
-//public:
-//
-//	SoftTeapot()
-//	{
-//		Instance teapot("../../data/teapot.ply");
-//		teapot.mScale = Vec3(25.0f);
-//		teapot.mClusterSpacing = 3.0f;
-//		teapot.mClusterRadius = 0.0f;
-//		teapot.mClusterStiffness = 0.1f;
-//
-//		AddInstance(teapot);
-//
-//		Initialize();
-//	}
-//};
-//
-//class SoftArmadillo : public SoftBody
-//{
-//public:
-//
-//	SoftArmadillo()
-//	{
-//		Instance armadillo("../../data/armadillo.ply");
-//		armadillo.mScale = Vec3(25.0f);
-//		armadillo.mClusterSpacing = 3.0f;
-//		armadillo.mClusterRadius = 0.0f;
-//
-//		AddInstance(armadillo);
-//
-//		Initialize();
-//	}
-//};
-//
-//
-//class SoftBunny : public SoftBody
-//{
-//public:
-//
-//	SoftBunny()
-//	{
-//		Instance softbunny("../../data/bunny.ply");
-//		softbunny.mScale = Vec3(20.0f);
-//		softbunny.mClusterSpacing = 3.5f;
-//		softbunny.mClusterRadius = 0.0f;
-//		softbunny.mClusterStiffness = 0.2f;
-//
-//		AddInstance(softbunny);
-//
-//		Initialize();
-//	}
-//};
-//
-//class PlasticBunnies : public SoftBody
-//{
-//public:
-//
-//	PlasticBunnies()
-//	{
-//		Instance plasticbunny("../../data/bunny.ply");
-//		plasticbunny.mScale = Vec3(10.0f);
-//		plasticbunny.mClusterSpacing = 1.0f;
-//		plasticbunny.mClusterRadius = 0.0f;
-//		plasticbunny.mClusterStiffness = 0.0f;
-//		plasticbunny.mGlobalStiffness = 1.0f;
-//		plasticbunny.mClusterPlasticThreshold = 0.0015f;
-//		plasticbunny.mClusterPlasticCreep = 0.15f;
-//		plasticbunny.mTranslation[1] = 5.0f;
-//
-//		mPlinth = true;
-//		AddStack(plasticbunny, 1, 10, 1, true);
-//
-//		Initialize();
-//	}
-//};
-//
-//class PlasticStack : public SoftBody
-//{
-//public:
-//
-//	PlasticStack()
-//	{
-//		Instance stackBox("../../data/box_high.ply");
-//		stackBox.mScale = Vec3(10.0f);
-//		stackBox.mClusterSpacing = 1.5f;
-//		stackBox.mClusterRadius = 0.0f;
-//		stackBox.mClusterStiffness = 0.0f;
-//		stackBox.mGlobalStiffness = 1.0f;
-//		stackBox.mClusterPlasticThreshold = 0.0015f;
-//		stackBox.mClusterPlasticCreep = 0.25f;
-//		stackBox.mTranslation[1] = 1.0f;
-//
-//		Instance stackSphere("../../data/sphere.ply");
-//		stackSphere.mScale = Vec3(10.0f);
-//		stackSphere.mClusterSpacing = 1.5f;
-//		stackSphere.mClusterRadius = 0.0f;
-//		stackSphere.mClusterStiffness = 0.0f;
-//		stackSphere.mGlobalStiffness = 1.0f;
-//		stackSphere.mClusterPlasticThreshold = 0.0015f;
-//		stackSphere.mClusterPlasticCreep = 0.25f;
-//		stackSphere.mTranslation[1] = 2.0f;
-//
-//		AddInstance(stackBox);
-//		AddInstance(stackSphere);
-//
-//		for (int i = 0; i < 3; i++)
-//		{
-//			stackBox.mTranslation[1] += 2.0f;
-//			stackSphere.mTranslation[1] += 2.0f;
-//			AddInstance(stackBox);
-//			AddInstance(stackSphere);
-//		}
-//
-//		Initialize();
-//	}
-//};
+	}
+};

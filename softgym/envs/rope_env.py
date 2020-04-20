@@ -3,6 +3,7 @@ from gym.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
 from softgym.envs.action_space import ParallelGripper, Picker
+from softgym.envs.robot_env import RobotBase
 from copy import deepcopy
 
 
@@ -12,7 +13,7 @@ class RopeEnv(FlexEnv):
         super().__init__(**kwargs)
 
         assert observation_mode in ['point_cloud', 'cam_rgb', 'key_point']
-        assert action_mode in ['picker']
+        assert action_mode in ['picker', 'sawyer', 'franka']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.num_picker = num_picker
@@ -20,6 +21,8 @@ class RopeEnv(FlexEnv):
         if action_mode == 'picker':
             self.action_tool = Picker(num_picker, picker_radius=picker_radius, picker_low=(-1.5, 0., -1.), picker_high=(4.5, 2.8, 4.))
             self.action_space = self.action_tool.action_space
+        elif action_mode in ['sawyer', 'franka']:
+            self.action_tool = RobotBase(action_mode)
 
         if observation_mode in ['key_point', 'point_cloud']:
             if observation_mode == 'key_point':
@@ -96,7 +99,7 @@ class RopeEnv(FlexEnv):
             render_mode = 2
         params = np.array(
             [5, config['ClusterSpacing'], config['ClusterRadius'], config['ClusterStiffness'], config['DynamicFriction'], config['ParticleFriction']])
-        pyflex.set_scene(12, params, 0)
+        pyflex.set_scene(12, params, 0, [0])
         self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
 
         if state is not None:

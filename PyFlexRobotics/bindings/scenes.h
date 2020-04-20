@@ -223,7 +223,7 @@ inline void RegisterPhysicsScenes()
     RegisterScene("SoftGym Cloth Flatten", []() { return new softgym_FlattenCloth(); });
     RegisterScene("SoftGym Water", []() { return new softgym_PourWater; });
 
-	RegisterScene("RL Sawyer", []() { return new RLSawyerCup(); });
+    RegisterScene("Soft Rope", []() { return new SoftgymSoftRope(); });
     RegisterScene("RL Franka Reach", []() { return new RLFrankaReach(); });
     RegisterScene("SoftGym Cloth New", []() { return new SoftgymCloth(); });
     RegisterScene("Rigid Sawyer", []() { return new RigidSawyer(RigidSawyer::eCloth); });
