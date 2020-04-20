@@ -124,7 +124,7 @@ public:
 		g_params.solidPressure = solidpressure; //0.f;
 		g_params.relaxationFactor = 0.0f;
 		g_params.cohesion = cohesion; // 0.02f;
-		g_params.collisionDistance = 0.01f;
+		g_params.collisionDistance = radius / 10;
 		// g_params.adhesion = adhesion;
 		// g_params.surfaceTension = surfaceTension;
 
