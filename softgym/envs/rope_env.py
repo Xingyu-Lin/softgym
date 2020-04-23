@@ -53,11 +53,11 @@ class RopeEnv(FlexEnv):
             'ClusterStiffness': 0.55,
             'DynamicFriction': 3.0,
             'ParticleFriction': 0.25,
-            'ParticleInvMass': 0.01,
+            'ParticleInvMass': 20,
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([0., 7., 3.]),
-                                   'angle': np.array([0, -65 / 180. * np.pi, 0.]),
+                                  {'pos': np.array([0., 2.5, 1.2]),
+                                   'angle': np.array([0 * np.pi, -45 / 180. * np.pi, 0]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}
         }
