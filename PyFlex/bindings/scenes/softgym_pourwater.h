@@ -94,20 +94,29 @@ public:
 		g_params.radius = radius;
 		g_params.dynamicFriction = 0.01f;
 		g_params.viscosity =  viscosity; //2.0f;
-		g_params.numIterations = 4;
+		g_params.numIterations = 10;
 		g_params.vorticityConfinement = vorticityConfinement;// 40.0f;
 		g_params.fluidRestDistance = restDistance;
 		g_params.solidPressure = solidpressure; //0.f;
 		g_params.relaxationFactor = 0.0f;
-		g_params.cohesion = cohesion; // 0.02f;
 		g_params.collisionDistance = 0.01f;
-		// g_params.adhesion = adhesion;
-		// g_params.surfaceTension = surfaceTension;
+		g_params.adhesion = 0.00001f*viscosity;
+		g_params.cohesion = 0.01f*viscosity;	
+
+		Vec4 milk_color = Vec4(1., 1., 1., 0.0f);
+		Vec4 nomral_water_color = Vec4(0.113f, 0.425f, 0.55f, 1.f);
+		Vec4 diff = milk_color - nomral_water_color;
+
+		float factor = (viscosity - 2.) / 8.;
+		g_fluidColor = nomral_water_color;
+		for (int i =0; i< 4; i++) {
+			g_fluidColor[i] += factor * diff[i];
+		}
 
 		g_maxDiffuseParticles = 0;
 		g_diffuseScale = 0.5f;
 
-		g_fluidColor = Vec4(0.113f, 0.425f, 0.55f, 1.f);
+		// g_fluidColor = Vec4(0.113f, 0.425f, 0.55f, 1.f);
 
 		Emitter e1;
 		e1.mDir = Vec3(1.0f, 0.0f, 0.0f);

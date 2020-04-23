@@ -2668,18 +2668,29 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
         g_pause = false;
     }
     // Customized scenes
-    g_scenes.push_back(new yz_BunnyBath("Bunny Bath", true));
-    g_scenes.push_back(new yz_BoxBath("Box Bath", true));
-    g_scenes.push_back(new yz_DamBreak("Dam Break", true));
-    g_scenes.push_back(new yz_RigidFall("Rigid Fall"));
-    g_scenes.push_back(new yz_RiceFall("Rice Fall"));
+    // g_scenes.push_back(new yz_BunnyBath("Bunny Bath", true));
+    // g_scenes.push_back(new yz_BoxBath("Box Bath", true));
+    // g_scenes.push_back(new yz_DamBreak("Dam Break", true));
+    // g_scenes.push_back(new yz_RigidFall("Rigid Fall"));
+    // g_scenes.push_back(new yz_RiceFall("Rice Fall"));
 
-    auto *plasticStackScene = new yz_SoftBody("Plastic Stack");
-    g_scenes.push_back(plasticStackScene);
+    // auto *plasticStackScene = new yz_SoftBody("Plastic Stack");
+    // g_scenes.push_back(plasticStackScene);
 
-    g_scenes.push_back(new yz_FluidShake("Fluid Shake"));
-    g_scenes.push_back(new yz_BoxBathExt("Box Bath Extension", true));
-    g_scenes.push_back(new yz_FluidIceShake("Fluid Ice Shake"));
+    // g_scenes.push_back(new yz_FluidShake("Fluid Shake"));
+    // g_scenes.push_back(new yz_BoxBathExt("Box Bath Extension", true));
+    // g_scenes.push_back(new yz_FluidIceShake("Fluid Ice Shake"));
+    // placeholder scenes
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+
     g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
     g_scenes.push_back(new softgym_FlattenCloth("Softgym Flatten Cloth"));
     g_scenes.push_back(new softgym_PourWater("Softgym Pour Water"));
@@ -3701,26 +3712,26 @@ void pyflex_set_shape_states(py::array_t<float> states) {
 //     int phase, float jitter=0.005f
 // }
 
-py::array_t<float> pyflex_get_sceneParams() {
-    if (g_scene == 5) {
-        auto params = py::array_t<float>(3);
-        auto ptr = (float *) params.request().ptr;
+// py::array_t<float> pyflex_get_sceneParams() {
+//     if (g_scene == 5) {
+//         auto params = py::array_t<float>(3);
+//         auto ptr = (float *) params.request().ptr;
 
-        ptr[0] = ((yz_SoftBody *) g_scenes[g_scene])->mInstances[0].mClusterStiffness;
-        ptr[1] = ((yz_SoftBody *) g_scenes[g_scene])->mInstances[0].mClusterPlasticThreshold * 1e4f;
-        ptr[2] = ((yz_SoftBody *) g_scenes[g_scene])->mInstances[0].mClusterPlasticCreep;
+//         ptr[0] = ((yz_SoftBody *) g_scenes[g_scene])->mInstances[0].mClusterStiffness;
+//         ptr[1] = ((yz_SoftBody *) g_scenes[g_scene])->mInstances[0].mClusterPlasticThreshold * 1e4f;
+//         ptr[2] = ((yz_SoftBody *) g_scenes[g_scene])->mInstances[0].mClusterPlasticCreep;
 
-        return params;
-    } else {
-        printf("Unsupprted scene_idx %d\n", g_scene);
+//         return params;
+//     } else {
+//         printf("Unsupprted scene_idx %d\n", g_scene);
 
-        auto params = py::array_t<float>(1);
-        auto ptr = (float *) params.request().ptr;
-        ptr[0] = 0.0f;
+//         auto params = py::array_t<float>(1);
+//         auto ptr = (float *) params.request().ptr;
+//         ptr[0] = 0.0f;
 
-        return params;
-    }
-}
+//         return params;
+//     }
+// }
 
 py::array_t<float> pyflex_get_sceneUpper() {
     auto scene_upper = py::array_t<float>(3);
@@ -4016,7 +4027,7 @@ PYBIND11_MODULE(pyflex, m) {
     m.def("get_rigidRotations", &pyflex_get_rigidRotations, "Get rigid rotations");
     m.def("get_rigidTranslations", &pyflex_get_rigidTranslations, "Get rigid translations");
 
-    m.def("get_sceneParams", &pyflex_get_sceneParams, "Get scene parameters");
+    // m.def("get_sceneParams", &pyflex_get_sceneParams, "Get scene parameters");
 
     m.def("get_velocities", &pyflex_get_velocities, "Get particle velocities");
     m.def("set_velocities", &pyflex_set_velocities, "Set particle velocities");
