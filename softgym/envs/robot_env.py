@@ -13,3 +13,8 @@ class RobotBase(ActionToolBase):
 
     def step(self, action):
         pass
+
+    @property
+    def action_space(self):
+        """ Action space of the robot"""
+        return None

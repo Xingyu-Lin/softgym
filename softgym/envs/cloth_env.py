@@ -116,10 +116,14 @@ class ClothEnv(FlexEnv):
         mass = config['mass'] if 'mass' in config else 0.5
         scene_params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
                                  *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass])
-        robot_params = [0]
+        
+        if self.version == 2:
+            robot_params = [0]
+            self.params = (scene_params, robot_params)
+            pyflex.set_scene(env_idx, scene_params, 0, robot_params)
+        elif self.version == 1:
+            pyflex.set_scene(env_idx, scene_params, 0)
 
-        self.params = (scene_params, robot_params)
-        pyflex.set_scene(env_idx, scene_params, 0, robot_params)
         if state is not None:
             self.set_state(state)
         self.current_config = deepcopy(config)

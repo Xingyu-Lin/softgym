@@ -19,7 +19,7 @@ args = args.parse_args()
 
 env_name = 'PourWater'
 dic = env_arg_dict[env_name]
-dic['headless'] = 1
+dic['headless'] = 0
 dic['observation_mode'] = 'cam_rgb'
 dic['action_repeat'] = 8
 env = PourWaterPosControlEnv(**dic)

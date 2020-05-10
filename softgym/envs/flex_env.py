@@ -52,6 +52,13 @@ class FlexEnv(gym.Env):
         self.particle_num = 0
         self.eval_flag = False
 
+        # version 1 does not support robot, while version 2 does.
+        pyflex_root = os.environ['PYFLEXROOT']
+        if 'Robotics' in pyflex_root:
+            self.version = 2
+        else:
+            self.version = 1
+
     @staticmethod
     def _random_pick_and_place(pick_num=10):
         """ Random pick a particle up and the drop it for pick_num times"""

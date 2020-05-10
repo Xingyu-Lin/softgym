@@ -21,11 +21,6 @@ class ActionToolBase(metaclass=abc.ABCMeta):
     def step(self, action):
         """ Step funciton to change the action space states. Does not call pyflex.step() """
 
-    @property
-    def action_space(self):
-        """ Action space of the robot"""
-        return None
-
 
 class ParallelGripper(ActionToolBase):
     def __init__(self, gripper_type='sphere', sphere_radius=0.1, init_pos=(0., -1., 0.)):
@@ -151,6 +146,7 @@ class Picker(ActionToolBase):
 
         space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.2  # [dx, dy, dz, [0, 1]]
         space_high = np.array([0.1, 0.1, 0.1, 5] * self.num_picker) * 0.2
+        print("right before action space")
         self.action_space = Box(space_low, space_high, dtype=np.float32)
 
     def update_picker_boundary(self, picker_low, picker_high):
