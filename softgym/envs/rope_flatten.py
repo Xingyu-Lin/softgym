@@ -47,7 +47,7 @@ class RopeFlattenEnv(RopeEnv):
             config['camera_params'] = deepcopy(self.camera_params)
             self.action_tool.reset([0., -1., 0.])
 
-            self._random_pick_and_place(pick_num=10)
+            # self._random_pick_and_place(pick_num=10)
             self._center_object()
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
