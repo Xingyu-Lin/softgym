@@ -24,7 +24,7 @@ class RopeFlattenEnv(RopeEnv):
             self.cached_states_path = osp.join(cur_dir, cached_states_path)
         else:
             self.cached_states_path = cached_states_path
-
+            
         if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
             config = self.get_default_config()
             self.generate_env_variation(config, self.num_variations, save_to_file=self.save_cache_states)
