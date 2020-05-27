@@ -196,6 +196,7 @@ bool g_interop = false;
 bool g_d3d12 = false;
 bool g_headless = false;
 bool g_render = true;
+bool g_sensor_segment = true;
 bool g_useAsyncCompute = true;
 bool g_increaseGfxLoadForAsyncComputeTesting = false;
 
@@ -606,7 +607,7 @@ struct RenderSensor
 
 DepthRenderProfile defaultDepthProfile = {
 	0.f, // minRange
-	0.f, // maxRange
+	5.f, // maxRange
 };
 
 std::vector<RenderSensor> g_renderSensors;
@@ -645,16 +646,6 @@ size_t AddSensor(int width, int height, int parent, Transform origin, float fov,
 
 	// returns id of added sensor
 	return g_renderSensors.size() - 1;
-}
-
-size_t AddPrimesenseSensor(int parent, Transform origin, float scale = 1.f, bool renderFluids = false)
-{
-	// TODO(jaliang): Color sensor should have higher res
-	DepthRenderProfile primesenseDepthProfile = {
-		0.35f, // minRange
-		3.f, // maxRange
-	};
-	return AddSensor(int(640.f * scale), int(480.f * scale), parent, origin, DegToRad(45.f), renderFluids, primesenseDepthProfile);
 }
 
 float* ReadSensor(int sensorId)
@@ -1758,12 +1749,6 @@ void UpdateScene()
 
 void RenderScene(int eye = 2, Matrix44* usedProj = nullptr, Matrix44* usedView = nullptr)
 {
-	for (auto& sensor : g_renderSensors)
-	{
-		// read back sensor data from previous frame to avoid stall, todo: multi-view / tiled sensor rendering / etc
-		ReadRenderTarget(sensor.target, sensor.rgbd, 0, 0, sensor.width, sensor.height);
-	}
-
     const int numParticles = NvFlexGetActiveCount(g_solver);
     const int numDiffuse = g_buffers->diffuseCount[0];
 
@@ -2046,12 +2031,20 @@ void RenderScene(int eye = 2, Matrix44* usedProj = nullptr, Matrix44* usedView =
 	// sensors pass
 
 	DrawSensors(numParticles, numDiffuse, radius, lightTransform);
+	for (auto& sensor : g_renderSensors)
+	{
+		// read back sensor data from previous frame to avoid stall, todo: multi-view / tiled sensor rendering / etc
+		// XY: Move this such that the data is the current frame
+		ReadRenderTarget(sensor.target, sensor.rgbd, 0, 0, sensor.width, sensor.height);
+	}
 
 	// need to reset the view for picking
     SetView(view, proj);
 
 	// end timing
     GraphicsTimerEnd();
+
+
 }
 
 void RenderDebug()
@@ -2803,20 +2796,36 @@ void DrawSensors(const int numParticles, const int numDiffuse, float radius, Mat
 			cameraToWorld = sensor.origin;
 		}
 
-		// convert from URDF (positive z-forward) to OpenGL (negative z-forward)
-		Matrix44 conversion = RotationMatrix(kPi, Vec3(1.0f, 0.0f, 0.0f));
+        Matrix44 conversion, view, proj;
+        if (false) // For now, do not use the
+        {
+            // convert from URDF (positive z-forward) to OpenGL (negative z-forward)
+            conversion = RotationMatrix(kPi, Vec3(1.0f, 0.0f, 0.0f));
 
-		Matrix44 view = AffineInverse(TransformMatrix(cameraToWorld) * conversion);
-		Matrix44 proj = ProjectionMatrix(RadToDeg(sensor.fov), 1.0f, g_camNear, g_camFar);
+            view = AffineInverse(TransformMatrix(cameraToWorld) * conversion);
+            proj = ProjectionMatrix(RadToDeg(sensor.fov), 1.0f, g_camNear, g_camFar);
+        }
+        else
+        {
+            float fov = kPi / 4.0f;
+            float aspect = float(sensor.width) / sensor.height;
+
+            view = GetCameraRotationMatrix(true) * TranslationMatrix(-Point3(g_camPos));
+            proj = ProjectionMatrix(RadToDeg(fov), aspect, g_camNear, g_camFar);
+        }
 
 		SetRenderTarget(sensor.target, 0, 0, sensor.width, sensor.height);	
 		SetView(view, proj);	
 
-		// draw all rigid attachments, todo: call into the main scene render or just render what we need selectively?		
-		DrawRigidAttachments();
-		DrawRigidShapes();
-		DrawStaticShapes();
-		DrawPlanes((Vec4*)g_params.planes, g_params.numPlanes, g_drawPlaneBias);
+        if (!g_sensor_segment)
+        {
+            // draw all rigid attachments, todo: call into the main scene render or just render what we need selectively?
+            DrawRigidAttachments();
+            DrawRigidShapes();
+            DrawStaticShapes();
+            DrawPlanes((Vec4*)g_params.planes, g_params.numPlanes, g_drawPlaneBias);
+        }
+
 
 		if (g_drawMesh)
 		{
@@ -6353,6 +6362,16 @@ void pyflex_set_camera_params(py::array_t<float> update_camera_param) {
         g_screenHeight = camera_param_ptr[7];}
 }
 
+py::array_t<float> pyflex_render_sensor(int sensor_id) {
+    RenderSensor s = g_renderSensors[sensor_id];
+    auto rendered_img = py::array_t<float>((int) s.width * s.height * 4);
+    auto rendered_img_ptr = (float *) rendered_img.request().ptr;
+    float* rgbd = ReadSensor(sensor_id);
+    for (int i=0; i< s.width * s.height *4; ++i)
+        rendered_img_ptr[i] = rgbd[i];
+    return rendered_img;
+}
+
 py::array_t<int> pyflex_render(int capture, char *path) {
     // TODO: Turn off the GUI menu for rendering
     static double lastTime;
@@ -6548,6 +6567,8 @@ py::array_t<int> pyflex_render(int capture, char *path) {
     return rendered_img;
 }
 
+void pyflex_set_sensor_segment(bool flag) {g_sensor_segment=flag;}
+
 int main() {
     cout<<"PyFlexRobotics loaded" <<endl;
     pyflex_init();
@@ -6574,7 +6595,8 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("capture") = 0,
           py::arg("path") = nullptr
         );
-
+    m.def("render_sensor", &pyflex_render_sensor, py::arg("sensor_id")= 0);
+    m.def("set_sensor_segment", &pyflex_set_sensor_segment, py::arg("flag"));
     m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
     m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
 

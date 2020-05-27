@@ -116,6 +116,15 @@ public:
 		g_sceneLower = Vec3(-1.0f);
 		g_sceneUpper = Vec3(1.0f);
 //		g_drawPoints = false;
+
+        const int headLink = urdf->rigidNameMap["head_tilt_link"];
+        bool hasFluids = false;
+        DepthRenderProfile p = {
+			0.f, // minRange
+			5.f // maxRange
+		};
+
+        AddSensor(g_screenWidth, g_screenHeight,  0,  Transform(Vec3(0.0f, 3.f, 3.5f), rpy2quat(2.7415926f, 0.0f, 0.0f)),  DegToRad(60.f), hasFluids, p);
     }
 
     virtual void DoGui()
