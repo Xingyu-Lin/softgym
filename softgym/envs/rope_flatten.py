@@ -19,17 +19,23 @@ class RopeFlattenEnv(RopeEnv):
 
         super().__init__(**kwargs)
         self.prev_endpoint_dist = None
+        self.prev_distance_diff = None
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
             self.cached_states_path = osp.join(cur_dir, cached_states_path)
         else:
             self.cached_states_path = cached_states_path
-            
+
         if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
             config = self.get_default_config()
             self.generate_env_variation(config, self.num_variations, save_to_file=self.save_cache_states)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
+
+        # set reward range
+        self.reward_max = 0
+        self.reward_min = -self.rope_length
+        self.reward_range = self.reward_max - self.reward_min
 
     def generate_env_variation(self, config=None, num_variations=1, save_to_file=False, **kwargs):
         """ Generate initial states. Note: This will also change the current states! """
@@ -40,6 +46,7 @@ class RopeFlattenEnv(RopeEnv):
             self.set_scene(config)
 
             pos = pyflex.get_positions().reshape(-1, 4)
+            
             pos[:, 3] = config['ParticleInvMass']
             pyflex.set_positions(pos)
 
@@ -47,7 +54,7 @@ class RopeFlattenEnv(RopeEnv):
             config['camera_params'] = deepcopy(self.camera_params)
             self.action_tool.reset([0., -1., 0.])
 
-            # self._random_pick_and_place(pick_num=10)
+            self._random_pick_and_place(pick_num=10)
             self._center_object()
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
@@ -84,14 +91,18 @@ class RopeFlattenEnv(RopeEnv):
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ Reward is the distance between the endpoints of the rope"""
         curr_endpoint_dist = self._get_endpoint_distance()
+        curr_distance_diff = -np.abs(curr_endpoint_dist - self.rope_length)
         if self.delta_reward:
-            r = curr_endpoint_dist - self.prev_endpoint_dist
+            r = curr_distance_diff - self.prev_distance_diff
             if set_prev_reward:
-                self.prev_endpoint_dist = curr_endpoint_dist
+                self.prev_distance_diff = curr_distance_diff
         else:
-            r = curr_endpoint_dist
+            r = curr_distance_diff
+            r = (r - self.reward_min) / self.reward_range # NOTE: this only suits to non-delta reward
         return r
 
     def _get_info(self):
         curr_endpoint_dist = self._get_endpoint_distance()
-        return {'performance': curr_endpoint_dist}
+        curr_distance_diff = -np.abs(curr_endpoint_dist - self.rope_length)
+        normalized_performance = (curr_distance_diff - self.reward_min) / self.reward_range
+        return {'performance': normalized_performance}

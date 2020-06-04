@@ -201,7 +201,6 @@ class PourJamPosControlEnv(FluidEnv):
                 pyflex.add_box(halfEdge, center, quat)
         
         # move pouring glass to be at ground
-        self.glass_floor_centerx = self.x_center
         self.glass_states = self.init_glass_state(self.x_center, 0, self.glass_dis_x, self.glass_dis_z, self.height, self.border)
 
         # move poured glass to be at ground

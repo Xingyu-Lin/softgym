@@ -29,12 +29,17 @@ class PassWater1DEnv(FluidEnv):
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.wall_num = 5  # number of glass walls. floor/left/right/front/back
-        self.inner_step = 0  # count action repetation
         self.distance_coef = 1.
         self.water_penalty_coef = 10.
         self.terminal_x = 1.2
         self.min_x = -0.5
         self.max_x = 1.5
+        self.prev_reward = 0
+
+        self.reward_min = self.distance_coef * min(self.min_x - self.terminal_x, self.terminal_x - self.max_x) - \
+            self.water_penalty_coef * 1
+        self.reward_max = 0 # reach target position, with no water spilled
+        self.reward_range = self.reward_max - self.reward_min
 
         super().__init__(**kwargs)
 
@@ -63,11 +68,12 @@ class PassWater1DEnv(FluidEnv):
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
 
+        default_config = self.get_default_config()
+        border = default_config['glass']['border']
         if action_mode == 'direct':
             self.action_direct_dim = 1
-            # control the (x, y) corrdinate of the floor center, and theta its rotation angle.
-            action_low = np.array([-0.025])
-            action_high = np.array([0.025])
+            action_low = np.array([-border])
+            action_high = np.array([border])
             self.action_space = Box(action_low, action_high, dtype=np.float32)
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
@@ -92,7 +98,8 @@ class PassWater1DEnv(FluidEnv):
             'glass': {
                 'border': 0.005 if self.action_mode in ['sawyer', 'franka'] else 0.025, 
                 'height': 0.6,
-            }
+            },
+            'camera_name': 'default',
         }
         return config
 
@@ -193,7 +200,6 @@ class PassWater1DEnv(FluidEnv):
         reset to environment to the initial state.
         return the initial observation.
         '''
-
         self.inner_step = 0
         return self._get_obs()
 
@@ -270,17 +276,23 @@ class PassWater1DEnv(FluidEnv):
         Construct the passing water scence.
         '''
         # create fluid
-        super().set_scene(config["fluid"])  # do not sample fluid parameters, as it's very likely to generate very strange fluid
-        # print("fluid particle num: ", pyflex.get_n_particles())
+        super().set_scene(config)  # do not sample fluid parameters, as it's very likely to generate very strange fluid
 
         # compute glass params
-        self.set_glass_params(config["glass"])
+        if states is None:
+            self.set_glass_params(config["glass"])
+        else:
+            glass_params = states['glass_params']
+            self.border = glass_params['border']
+            self.height = glass_params['height']
+            self.glass_dis_x = glass_params['glass_dis_x']
+            self.glass_dis_z = glass_params['glass_dis_z']
+            self.glass_params = glass_params
 
         # create glass
         self.create_glass(self.glass_dis_x, self.glass_dis_z, self.height, self.border)
 
         # move glass to be at ground or on the table
-        self.glass_floor_centerx = self.x_center
         self.glass_states = self.init_glass_state(self.x_center, 0, self.glass_dis_x, self.glass_dis_z, self.height, self.border)
 
         pyflex.set_shape_states(self.glass_states)
@@ -319,7 +331,6 @@ class PassWater1DEnv(FluidEnv):
         else:  # set to passed-in cached init states
             self.set_state(states)
 
-        # print("pour water inital scene constructed over...")
 
     def _get_obs(self):
         '''
@@ -351,24 +362,31 @@ class PassWater1DEnv(FluidEnv):
         in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
         out_glass = water_num - in_glass
 
-        # print("out glass water num: ", out_glass)
-        reward = -self.water_penalty_coef * (out_glass / water_num)
+        reward = -self.water_penalty_coef * (float(out_glass) / water_num)
         reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
 
-        if set_prev_reward:
+        if self.delta_reward:
             delta_reward = reward - self.prev_reward
             self.prev_reward = reward
+        else:
+            normalized_reward = (reward - self.reward_min) / self.reward_range
 
-        return delta_reward if self.delta_reward else reward
+        return delta_reward if self.delta_reward else normalized_reward
 
-    def compute_in_pouring_glass_water(self):
+    def _get_info(self):
         state_dic = self.get_state()
-        water_state = state_dic['particle_pos'].reshape(-1, self.dim_position)
-        in_pouring_glass = 0
-        for water in water_state:
-            res = self.in_glass(water, self.glass_states, self.border, self.height)
-            in_pouring_glass += res
-        return in_pouring_glass
+        water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
+        water_num = len(water_state)
+
+        in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+        out_glass = water_num - in_glass
+        reward = -self.water_penalty_coef * (float(out_glass) / water_num)
+        reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
+        normalized_reward = (reward - self.reward_min) / self.reward_range
+        return {'performance': normalized_reward,
+                'distance_to_target': np.abs((self.terminal_x - self.glass_x)),
+                'out_water': (out_glass / water_num)}
+
 
     def _step(self, action):
         '''
@@ -376,7 +394,7 @@ class PassWater1DEnv(FluidEnv):
         '''
         # make action as increasement, clip its range
         dx = action[0]
-        dx = np.clip(dx, a_min=-self.border, a_max=self.border)
+        dx = np.clip(dx, a_min=self.action_space.low[0], a_max=self.action_space.high[0])
         x = self.glass_x + dx
 
         # move the glass
@@ -390,7 +408,6 @@ class PassWater1DEnv(FluidEnv):
         pyflex.step()
 
         self.inner_step += 1
-        return
 
     def create_glass(self, glass_dis_x, glass_dis_z, height, border):
         """
@@ -545,18 +562,6 @@ class PassWater1DEnv(FluidEnv):
         res = np.sum(res)
         return res
 
-    def _get_info(self):
-        state_dic = self.get_state()
-        water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
-        water_num = len(water_state)
-
-        in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
-        out_glass = water_num - in_glass
-        reward = -self.water_penalty_coef * (out_glass / water_num)
-        reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
-        return {'performance': reward,
-                'distance_to_target': np.abs((self.terminal_x - self.glass_x)),
-                'out_water': (out_glass / water_num)}
 
 
 if __name__ == '__main__':

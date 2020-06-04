@@ -5,7 +5,7 @@ from softgym.envs.flex_env import FlexEnv
 from softgym.envs.action_space import ParallelGripper, Picker
 from softgym.envs.robot_env import RobotBase
 from copy import deepcopy
-
+import os.path as osp
 
 class RopeEnv(FlexEnv):
     def __init__(self, observation_mode, action_mode, num_picker=2, horizon=250, render_mode='particle', picker_radius=0.15, **kwargs):
@@ -18,8 +18,20 @@ class RopeEnv(FlexEnv):
         self.action_mode = action_mode
         self.num_picker = num_picker
 
+        cur_dir = osp.dirname(osp.abspath(__file__))
+        if not osp.exists(osp.join(cur_dir, 'rope_init_pos.npy')):
+            config = self.get_default_config()
+            self.set_scene(config)
+            rope_init_pos = pyflex.get_positions().reshape(-1, 4)
+            np.save(osp.join(cur_dir, 'rope_init_pos.npy'), rope_init_pos)
+            print("saved!")
+        else:
+            rope_init_pos = np.load(osp.join(cur_dir, 'rope_init_pos.npy'))
+        self.rope_length = np.linalg.norm(rope_init_pos[0, :3] - rope_init_pos[-1, :3]).squeeze()
+
         if action_mode == 'picker':
-            self.action_tool = Picker(num_picker, picker_radius=picker_radius, picker_low=(-1.5, 0., -1.), picker_high=(4.5, 2.8, 4.))
+            self.action_tool = Picker(num_picker, picker_radius=picker_radius, picker_low=(-1.5, 0., -1.), picker_high=(4.5, 2.8, 4.), 
+                init_particle_pos=rope_init_pos)
             self.action_space = self.action_tool.action_space
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
@@ -42,8 +54,8 @@ class RopeEnv(FlexEnv):
 
         self.horizon = horizon
 
-        self.cached_configs = [self.get_default_config()]
-        self.cached_init_states = [None]
+        # self.cached_configs = [self.get_default_config()]
+        # self.cached_init_states = [None]
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """

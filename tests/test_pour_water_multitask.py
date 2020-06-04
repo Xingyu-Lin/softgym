@@ -90,7 +90,7 @@ if args.policy == 'heuristic':
     v = 0.13
     y = 0
     dt = 0.1
-    x = env.glass_floor_centerx
+    x = env.x_center
     total_rotate = 0.28* np.pi
 
     # test a heuristic policy

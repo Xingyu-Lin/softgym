@@ -17,7 +17,7 @@ except ImportError as e:
 
 class FlexEnv(gym.Env):
     def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, num_variations=1,
-                 action_repeat=8, camera_name='default_camera', delta_reward=True, deterministic=True, use_cached_states=True, 
+                 action_repeat=8, camera_name='default_camera', delta_reward=False, deterministic=True, use_cached_states=True, 
                  save_cache_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)

@@ -21,7 +21,7 @@ vx = 0.02
 vx2 = 0.15
 y = 0
 dt = 0.1
-x = env.glass_floor_centerx
+x = env.x_center
 total_rotate1 = 0.57* np.pi
 total_rotate2 = 0.67* np.pi
 
