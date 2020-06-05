@@ -27,19 +27,19 @@ class ClothFoldEnv(ClothEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
-    def initialize_camera(self):
-        """
-        set the camera width, height, position and angle.
-        **Note: width and height is actually the screen width and screen height of FLex.
-        I suggest to keep them the same as the ones used in pyflex.cpp.
-        """
-        self.camera_name = 'default_camera'
-        self.camera_params['default_camera'] = {
-            'pos': np.array([0., 3, 3.5]),
-            'angle': np.array([0, -45 / 180. * np.pi, 0.]),
-            'width': self.camera_width,
-            'height': self.camera_height
-        }
+    # def initialize_camera(self):
+    #     """
+    #     set the camera width, height, position and angle.
+    #     **Note: width and height is actually the screen width and screen height of FLex.
+    #     I suggest to keep them the same as the ones used in pyflex.cpp.
+    #     """
+    #     self.camera_name = 'default_camera'
+    #     self.camera_params['default_camera'] = {
+    #         'pos': np.array([0.0, 0.9, 0.75]),
+    #         'angle': np.array([0, -45 / 180. * np.pi, 0.]),
+    #         'width': self.camera_width,
+    #         'height': self.camera_height
+    #     }
 
     def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
@@ -118,14 +118,14 @@ class ClothFoldEnv(ClothEnv):
         """ Right now only use one initial state"""
         if hasattr(self, 'action_tool'):
             x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
-            self.action_tool.reset([x + 0.1, 0.2, 0])
-            picker_low = self.action_tool.picker_low
-            picker_high = self.action_tool.picker_high
-            offset_x = self.action_tool._get_pos()[0][0][0] - picker_low[0] - 0.3
-            picker_low[0] += offset_x
-            picker_high[0] += offset_x
-            picker_high[0] += 1.0
-            self.action_tool.update_picker_boundary(picker_low, picker_high)
+            self.action_tool.reset([x + 0.1, 0.1, 0])
+            # picker_low = self.action_tool.picker_low
+            # picker_high = self.action_tool.picker_high
+            # offset_x = self.action_tool._get_pos()[0][0][0] - picker_low[0] - 0.3
+            # picker_low[0] += offset_x
+            # picker_high[0] += offset_x
+            # picker_high[0] += 1.0
+            # self.action_tool.update_picker_boundary(picker_low, picker_high)
 
         config = self.get_current_config()
         num_particles = np.prod(config['ClothSize'], dtype=int)
@@ -149,6 +149,9 @@ class ClothFoldEnv(ClothEnv):
         return self._get_obs()
 
     def _step(self, action):
+        # self.action_tool.visualize_picker_boundary()
+        # while (1):
+        #     pyflex.step()
         if self.action_mode == 'key_point':
             pyflex.step()
             action[2] = 0

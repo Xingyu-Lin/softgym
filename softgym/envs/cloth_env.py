@@ -52,7 +52,7 @@ class ClothEnv(FlexEnv):
                                          dtype=np.float32)
 
     def _sample_cloth_size(self):
-        return np.random.randint(50, 150), np.random.randint(50, 150)
+        return np.random.randint(60, 120), np.random.randint(60, 120)
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
@@ -63,7 +63,7 @@ class ClothEnv(FlexEnv):
             'ClothStiff': [0.8, 1, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([-0.0, 0.9, 0.75]),
+                                  {'pos': np.array([-0.0, 1.2, 1.2]),
                                    'angle': np.array([0, -45 / 180. * np.pi, 0.]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}

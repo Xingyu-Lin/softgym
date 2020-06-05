@@ -127,7 +127,7 @@ class ParallelGripper(ActionToolBase):
 
 class Picker(ActionToolBase):
     def __init__(self, num_picker=1, picker_radius=0.05, init_pos=(0., -0.1, 0.), picker_threshold=0.05, particle_radius=0.05,
-                 picker_low=(-0.5, 0., -0.5), picker_high=(1.5, 0.7, 1.5), init_particle_pos=None, spring_coef=1.2, **kwargs):
+                 picker_low=(-0.4, 0., -0.4), picker_high=(0.4, 0.5, 0.4), init_particle_pos=None, spring_coef=1.2, **kwargs):
         """
 
         :param gripper_type:
@@ -140,19 +140,26 @@ class Picker(ActionToolBase):
         self.picker_threshold = picker_threshold
         self.num_picker = num_picker
         self.picked_particles = [None] * self.num_picker
-        self.picker_low, self.picker_high = list(picker_low), list(picker_high)
+        self.picker_low, self.picker_high = np.array(list(picker_low)), np.array(list(picker_high))
         self.init_pos = init_pos
         self.particle_radius = particle_radius
         self.init_particle_pos = init_particle_pos
         self.spring_coef = spring_coef  # Prevent picker to drag two particles too far away
 
         space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.1  # [dx, dy, dz, [0, 1]]
-        space_high = np.array([0.1, 0.1, 0.1, 5] * self.num_picker) * 0.1
+        space_high = np.array([0.1, 0.1, 0.1, 10] * self.num_picker) * 0.1
         print("right before action space")
         self.action_space = Box(space_low, space_high, dtype=np.float32)
 
     def update_picker_boundary(self, picker_low, picker_high):
         self.picker_low, self.picker_high = copy.copy(picker_low), copy.copy(picker_high)
+
+    def visualize_picker_boundary(self):
+        halfEdge = np.array(self.picker_high - self.picker_low) / 2.
+        center = np.array(self.picker_high + self.picker_low) / 2.
+        quat = np.array([1., 0., 0., 0.])
+        pyflex.add_box(halfEdge, center, quat)
+
 
     def _apply_picker_boundary(self, picker_pos):
         clipped_picker_pos = picker_pos.copy()
