@@ -18,9 +18,11 @@ class ClothFoldEnv(ClothEnv):
             self.cached_states_path = osp.join(cur_dir, cached_states_path)
         else:
             self.cached_states_path = cached_states_path
-        success = self.get_cached_configs_and_states(cached_states_path)
+
+        if self.use_cached_states:
+            success = self.get_cached_configs_and_states(cached_states_path)
         
-        if not success or not self.use_cached_states:
+        if not self.use_cached_states or not success:
             self.generate_env_variation(self.num_variations, save_to_file=True)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
@@ -38,9 +40,6 @@ class ClothFoldEnv(ClothEnv):
             'width': self.camera_width,
             'height': self.camera_height
         }
-
-    def _sample_cloth_size(self):
-        return np.random.randint(10, 64), np.random.randint(10, 40)
 
     def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
@@ -139,7 +138,7 @@ class ClothFoldEnv(ClothEnv):
 
         colors = np.zeros(num_particles)
         colors[self.fold_group_a] = 1
-        self.set_colors(colors)
+        # self.set_colors(colors) # TODO the phase actually changes the cloth dynamics so we do not change them for now. Maybe delete this later.
 
         pyflex.step()
         self.init_pos = pyflex.get_positions().reshape((-1, 4))[:, :3]

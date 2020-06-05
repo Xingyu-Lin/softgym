@@ -8,15 +8,16 @@ from copy import deepcopy
 
 
 class ClothEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.07, particle_radius=0.05, **kwargs):
+    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.05, particle_radius=0.00625, **kwargs):
         self.render_mode = render_mode
+        self.cloth_particle_radius = particle_radius
         super().__init__(**kwargs)
 
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['sphere', 'picker', 'pickerpickplace', 'sawyer', 'franka']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
-        self.cloth_particle_radius = particle_radius
+
 
         if action_mode.startswith('key_point'):
             space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
@@ -51,18 +52,19 @@ class ClothEnv(FlexEnv):
                                          dtype=np.float32)
 
     def _sample_cloth_size(self):
-        return np.random.randint(10, 64), np.random.randint(10, 40)
+        return np.random.randint(50, 150), np.random.randint(50, 150)
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
+        particle_radius = self.cloth_particle_radius
         config = {
             'ClothPos': [-1.6, 2.0, -0.8],
-            'ClothSize': [64, 32],
-            'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear, Before ICML rebuttal
+            'ClothSize': [int(0.6 / particle_radius), int(0.368 / particle_radius)],
+            'ClothStiff': [0.8, 1, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([0, 4., 1]),
-                                   'angle': np.array([0, -70 / 180. * np.pi, 0.]),
+                                  {'pos': np.array([-0.0, 0.9, 0.75]),
+                                   'angle': np.array([0, -45 / 180. * np.pi, 0.]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}
         }
@@ -116,7 +118,7 @@ class ClothEnv(FlexEnv):
         mass = config['mass'] if 'mass' in config else 0.5
         scene_params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
                                  *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass])
-        
+
         if self.version == 2:
             robot_params = [0]
             self.params = (scene_params, robot_params)

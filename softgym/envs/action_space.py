@@ -126,7 +126,7 @@ class ParallelGripper(ActionToolBase):
 
 
 class Picker(ActionToolBase):
-    def __init__(self, num_picker=1, picker_radius=0.03, init_pos=(0., -0.1, 0.), picker_threshold=0.05, particle_radius=0.05,
+    def __init__(self, num_picker=1, picker_radius=0.05, init_pos=(0., -0.1, 0.), picker_threshold=0.05, particle_radius=0.05,
                  picker_low=(-0.5, 0., -0.5), picker_high=(1.5, 0.7, 1.5), init_particle_pos=None, spring_coef=1.2, **kwargs):
         """
 
@@ -144,10 +144,10 @@ class Picker(ActionToolBase):
         self.init_pos = init_pos
         self.particle_radius = particle_radius
         self.init_particle_pos = init_particle_pos
-        self.spring_coef = spring_coef #  Prevent picker to drag two particles too far away
+        self.spring_coef = spring_coef  # Prevent picker to drag two particles too far away
 
-        space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.2  # [dx, dy, dz, [0, 1]]
-        space_high = np.array([0.1, 0.1, 0.1, 5] * self.num_picker) * 0.2
+        space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.1  # [dx, dy, dz, [0, 1]]
+        space_high = np.array([0.1, 0.1, 0.1, 5] * self.num_picker) * 0.1
         print("right before action space")
         self.action_space = Box(space_low, space_high, dtype=np.float32)
 
@@ -252,9 +252,9 @@ class Picker(ActionToolBase):
 
                 if self.picked_particles[i] is not None:
                     # TODO The position of the particle needs to be updated such that it is close to the picker particle
-                    new_particle_pos[self.picked_particles[i], :3] = particle_pos[self.picked_particles[i], :3] + new_picker_pos[i, :] - picker_pos[i,:]
+                    new_particle_pos[self.picked_particles[i], :3] = particle_pos[self.picked_particles[i], :3] + new_picker_pos[i, :] - picker_pos[i,
+                                                                                                                                         :]
                     new_particle_pos[self.picked_particles[i], 3] = 0  # Set the mass to infinity
-
 
         # check for e.g., rope, the picker is not dragging the particles too far away that violates the actual physicals constraints.
         if self.init_particle_pos is not None:
@@ -267,12 +267,12 @@ class Picker(ActionToolBase):
 
             l = len(picked_particle_idices)
             for i in range(l):
-                for j in range(i+1, l):
-                    init_distance = np.linalg.norm(self.init_particle_pos[picked_particle_idices[i], :3] - 
-                        self.init_particle_pos[picked_particle_idices[j], :3])
-                    now_distance = np.linalg.norm(new_particle_pos[picked_particle_idices[i], :3] - 
-                        new_particle_pos[picked_particle_idices[j], :3])
-                    if now_distance >= init_distance * self.spring_coef: # if dragged too long, make the action has no effect; revert it
+                for j in range(i + 1, l):
+                    init_distance = np.linalg.norm(self.init_particle_pos[picked_particle_idices[i], :3] -
+                                                   self.init_particle_pos[picked_particle_idices[j], :3])
+                    now_distance = np.linalg.norm(new_particle_pos[picked_particle_idices[i], :3] -
+                                                  new_particle_pos[picked_particle_idices[j], :3])
+                    if now_distance >= init_distance * self.spring_coef:  # if dragged too long, make the action has no effect; revert it
                         new_picker_pos[active_picker_indices[i], :] = picker_pos[active_picker_indices[i], :].copy()
                         new_picker_pos[active_picker_indices[j], :] = picker_pos[active_picker_indices[j], :].copy()
                         new_particle_pos[picked_particle_idices[i], :3] = particle_pos[picked_particle_idices[i], :3].copy()

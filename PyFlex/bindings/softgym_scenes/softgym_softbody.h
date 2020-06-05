@@ -4,7 +4,7 @@ class softgym_SoftBody : public Scene
 public:
 	softgym_SoftBody(const char* name) :
 		Scene(name),
-		mRadius(0.1f),
+		mRadius(0.02f),
 		mRelaxationFactor(1.0f),
 		mPlinth(false),
 		plasticDeformation(false)
