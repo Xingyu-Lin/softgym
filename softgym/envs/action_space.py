@@ -152,7 +152,7 @@ class Picker(ActionToolBase):
         self.action_space = Box(space_low, space_high, dtype=np.float32)
 
     def update_picker_boundary(self, picker_low, picker_high):
-        self.picker_low, self.picker_high = copy.copy(picker_low), copy.copy(picker_high)
+        self.picker_low, self.picker_high = np.array(picker_low).copy(), np.array(picker_high).copy()
 
     def visualize_picker_boundary(self):
         halfEdge = np.array(self.picker_high - self.picker_low) / 2.

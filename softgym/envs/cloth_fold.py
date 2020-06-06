@@ -44,13 +44,12 @@ class ClothFoldEnv(ClothEnv):
     def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.001  # Cloth stable when all particles' vel are smaller than this
+        stable_vel_threshold = 0.2  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
         if config is None:
             default_config = self.get_default_config()
         else:
             default_config = config
-
         for i in range(num_variations):
             config = deepcopy(default_config)
             self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
@@ -150,8 +149,6 @@ class ClothFoldEnv(ClothEnv):
 
     def _step(self, action):
         # self.action_tool.visualize_picker_boundary()
-        # while (1):
-        #     pyflex.step()
         if self.action_mode == 'key_point':
             pyflex.step()
             action[2] = 0

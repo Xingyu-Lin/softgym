@@ -14,8 +14,8 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
 
     def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
-        max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.001  # Cloth stable when all particles' vel are smaller than this
+        max_wait_step = 2000  # Maximum number of steps waiting for the cloth to stablize
+        stable_vel_threshold = 0.2  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
         default_config = self.get_default_config()
 
@@ -37,15 +37,15 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
             original_inv_mass = curr_pos[pickpoint * 4 + 3]
             curr_pos[pickpoint * 4 + 3] = 0  # Set the mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
             pickpoint_pos = curr_pos[pickpoint * 4: pickpoint * 4 + 3].copy()  # Pos of the pickup point is fixed to this point
-            pickpoint_pos[1] += np.random.random(1) * 0.5
+            pickpoint_pos[1] += np.random.random(1) * 0.5 + 0.5
             pyflex.set_positions(curr_pos)
 
             # Pick up the cloth and wait to stablize
-            for _ in range(0, max_wait_step):
+            for i in range(0, max_wait_step):
                 pyflex.step()
                 curr_pos = pyflex.get_positions()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < stable_vel_threshold):
+                if np.alltrue(curr_vel < stable_vel_threshold) and i > 0:
                     break
                 curr_pos[pickpoint * 4: pickpoint * 4 + 3] = pickpoint_pos
                 curr_vel[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
@@ -89,8 +89,8 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
 
         if hasattr(self, 'action_tool'):
             # curr_pos = pyflex.get_positions()
-            self.action_tool.reset([0., 0.5, 0.])
-            self.action_tool.update_picker_boundary(picker_low=[-0.5, 0., -0.5], picker_high=[1.5, 2., 1.5])
+            self.action_tool.reset([0., 0.2, 0.])
+            # self.action_tool.update_picker_boundary(picker_low=[-0.5, 0., -0.5], picker_high=[0.5, 0.5, 0.5])
 
         config = self.get_current_config()
         num_particles = np.prod(config['ClothSize'], dtype=int)

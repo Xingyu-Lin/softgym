@@ -9,7 +9,7 @@ from softgym.envs.cloth_fold import ClothFoldEnv
 
 class ClothFoldDropEnv(ClothFoldEnv):
     def __init__(self, **kwargs):
-        self.start_height = 1.5
+        self.start_height = 0.8
         kwargs['cached_states_path'] = 'cloth_fold_drop_init_states.pkl'
         super().__init__(**kwargs)
 
@@ -24,8 +24,8 @@ class ClothFoldDropEnv(ClothFoldEnv):
             'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([2, 3.5, 4.]),
-                                   'angle': np.array([30. / 180. * np.pi, -20. / 180. * np.pi, 0.]),
+                                  {'pos': np.array([-0.5, 2., 1.5]),
+                                   'angle': np.array([20. / 180. * np.pi, -40. / 180. * np.pi, 0.]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}
         }
@@ -33,8 +33,8 @@ class ClothFoldDropEnv(ClothFoldEnv):
 
     def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
-        max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
+        max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
+        stable_vel_threshold = 0.1  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
         default_config = self.get_default_config()
 
@@ -64,7 +64,7 @@ class ClothFoldDropEnv(ClothFoldEnv):
             curr_pos[pickpoints, 3] = 0  # Set mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
             pickpoint_pos = curr_pos[pickpoints, :3]
             # pickpoint_pos[:, 1] += 1 + np.random.random(1)
-            pickpoint_pos[:, 1] = cloth_height + np.random.random()
+            pickpoint_pos[:, 1] = cloth_height + np.random.random() / 2.
             pyflex.set_positions(curr_pos.flatten())
 
             # Pick up the cloth and wait to stablize
@@ -130,11 +130,11 @@ class ClothFoldDropEnv(ClothFoldEnv):
             middle_point = np.mean(drop_point_pos, axis=0)
             self.action_tool.reset(middle_point)
             self.action_tool.set_picker_pos(picker_pos=drop_point_pos)
-            picker_low = middle_point - [0.1, 0.3, 1.5]
-            picker_high = middle_point + [3., 0.3, 1.5]
-            # print('picker low: {}, picker high: {}'.format(picker_low, picker_high))
+            picker_low = middle_point - [0.3, 0.5, 0.6]
+            picker_high = middle_point + [0.5, 0.5, 0.6]
+            # # print('picker low: {}, picker high: {}'.format(picker_low, picker_high))
             picker_low[1] = 0.1
-            picker_high[1] = 2.0
+            picker_high[1] = 1.2
             self.action_tool.update_picker_boundary(picker_low, picker_high)
 
         # if hasattr(self, 'action_tool'):
@@ -152,7 +152,7 @@ class ClothFoldDropEnv(ClothFoldEnv):
 
         colors = np.zeros(num_particles)
         colors[self.fold_group_a] = 1
-        self.set_colors(colors)
+        # self.set_colors(colors)
 
         pyflex.step()
         self.init_pos = pyflex.get_positions().reshape((-1, 4))[:, :3]
