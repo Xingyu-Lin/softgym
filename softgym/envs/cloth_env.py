@@ -18,7 +18,6 @@ class ClothEnv(FlexEnv):
         self.observation_mode = observation_mode
         self.action_mode = action_mode
 
-
         if action_mode.startswith('key_point'):
             space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
             space_high = np.array([3.9, 0.1, 0.1, 0.1] * 2)
@@ -39,7 +38,7 @@ class ClothEnv(FlexEnv):
             if observation_mode == 'key_point':
                 obs_dim = len(self._get_key_point_idx()) * 3
             else:
-                max_particles = 64 * 40
+                max_particles = 120 * 120
                 obs_dim = max_particles * 3
                 self.particle_obs_dim = obs_dim
             if action_mode in ['picker']:
@@ -53,6 +52,29 @@ class ClothEnv(FlexEnv):
 
     def _sample_cloth_size(self):
         return np.random.randint(60, 120), np.random.randint(60, 120)
+
+    def _get_flat_pos(self):
+        config = self.get_current_config()
+        dimx, dimy = config['ClothSize']
+
+        x = np.array([i * self.cloth_particle_radius for i in range(dimx)])
+        y = np.array([i * self.cloth_particle_radius for i in range(dimy)])
+        x = x - np.mean(x)
+        y = y - np.mean(y)
+        xx, yy = np.meshgrid(x, y)
+
+        curr_pos = np.zeros([dimx * dimy, 3], dtype=np.float32)
+        curr_pos[:, 0] = xx.flatten()
+        curr_pos[:, 2] = yy.flatten()
+        curr_pos[:, 1] = 5e-3  # Set specifally for particle radius of 0.00625
+        return curr_pos
+
+    def _set_to_flat(self):
+        curr_pos = pyflex.get_positions().reshape((-1, 4))
+        flat_pos = self._get_flat_pos()
+        curr_pos[:, :3] = flat_pos
+        pyflex.set_positions(curr_pos)
+        pyflex.step()
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """

@@ -21,7 +21,7 @@ class ClothFoldEnv(ClothEnv):
 
         if self.use_cached_states:
             success = self.get_cached_configs_and_states(cached_states_path)
-        
+
         if not self.use_cached_states or not success:
             self.generate_env_variation(self.num_variations, save_to_file=True)
             success = self.get_cached_configs_and_states(cached_states_path)
@@ -61,7 +61,7 @@ class ClothFoldEnv(ClothEnv):
             self.set_scene(config)
             self.action_tool.reset([0., -1., 0.])
 
-            for _ in range(5): # In case if the cloth starts in the air
+            for _ in range(5):  # In case if the cloth starts in the air
                 pyflex.step()
 
             for wait_i in range(max_wait_step):
@@ -194,11 +194,21 @@ class ClothFoldEnv(ClothEnv):
         pos_group_b_init = self.init_pos[self.fold_group_b]
         group_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
         fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
+        performance = -group_dist - 1.2 * fixation_dist
+        pb = self.performance_bound
         return {
-            'performance': -group_dist - 1.2 * fixation_dist,
+            'performance': performance,
+            'normalized_performance': (performance - pb[0]) / (pb[1] - pb[0]),
             'neg_group_dist': -group_dist,
             'neg_fixation_dist': -fixation_dist
         }
+
+    @property
+    def performance_bound(self):
+        max_dist = 1.043
+        min_p = -2.2 * max_dist
+        max_p = 0
+        return min_p, max_p
 
     def _set_to_folded(self):
         config = self.get_current_config()

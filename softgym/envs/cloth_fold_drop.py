@@ -137,11 +137,9 @@ class ClothFoldDropEnv(ClothFoldEnv):
             picker_high[1] = 1.2
             self.action_tool.update_picker_boundary(picker_low, picker_high)
 
-        # if hasattr(self, 'action_tool'):
-        #     self.action_tool.reset([0., 0.5, 0.])
-        #     self.action_tool.update_picker_boundary(picker_low=[-0.5, 0., -0.5], picker_high=[1.5, 2., 1.5])
-
         config = self.get_current_config()
+        self.flat_pos = self._get_flat_pos()
+        self.flat_pos += np.array([-1.2, 0., -0.55])
         num_particles = np.prod(config['ClothSize'], dtype=int)
         particle_grid_idx = np.array(list(range(num_particles))).reshape(config['ClothSize'][1], config['ClothSize'][0])  # Reversed index here
 
@@ -149,7 +147,6 @@ class ClothFoldDropEnv(ClothFoldEnv):
         x_split = cloth_dimx // 2
         self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
         self.fold_group_b = np.flip(particle_grid_idx, axis=1)[:, :x_split].flatten()
-
         colors = np.zeros(num_particles)
         colors[self.fold_group_a] = 1
         # self.set_colors(colors)
@@ -162,7 +159,6 @@ class ClothFoldDropEnv(ClothFoldEnv):
 
         return self._get_obs()
 
-    # TODO find a fixation point
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """
         The particles are splitted into two groups. The reward will be the minus average eculidean distance between each
@@ -173,9 +169,8 @@ class ClothFoldDropEnv(ClothFoldEnv):
         pos = pos.reshape((-1, 4))[:, :3]
         pos_group_a = pos[self.fold_group_a]
         pos_group_b = pos[self.fold_group_b]
-        pos_group_b_init = self.init_pos[self.fold_group_b]
-        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + \
-                    0.2 * np.linalg.norm(np.mean(pos_group_b, axis=0)[[0, 2]] - np.mean(pos_group_b_init, axis=0)[[0, 2]])
+        pos_group_b_init = self.flat_pos[self.fold_group_b]
+        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + 1.2 * np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         if self.delta_reward:
             reward = self.prev_dist - curr_dist
             if set_prev_reward:
@@ -184,17 +179,27 @@ class ClothFoldDropEnv(ClothFoldEnv):
             reward = -curr_dist
         return reward
 
+    @property
+    def performance_bound(self):
+        max_dist = 1.043
+        min_p = -2.2 * max_dist
+        max_p = 0
+        return min_p, max_p
+
     def _get_info(self):
         # Duplicate of the compute reward function!
         pos = pyflex.get_positions()
         pos = pos.reshape((-1, 4))[:, :3]
         pos_group_a = pos[self.fold_group_a]
         pos_group_b = pos[self.fold_group_b]
-        pos_group_b_init = self.init_pos[self.fold_group_b]
+        pos_group_b_init = self.flat_pos[self.fold_group_b]
         group_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
-        fixation_dist = np.linalg.norm(np.mean(pos_group_b, axis=0)[[0, 2]] - np.mean(pos_group_b_init, axis=0)[[0, 2]])
+        fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
+        performance = -group_dist - 1.2 * fixation_dist
+        pb = self.performance_bound
         return {
-            'performance': -group_dist - 0.2 * fixation_dist,
+            'performance': performance,
+            'normalized_performance': (performance - pb[0]) / (pb[1] - pb[0]),
             'neg_group_dist': -group_dist,
             'neg_fixation_dist': -fixation_dist
         }

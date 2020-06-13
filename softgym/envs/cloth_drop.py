@@ -190,7 +190,17 @@ class ClothDropEnv(ClothEnv):
             r = - curr_dist
         return r
 
+    @property
+    def performance_bound(self):
+        max_dist = 1.043
+        min_p = - max_dist
+        max_p = 0
+        return min_p, max_p
+
     def _get_info(self):
         particle_pos = pyflex.get_positions()
         curr_dist = self._get_current_dist(particle_pos)
-        return {'performance': -curr_dist}
+        performance = -curr_dist
+        pb = self.performance_bound
+        return {'performance': performance,
+                'normalized_performance': (performance - pb[0]) / (pb[1] - pb[0])}

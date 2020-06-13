@@ -31,6 +31,32 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
             self.set_scene(config)
             self.action_tool.reset([0., -1., 0.])
 
+            # Test
+            # print('start')
+            # for i in range(50):
+            #     pyflex.step()
+            # pos = pyflex.get_positions().copy().reshape((-1, 4))
+            # pos[:, :3] -= np.mean(pos, axis=0)[:3]
+            # pos = pos.flatten()
+            # pyflex.set_positions(pos)
+            # for _ in range(10):
+            #     pyflex.step()
+            # pos = pyflex.get_positions()
+            # self._set_to_flat()
+            # pos2 = pyflex.get_positions()
+            # print(pos.dtype, pos2.dtype)
+            # # for i in range(100):
+            # #     if i % 2 == 0:
+            # #         pyflex.set_positions(pos)
+            # #         print('pos:',  np.mean(pos.reshape(-1, 4), axis=0))
+            # #     else:
+            # #         pyflex.set_positions(pos2)
+            # #         print('pos2', np.mean(pos2.reshape(-1, 4), axis=0))
+            # #     for _ in range(50):
+            # #         pyflex.step()
+            # print(np.max(np.abs(pos- pos2)))
+            # assert np.allclose(pos, pos2, atol=1e-5)
+
             num_particle = cloth_dimx * cloth_dimy
             pickpoint = random.randint(0, num_particle - 1)
             curr_pos = pyflex.get_positions()
@@ -76,23 +102,13 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
 
     def _reset(self):
         """ Right now only use one initial state"""
-        # if hasattr(self, 'action_tool'):
-        #     x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
-        #     self.action_tool.reset([x + 0.1, 0.2, 0])
-        #     picker_low = self.action_tool.picker_low
-        #     picker_high = self.action_tool.picker_high
-        #     offset_x = self.action_tool._get_pos()[0][0][0] - picker_low[0] - 0.3
-        #     picker_low[0] += offset_x
-        #     picker_high[0] += offset_x
-        #     picker_high[0] += 1.0
-        #     self.action_tool.update_picker_boundary(picker_low, picker_high)
-
         if hasattr(self, 'action_tool'):
             # curr_pos = pyflex.get_positions()
             self.action_tool.reset([0., 0.2, 0.])
             # self.action_tool.update_picker_boundary(picker_low=[-0.5, 0., -0.5], picker_high=[0.5, 0.5, 0.5])
 
         config = self.get_current_config()
+        self.flat_pos = self._get_flat_pos()
         num_particles = np.prod(config['ClothSize'], dtype=int)
         particle_grid_idx = np.array(list(range(num_particles))).reshape(config['ClothSize'][1], config['ClothSize'][0])  # Reversed index here
 
@@ -103,12 +119,13 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
 
         colors = np.zeros(num_particles)
         colors[self.fold_group_a] = 1
-        self.set_colors(colors)
+        # self.set_colors(colors)
 
         pyflex.step()
         self.init_pos = pyflex.get_positions().reshape((-1, 4))[:, :3]
         pos_a = self.init_pos[self.fold_group_a, :]
         pos_b = self.init_pos[self.fold_group_b, :]
+
         self.prev_dist = np.mean(np.linalg.norm(pos_a - pos_b, axis=1))
 
         return self._get_obs()
@@ -123,9 +140,8 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
         pos = pos.reshape((-1, 4))[:, :3]
         pos_group_a = pos[self.fold_group_a]
         pos_group_b = pos[self.fold_group_b]
-        pos_group_b_init = self.init_pos[self.fold_group_b]
-        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + \
-                    0.2 * np.linalg.norm(np.mean(pos_group_b, axis=0)[[0, 2]] - np.mean(pos_group_b_init, axis=0)[[0, 2]])
+        pos_group_b_init = self.flat_pos[self.fold_group_b]
+        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + 1.2 * np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         if self.delta_reward:
             reward = self.prev_dist - curr_dist
             if set_prev_reward:
@@ -134,17 +150,27 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
             reward = -curr_dist
         return reward
 
+    @property
+    def performance_bound(self):
+        max_dist = 1.043
+        min_p = -2.2 * max_dist
+        max_p = 0
+        return min_p, max_p
+
     def _get_info(self):
         # Duplicate of the compute reward function!
         pos = pyflex.get_positions()
         pos = pos.reshape((-1, 4))[:, :3]
         pos_group_a = pos[self.fold_group_a]
         pos_group_b = pos[self.fold_group_b]
-        pos_group_b_init = self.init_pos[self.fold_group_b]
+        pos_group_b_init = self.flat_pos[self.fold_group_b]
         group_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
-        fixation_dist = np.linalg.norm(np.mean(pos_group_b, axis=0)[[0, 2]] - np.mean(pos_group_b_init, axis=0)[[0, 2]])
+        fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
+        performance = -group_dist - 1.2 * fixation_dist
+        pb = self.performance_bound
         return {
-            'performance': -group_dist - 0.2 * fixation_dist,
+            'performance': performance,
+            'normalized_performance': (performance - pb[0]) / (pb[1] - pb[0]),
             'neg_group_dist': -group_dist,
             'neg_fixation_dist': -fixation_dist
         }

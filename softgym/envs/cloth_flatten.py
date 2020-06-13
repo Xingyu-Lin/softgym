@@ -208,10 +208,20 @@ class ClothFlattenEnv(ClothEnv):
             r = curr_covered_area
         return r
 
+    @property
+    def performance_bound(self):
+        dimx, dimy = self.current_config['ClothSize']
+        max_area = dimx * self.cloth_particle_radius * dimy * self.cloth_particle_radius
+        min_p = 0
+        max_p = max_area
+        return min_p, max_p
+
     def _get_info(self):
         # Duplicate of the compute reward function!
         particle_pos = pyflex.get_positions()
         curr_covered_area = self._get_current_covered_area(particle_pos)
+        pb = self.performance_bound
         return {
-            'performance': curr_covered_area
+            'performance': curr_covered_area,
+            'normalized_performance': (curr_covered_area - pb[0]) / (pb[1] - pb[0]),
         }
