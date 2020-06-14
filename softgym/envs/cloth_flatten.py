@@ -6,6 +6,7 @@ import pyflex
 from softgym.envs.cloth_env import ClothEnv
 import copy
 from copy import deepcopy
+from softgym.utils.utils import vectorized_range, vectorized_meshgrid
 
 
 class ClothFlattenEnv(ClothEnv):
@@ -174,7 +175,6 @@ class ClothFlattenEnv(ClothEnv):
         min_y = np.min(pos[:, 2])
         max_x = np.max(pos[:, 0])
         max_y = np.max(pos[:, 2])
-        grid = np.zeros([100, 100])  # Discretization
         init = np.array([min_x, min_y])
         span = np.array([max_x - min_x, max_y - min_y]) / 100.
         pos2d = pos[:, [0, 2]]
@@ -185,9 +185,21 @@ class ClothFlattenEnv(ClothEnv):
         slotted_y_low = np.maximum(np.round((offset[:, 1] - self.cloth_particle_radius) / span[1]).astype(int), 0)
         slotted_y_high = np.minimum(np.round((offset[:, 1] + self.cloth_particle_radius) / span[1]).astype(int), 100)
 
-        for x_low, x_high, y_low, y_high in zip(slotted_x_low, slotted_x_high, slotted_y_low, slotted_y_high):
-            grid[x_low:x_high, y_low:y_high] = 1
+        # Method 1
+        grid = np.zeros(10000)  # Discretization
+        listx = vectorized_range(slotted_x_low, slotted_x_high)
+        listy = vectorized_range(slotted_y_low, slotted_y_high)
+        listxx, listyy = vectorized_meshgrid(listx, listy)
+        idx = listxx * 100 + listyy
+        grid[idx.flatten()] = 1
         return np.sum(grid) * span[0] * span[1]
+
+        # Method 2
+        # grid_copy = np.zeros([100, 100])
+        # for x_low, x_high, y_low, y_high in zip(slotted_x_low, slotted_x_high, slotted_y_low, slotted_y_high):
+        #     grid_copy[x_low:x_high, y_low:y_high] = 1
+        # assert np.allclose(grid_copy, grid)
+        # return np.sum(grid_copy) * span[0] * span[1]
 
     def _get_center_point(self, pos):
         pos = np.reshape(pos, [-1, 4])
