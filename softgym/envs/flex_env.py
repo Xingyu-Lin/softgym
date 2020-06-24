@@ -16,8 +16,8 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=128, camera_height=128, num_variations=1,
-                 action_repeat=8, camera_name='default_camera', delta_reward=False, deterministic=True, use_cached_states=True, 
+    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, num_variations=1,
+                 action_repeat=8, camera_name='default_camera', delta_reward=False, deterministic=True, use_cached_states=True,
                  save_cache_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
@@ -302,18 +302,10 @@ class FlexEnv(gym.Env):
     def _seed(self):
         pass
 
-    def get_image(self, width=960, height=720):
-        '''
-        use pyflex.render to get a rendered image.
-        this is in support for the multitask env.
-        '''
-        # raise DeprecationWarning
-        # img = pyflex.render()
-        # img = img.reshape(self.camera_height, self.camera_width, 4)[::-1, :, :3]  # Need to reverse the height dimension
-        # img = img.astype(np.uint8)
-        # img = cv2.resize(img, (width, height))  # add this to align with img env. TODO: this seems to have some problems.
-        # return img
+    def get_image(self, width=720, height=720):
+        """ use pyflex.render to get a rendered image. """
         img = self.render(mode='rgb_array')
         img = img.astype(np.uint8)
-        img = cv2.resize(img, (width, height))
+        if width != img.shape[0] or height != img.shape[1]:
+            img = cv2.resize(img, (width, height))
         return img

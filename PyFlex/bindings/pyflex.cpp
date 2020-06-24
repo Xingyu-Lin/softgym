@@ -2732,6 +2732,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     //     softgym_PlasticDough->AddInstance(stackSphere);
     // }
     g_scenes.push_back(softgym_PlasticDough);
+    g_scenes.push_back(new SoftgymRigidCloth("Softgym Rigid Cloth"));
 
 
 
