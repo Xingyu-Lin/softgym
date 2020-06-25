@@ -2733,6 +2733,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     //     softgym_PlasticDough->AddInstance(stackSphere);
     // }
     g_scenes.push_back(softgym_PlasticDough);
+    g_scenes.push_back(new SoftgymRigidCloth("Softgym Rigid Cloth"));
 
 
 
@@ -3143,7 +3144,10 @@ void SDL_EventFunc() {
     }
 }
 
-void pyflex_step(py::array_t<float> update_params, int capture, char *path) {
+void pyflex_step(py::array_t<float> update_params, int capture, char *path, int render) {
+    int temp_render = g_render;
+    g_render = render;
+
     if (capture == 1) {
         g_capture = true;
         g_ffmpeg = fopen(path, "wb");
@@ -3157,6 +3161,7 @@ void pyflex_step(py::array_t<float> update_params, int capture, char *path) {
         fclose(g_ffmpeg);
         g_ffmpeg = nullptr;
     }
+    g_render = temp_render;
 }
 
 float rand_float(float LO, float HI) {
@@ -3992,8 +3997,8 @@ PYBIND11_MODULE(pyflex, m) {
     m.def("step", &pyflex_step,
           py::arg("update_params") = nullptr,
           py::arg("capture") = 0,
-          py::arg("path") = nullptr);
-    
+          py::arg("path") = nullptr,
+          py::arg("render") = 0);
     m.def("render", &pyflex_render, 
           py::arg("capture") = 0,
           py::arg("path") = nullptr    
