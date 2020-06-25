@@ -46,7 +46,6 @@ class RopeFlattenEnv(RopeEnv):
             self.set_scene(config)
 
             pos = pyflex.get_positions().reshape(-1, 4)
-            
             pos[:, 3] = config['ParticleInvMass']
             pyflex.set_positions(pos)
 
@@ -54,7 +53,7 @@ class RopeFlattenEnv(RopeEnv):
             config['camera_params'] = deepcopy(self.camera_params)
             self.action_tool.reset([0., -1., 0.])
 
-            self._random_pick_and_place(pick_num=10)
+            self._random_pick_and_place(pick_num=5, pick_scale=0.005)
             self._center_object()
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
@@ -85,7 +84,6 @@ class RopeFlattenEnv(RopeEnv):
     def _get_endpoint_distance(self):
         pos = pyflex.get_positions().reshape(-1, 4)
         p1, p2 = pos[0, :3], pos[-1, :3]
-        # print('end point distance:', p1, ' ', p2, ' ', np.linalg.norm(p1 - p2).squeeze())
         return np.linalg.norm(p1 - p2).squeeze()
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):

@@ -60,7 +60,7 @@ class FlexEnv(gym.Env):
             self.version = 1
 
     @staticmethod
-    def _random_pick_and_place(pick_num=10):
+    def _random_pick_and_place(pick_num=10, pick_scale=0.01):
         """ Random pick a particle up and the drop it for pick_num times"""
         curr_pos = pyflex.get_positions().reshape(-1, 4)
         num_particles = curr_pos.shape[0]
@@ -68,7 +68,7 @@ class FlexEnv(gym.Env):
             pick_id = np.random.randint(num_particles)
             pick_dir = np.random.random(3) * 2 - 1
             pick_dir[1] = (pick_dir[1] + 1)
-            pick_dir *= 0.01
+            pick_dir *= pick_scale
             original_inv_mass = curr_pos[pick_id, 3]
             for _ in range(60):
                 curr_pos = pyflex.get_positions().reshape(-1, 4)
@@ -104,7 +104,6 @@ class FlexEnv(gym.Env):
         # print(np.mean(pos[:, [0, 2]], axis=0, keepdims=True))
         # print(pos)
         pos[:, [0, 2]] -= np.mean(pos[:, [0, 2]], axis=0, keepdims=True)
-        # print(pos)
         pyflex.set_positions(pos.flatten())
         pyflex.step()
 

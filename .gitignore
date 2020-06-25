@@ -1,5 +1,5 @@
 softgym/envs/*.pkl
-./data
+data
 __pycache__/
 .idea
 PyFlex/demo/compiler/makelinux64/.deps
@@ -8,12 +8,6 @@ PyFlex/examples/build
 PyFlex/examples/cmake-build-debug
 PyFlex/bindings/cmake-build-debug
 PyFlex/bindings/build
-
-PyFlexRobotics/demo/compiler/makelinux64/.deps
-PyFlexRobotics/demo/compiler/makelinux64/build
-PyFlexRobotics/bindings/cmake-build-debug
-PyFlexRobotics/bindings/build
-
 *.swp
 *.swo
 *.swn
@@ -22,3 +16,5 @@ PyFlex/bindings/examples/tmp
 PyFlex/bindings/examples/*.avi
 PyFlex/bindings/examples/*/
 PyFlex/bindings/examples/*.gif
+
+build/

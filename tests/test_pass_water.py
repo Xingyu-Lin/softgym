@@ -15,7 +15,9 @@ args.add_argument("--mode", type=str, default='test')
 args.add_argument("--headless", type=int, default=0)
 args.add_argument("--N", type=int, default=1)
 args.add_argument("--obs_mode", type=str, default='cam_rgb')
+args.add_argument("--use_cached_states", type=str, default=False)
 args = args.parse_args()
+from softgym.utils.visualization import save_numpy_as_gif
 
 def get_particle_max_y():
     import pyflex
@@ -27,9 +29,17 @@ def run_heuristic(args):
     dic = env_arg_dict[env_name]
     dic['headless'] = args.headless
     dic['observation_mode'] = args.obs_mode
-    action_repeat = dic.get('action_repeat', 8)
+    dic['render_mode'] = 'fluid'
+    action_repeat = 8
+    dic['action_repeat'] = action_repeat
     horizon = dic['horizon']
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
+
+    if not args.use_cached_states:
+        dic['use_cached_states'] = False
+        dic['save_cache_states'] = True
+        dic['num_variations'] = 10
+
     env = PassWater1DEnv(**dic)
 
     returns = []
@@ -51,18 +61,18 @@ def run_heuristic(args):
         horizon = env.horizon 
         for i in range(horizon):
             if np.abs(env.height - particle_y) > 0.2: # small water
-                action = np.array([0.13]) / action_repeat
+                action = np.array([0.13]) / action_repeat 
             elif np.abs(env.height - particle_y) <= 0.2 and np.abs(env.height - particle_y) > 0.1: # medium water:
-                action = np.array([0.08]) / action_repeat
+                action = np.array([0.08]) / action_repeat 
             else:
-                action = np.array([0.025]) / action_repeat
+                action = np.array([0.025]) / action_repeat 
 
             if np.abs(env.glass_x - env.terminal_x) < 0.01:
                 action = np.array([0]) 
         
             _, reward, _, info = env.step(action)
             total_reward += reward
-            imgs.append(env.render(mode='rgb_array'))
+            imgs.append(env.get_image(width=128, height=128))
             print(reward, info['performance'])
 
             if i == horizon - 1:
@@ -74,14 +84,9 @@ def run_heuristic(args):
     print("return mean: ", np.mean(returns))
     print("return std: ", np.std(returns))
     print("final performances mean {}".format(np.mean(final_performances)))
+    save_dir = './data/videos/'
+    save_name = 'PassWaterSingle'
+    # save_numpy_as_gif(np.array(imgs), save_dir + save_name, fps=5)
 
 if __name__ == '__main__':
     run_heuristic(args)
-
-# all_frames = imgs
-# all_frames = np.array(all_frames).transpose([1, 0, 4, 2, 3])
-# grid_imgs = [torchvision.utils.make_grid(torch.from_numpy(frame), nrow=4).permute(1, 2, 0).data.cpu().numpy() for frame in all_frames]
-
-# from os import path as osp
-# save_name = 'pass_water_heuristic' + '.gif'
-# save_numpy_as_gif(np.array(grid_imgs), osp.join('./data/video/env_demos', save_name))
