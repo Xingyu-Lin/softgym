@@ -21,6 +21,8 @@ class FlexEnv(gym.Env):
                  save_cache_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
+
+
         self.record_video, self.video_path, self.video_name = False, None, None
 
         self.metadata = {

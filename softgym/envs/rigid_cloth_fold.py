@@ -4,11 +4,11 @@ import pickle
 import os.path as osp
 import pyflex
 from copy import deepcopy
-from softgym.envs.cloth_env import ClothEnv
+from softgym.envs.rigid_cloth_env import RigidClothEnv
 
 
-class ClothFoldEnv(ClothEnv):
-    def __init__(self, cached_states_path='cloth_fold_init_states.pkl', **kwargs):
+class RigidClothFoldEnv(RigidClothEnv):
+    def __init__(self, cached_states_path='rigid_cloth_fold_init_states.pkl', **kwargs):
         self.fold_group_a = self.fold_group_b = None
         self.init_pos, self.prev_dist = None, None
         super().__init__(**kwargs)
@@ -26,20 +26,6 @@ class ClothFoldEnv(ClothEnv):
             self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.use_cached_states)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
-
-    # def initialize_camera(self):
-    #     """
-    #     set the camera width, height, position and angle.
-    #     **Note: width and height is actually the screen width and screen height of FLex.
-    #     I suggest to keep them the same as the ones used in pyflex.cpp.
-    #     """
-    #     self.camera_name = 'default_camera'
-    #     self.camera_params['default_camera'] = {
-    #         'pos': np.array([0.0, 0.9, 0.75]),
-    #         'angle': np.array([0, -45 / 180. * np.pi, 0.]),
-    #         'width': self.camera_width,
-    #         'height': self.camera_height
-    #     }
 
     def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
@@ -82,37 +68,6 @@ class ClothFoldEnv(ClothEnv):
 
         return generated_configs, generated_states
 
-    # def set_scene(self, config, **kwargs):
-    #     """ Setup the cloth scene and split particles into two groups for folding """
-    #     super().set_scene(config, **kwargs)
-    #     # Set folding group
-    #     num_particles = np.prod(config['ClothSize'])
-    #     particle_grid_idx = np.array(list(range(num_particles))).reshape(*config['ClothSize'])
-    #
-    #     cloth_dimx = config['ClothSize'][0]
-    #     x_split = cloth_dimx // 2
-    #     self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
-    #     self.fold_group_b = particle_grid_idx[:, cloth_dimx:x_split - 1:-1].flatten()
-    #
-    #     colors = np.zeros(num_particles)
-    #     colors[self.fold_group_b] = 1
-    #
-    #     self.set_colors(colors)
-    # self.set_test_color(num_particles)
-
-    def set_test_color(self, num_particles):
-        """
-        Assign random colors to group a and the same colors for each corresponding particle in group b
-        :return:
-        """
-        colors = np.zeros((num_particles))
-        rand_size = 30
-        rand_colors = np.random.randint(0, 5, size=rand_size)
-        rand_index = np.random.choice(range(len(self.fold_group_a)), rand_size)
-        colors[self.fold_group_a[rand_index]] = rand_colors
-        colors[self.fold_group_b[rand_index]] = rand_colors
-        self.set_colors(colors)
-
     def _reset(self):
         """ Right now only use one initial state"""
         if hasattr(self, 'action_tool'):
@@ -127,17 +82,15 @@ class ClothFoldEnv(ClothEnv):
             # self.action_tool.update_picker_boundary(picker_low, picker_high)
 
         config = self.get_current_config()
-        num_particles = np.prod(config['ClothSize'], dtype=int)
-        particle_grid_idx = np.array(list(range(num_particles))).reshape(config['ClothSize'][1], config['ClothSize'][0])  # Reversed index here
+        num_particles = np.prod(config['ClothSize'], dtype=int)  # Per piece
+        self.fold_group_a = np.array(list(range(num_particles)))
+        self.fold_group_b = np.flip(np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]), axis=0) + num_particles
+        self.fold_group_b = self.fold_group_b.flatten()
 
-        cloth_dimx = config['ClothSize'][0]
-        x_split = cloth_dimx // 2
-        self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
-        self.fold_group_b = np.flip(particle_grid_idx, axis=1)[:, :x_split].flatten()
-
-        colors = np.zeros(num_particles)
-        colors[self.fold_group_a] = 1
-        # self.set_colors(colors) # TODO the phase actually changes the cloth dynamics so we do not change them for now. Maybe delete this later.
+        # Visualize correspondence
+        # self.set_test_color(len(pyflex.get_positions())// 4)
+        # for i in range(100000):
+        #     pyflex.step(render=True)
 
         pyflex.step()
         self.init_pos = pyflex.get_positions().reshape((-1, 4))[:, :3]
@@ -146,6 +99,19 @@ class ClothFoldEnv(ClothEnv):
         self.prev_dist = np.mean(np.linalg.norm(pos_a - pos_b, axis=1))
 
         return self._get_obs()
+
+    def set_test_color(self, num_particles):
+        """
+        Assign random colors to group a and the same colors for each corresponding particle in group b
+        :return:
+        """
+        colors = np.zeros((num_particles))
+        rand_size = 30
+        rand_colors = np.random.randint(0, 5, size=rand_size)
+        rand_index = np.random.choice(range(len(self.fold_group_a)), rand_size)
+        colors[self.fold_group_a[rand_index]] = rand_colors
+        colors[self.fold_group_b[rand_index]] = rand_colors
+        self.set_colors(colors)
 
     def _step(self, action):
         # self.action_tool.visualize_picker_boundary()
@@ -210,21 +176,21 @@ class ClothFoldEnv(ClothEnv):
         max_p = 0
         return min_p, max_p
 
-    def _set_to_folded(self):
-        config = self.get_current_config()
-        num_particles = np.prod(config['ClothSize'], dtype=int)
-        particle_grid_idx = np.array(list(range(num_particles))).reshape(config['ClothSize'][1], config['ClothSize'][0])  # Reversed index here
-
-        cloth_dimx = config['ClothSize'][0]
-        x_split = cloth_dimx // 2
-        fold_group_a = particle_grid_idx[:, :x_split].flatten()
-        fold_group_b = np.flip(particle_grid_idx, axis=1)[:, :x_split].flatten()
-
-        curr_pos = pyflex.get_positions().reshape((-1, 4))
-        curr_pos[fold_group_a, :] = curr_pos[fold_group_b, :].copy()
-        curr_pos[fold_group_a, 1] += 0.05  # group a particle position made tcurr_pos[self.fold_group_b, 1] + 0.05e at top of group b position.
-
-        pyflex.set_positions(curr_pos)
-        for i in range(10):
-            pyflex.step()
-        return self._get_info()['performance']
+    # def _set_to_folded(self):
+    #     config = self.get_current_config()
+    #     num_particles = np.prod(config['ClothSize'], dtype=int)
+    #     particle_grid_idx = np.array(list(range(num_particles))).reshape(config['ClothSize'][1], config['ClothSize'][0])  # Reversed index here
+    #
+    #     cloth_dimx = config['ClothSize'][0]
+    #     x_split = cloth_dimx // 2
+    #     fold_group_a = particle_grid_idx[:, :x_split].flatten()
+    #     fold_group_b = np.flip(particle_grid_idx, axis=1)[:, :x_split].flatten()
+    #
+    #     curr_pos = pyflex.get_positions().reshape((-1, 4))
+    #     curr_pos[fold_group_a, :] = curr_pos[fold_group_b, :].copy()
+    #     curr_pos[fold_group_a, 1] += 0.05  # group a particle position made tcurr_pos[self.fold_group_b, 1] + 0.05e at top of group b position.
+    #
+    #     pyflex.set_positions(curr_pos)
+    #     for i in range(10):
+    #         pyflex.step()
+    #     return self._get_info()['performance']
