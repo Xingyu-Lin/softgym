@@ -9,6 +9,8 @@ from matplotlib import pyplot as plt
 import torch, torchvision, cv2
 from softgym.registered_env import  env_arg_dict
 import argparse
+import time
+from softgym.utils.visualization import save_numpy_as_gif
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--mode", type=str, default='debug')
@@ -27,10 +29,11 @@ def run_heuristic(args):
 
     # if not args.use_cached_states:
     #     dic['use_cached_states'] = False
-    #     dic['save_cache_states'] = False
+    #     dic['save_cache_states'] = True
     #     dic['num_variations'] = 10
 
-    action_repeat = dic.get('action_repeat', 8)
+    action_repeat = 1
+    dic['action_repeat'] = action_repeat
     horizon = dic['horizon']
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
     env = RopeFlattenEnv(**dic) if mode != 'visual' else RopeManipulateEnv(**dic)
@@ -41,6 +44,8 @@ def run_heuristic(args):
     final_performances = []
     for idx in range(N):
         env.reset()
+
+        # env.action_tool.visualize_picker_boundary()
 
         total_reward = 0
         
@@ -54,7 +59,10 @@ def run_heuristic(args):
             action[:, 1] = 0.01
             obs, reward, _, info = env.step(action)
             total_reward += reward
+            # print(env.action_tool._get_pos()[0])
+            # time.sleep(0.1)
             print(reward, info['performance'])
+            imgs.append(env.get_image(720, 720))
 
         picker_pos, _ = env.action_tool._get_pos()
         diff1 = corner1 - picker_pos[0]
@@ -67,11 +75,15 @@ def run_heuristic(args):
             action[1, :3] = diff2 / steps / env.action_repeat
             _, reward, _, info = env.step(action)
             total_reward += reward
+            # print(env.action_tool._get_pos()[0])
+            # time.sleep(0.1)
             print(reward, info['performance'])
+            imgs.append(env.get_image(720, 720))
+
 
         picker_pos, _ = env.action_tool._get_pos()
-        target_pos_1 = np.array([2.6, 0.05, 1.5])
-        target_pos_2 = np.array([-2.6, 0.05, -1.5])
+        target_pos_1 = np.array([0, 0.05, -0.5])
+        target_pos_2 = np.array([0, 0.05, 0.5])
 
         picker_pos, _ = env.action_tool._get_pos()
         diff1 = target_pos_1 - picker_pos[0]
@@ -85,6 +97,9 @@ def run_heuristic(args):
             _, reward, _ , info  = env.step(action)
             total_reward += reward
             print(reward, info['performance'])
+            # time.sleep(0.1)
+            # print(env.action_tool._get_pos()[0])
+            imgs.append(env.get_image(720, 720))
 
         steps = 35 
         for i in range(steps):
@@ -93,11 +108,17 @@ def run_heuristic(args):
             total_reward += reward
             if i == steps - 1:
                 final_performances.append(reward)
+            time.sleep(0.1)
             print(reward, info['performance'])
+            imgs.append(env.get_image(720, 720))
+
 
         print("episode {} total reward {}".format(idx, total_reward))
         returns.append(total_reward)
 
+    save_dir = 'data/videos/'
+    save_name = 'RopeFlatten'
+    save_numpy_as_gif(np.asarray(imgs), save_dir + save_name)
     print("mean return: ", np.mean(returns))
     print("std return: ", np.std(returns))
     print("final performances mean {}".format(np.mean(final_performances)))

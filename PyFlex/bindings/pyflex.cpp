@@ -2700,6 +2700,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
 	rope.mClusterSpacing = 1.5f;
 	rope.mClusterRadius = 0.0f;
 	rope.mClusterStiffness = 0.55f;
+    rope.mTranslation = Vec3(0.0f, 0.6f, 0.0f);
 	softgym_SoftBody* softRopeSceneNew = new softgym_SoftBody("Soft Rope");
 	softRopeSceneNew->AddInstance(rope);
     g_scenes.push_back(softRopeSceneNew);

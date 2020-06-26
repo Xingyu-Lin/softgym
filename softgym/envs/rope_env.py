@@ -8,7 +8,7 @@ from copy import deepcopy
 import os.path as osp
 
 class RopeEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, horizon=250, render_mode='particle', picker_radius=0.15, **kwargs):
+    def __init__(self, observation_mode, action_mode, num_picker=2, horizon=250, render_mode='particle', picker_radius=0.03, **kwargs):
         self.render_mode = render_mode
         super().__init__(**kwargs)
 
@@ -18,20 +18,22 @@ class RopeEnv(FlexEnv):
         self.action_mode = action_mode
         self.num_picker = num_picker
 
+        # print("enter rope_env!")
         cur_dir = osp.dirname(osp.abspath(__file__))
         if not osp.exists(osp.join(cur_dir, 'rope_init_pos.npy')):
             config = self.get_default_config()
             self.set_scene(config)
             rope_init_pos = pyflex.get_positions().reshape(-1, 4)
             np.save(osp.join(cur_dir, 'rope_init_pos.npy'), rope_init_pos)
-            print("saved!")
         else:
             rope_init_pos = np.load(osp.join(cur_dir, 'rope_init_pos.npy'))
+        print(rope_init_pos)
+
         self.rope_length = np.linalg.norm(rope_init_pos[0, :3] - rope_init_pos[-1, :3]).squeeze()
 
         if action_mode == 'picker':
-            self.action_tool = Picker(num_picker, picker_radius=picker_radius, picker_low=(-1.5, 0., -1.), picker_high=(4.5, 2.8, 4.), 
-                init_particle_pos=rope_init_pos)
+            self.action_tool = Picker(num_picker, picker_radius=picker_radius, 
+                picker_low=(-1, 0., -1), picker_high=(1, 1, 1.), init_particle_pos=rope_init_pos)
             self.action_space = self.action_tool.action_space
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
@@ -68,7 +70,7 @@ class RopeEnv(FlexEnv):
             'ParticleInvMass': 20,
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([0., 2.5, 1.2]),
+                                  {'pos': np.array([0, 1.5, 1.5]),
                                    'angle': np.array([0 * np.pi, -45 / 180. * np.pi, 0]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}

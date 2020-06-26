@@ -82,11 +82,11 @@ class PourWaterPosControlEnv(FluidEnv):
     def get_default_config(self):
         config = {
             'fluid': {
-                'radius': 0.1,
-                'rest_dis_coef': 0.55,
-                'cohesion': 0.02,  # not actually used, instead, is computed as viscosity * 0.01
-                'viscosity': 2.0,
-                'surfaceTension': 0.,
+                'radius': 0.033,
+                'rest_dis_coef': 0.5,
+                'cohesion': 0.03,  # not actually used, instead, is computed as viscosity * 0.01
+                'viscosity': 0.0001,
+                'surfaceTension': 0,
                 'adhesion': 0.0, # not actually used, instead, is computed as viscosity * 0.001
                 'vorticityConfinement': 40,
                 'solidpressure': 0.,
@@ -95,13 +95,13 @@ class PourWaterPosControlEnv(FluidEnv):
                 'dim_z': 8,
             },
             'glass': {
-                'border': 0.025,
+                'border': 0.01,
                 'height': 0.6,
                 'glass_distance': 1.0,
-                'poured_border': 0.025,
+                'poured_border': 0.01,
                 'poured_height': 0.6,
             },
-            'camera_name': 'default',
+            'camera_name': 'default_camera',
         }
         return config
 
@@ -109,8 +109,8 @@ class PourWaterPosControlEnv(FluidEnv):
         """
         TODO: add more randomly generated configs instead of using manually specified configs. 
         """
-        dim_xs = [5, 6, 7, 8, 9, 10, 11, 12]
-        dim_zs = [5, 6, 7, 8, 9, 10, 11, 12]
+        dim_xs = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        dim_zs = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
         self.cached_configs = []
         self.cached_init_states = []
@@ -122,27 +122,27 @@ class PourWaterPosControlEnv(FluidEnv):
             m = min(dim_x, dim_z)
             p = np.random.rand()
             water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef']
-            if p < 1. / 3.:  # small water volume
-                print("small volume water")
-                dim_y = 2 * m + np.random.randint(0, 2)
-                v = dim_x * dim_y * dim_z
-                h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius
-                print("h {}".format(h))
-                glass_height = h + (np.random.rand() - 0.5) * 0.05
-            elif 1. / 3 < p and p < 2. / 3:  # midium water volumes
+            # if p < 1. / 3.:  # small water volume
+            #     print("small volume water")
+            #     dim_y = int(2.5 * m) + np.random.randint(0, 2)
+            #     v = dim_x * dim_y * dim_z
+            #     h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 2
+            #     print("h {}".format(h))
+            #     glass_height = h + (np.random.rand() - 0.5) * 0.001
+            if p < 0.5:  # midium water volumes
                 print("medium volume water")
-                dim_y = int(2.5 * m) + np.random.randint(0, 2)
+                dim_y = int(3.5 * m) 
                 v = dim_x * dim_y * dim_z
-                h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 1.5
+                h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 2
                 print("h {}".format(h))
-                glass_height = h + (np.random.rand() - 0.5) * 0.05
+                glass_height = h + (np.random.rand() - 0.5) * 0.001
             else:
                 print("large volume water")
                 dim_y = 4 * m
                 v = dim_x * dim_y * dim_z
-                h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / (2 + self.rand_float(0.05, 0.18))
+                h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 3
                 print("h {}".format(h))
-                glass_height = h  +  (m + np.random.rand()) * 0.007
+                glass_height = h  +  (m + np.random.rand()) * 0.001
 
             print("dim_x {} dim_y {} dim_z {} glass_height {}".format(dim_x, dim_y, dim_z, glass_height))
             config_variations[idx]['fluid']['dim_x'] = dim_x
@@ -153,8 +153,8 @@ class PourWaterPosControlEnv(FluidEnv):
 
             config_variations[idx]['glass']['height'] = glass_height
             config_variations[idx]['glass']['poured_height'] = glass_height + np.random.rand() * 0.1
-            config_variations[idx]['glass']['glass_distance'] = self.rand_float(0.1 * m, 0.16 * m) + dim_x * water_radius / 2.
-            config_variations[idx]['glass']['poured_border'] = self.rand_float(0.015, 0.025)
+            config_variations[idx]['glass']['glass_distance'] = self.rand_float(0.05 * m, 0.09 * m) + dim_x * water_radius / 2.
+            config_variations[idx]['glass']['poured_border'] = self.rand_float(0.008, 0.01)
 
             self.set_scene(config_variations[idx])
             init_state = copy.deepcopy(self.get_state())
@@ -216,7 +216,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
     def initialize_camera(self):
         self.camera_params = {
-            'default_camera': {'pos': np.array([2.2, 1.5 + 1.7, 0.3]),
+            'default_camera': {'pos': np.array([1.4, 1.5, 0.1]),
                                'angle': np.array([0.45 * np.pi, -60 / 180. * np.pi, 0]),
                                'width': self.camera_width,
                                'height': self.camera_height},
@@ -305,23 +305,65 @@ class PourWaterPosControlEnv(FluidEnv):
         if states is None:
             fluid_pos = np.ones((self.particle_num, self.dim_position))
 
-            # move water all inside pouring cup
+            # move water all inside the glass
             fluid_radius = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
-            fluid_dis = np.array([1.2 * fluid_radius, fluid_radius * 0.5, 1.2 * fluid_radius])
-            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2. + self.glass_params['border']
-            lower_z = -self.glass_params['glass_dis_z'] / 2 + self.glass_params['border']
-            lower_y = self.glass_params['border']
+            # fluid_dis = np.array([1.2 * fluid_radius, fluid_radius * 0.45, 1.2 * fluid_radius])
+            fluid_dis = np.array([1.0 * fluid_radius, fluid_radius * 0.5, 1.0 * fluid_radius])
+            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2. + self.glass_params['border'] 
+            lower_z = -self.glass_params['glass_dis_z'] / 2 + self.glass_params['border'] 
+            lower_y = self.glass_params['border'] 
+            if self.action_mode in ['sawyer', 'franka']:
+                lower_y += 0.56 # NOTE: robotics table
             lower = np.array([lower_x, lower_y, lower_z])
             cnt = 0
-            for x in range(self.fluid_params['dim_x']):
-                for y in range(self.fluid_params['dim_y']):
-                    for z in range(self.fluid_params['dim_z']):
-                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * fluid_dis 
+            rx = int(self.fluid_params['dim_x'] * 1)
+            ry = int(self.fluid_params['dim_y'] * 1)
+            rz = int(self.fluid_params['dim_z'] / 1)
+            for x in range(rx):
+                for y in range(ry):
+                    for z in range(rz):
+                        fluid_pos[cnt][:3] = lower + np.array([x, y, z]) * fluid_dis  # + np.random.rand() * 0.01
                         cnt += 1
 
             pyflex.set_positions(fluid_pos)
             print("stablize water!")
-            for _ in range(300):
+            for _ in range(100):
+                pyflex.step()
+                # time.sleep(0.1)
+
+
+            state_dic = self.get_state()
+            water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
+            in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+            not_in_glass = 1 - in_glass
+            not_total_num = np.sum(not_in_glass)
+
+            while not_total_num > 0:
+                max_height_now = np.max(water_state[:, 1])
+                fluid_dis = np.array([1.0 * fluid_radius, fluid_radius * 1, 1.0 * fluid_radius])
+                lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 4 
+                lower_z = -self.glass_params['glass_dis_z'] / 4 
+                lower_y = max_height_now
+                lower = np.array([lower_x, lower_y, lower_z])
+                cnt = 0 
+                dim_x = config['fluid']['dim_x']
+                dim_z = config['fluid']['dim_z']
+                for w_idx in range(len(water_state)):
+                    if not in_glass[w_idx]:
+                        water_state[w_idx][:3] = lower + fluid_dis * np.array([cnt % dim_x, cnt // (dim_x * dim_z), (cnt // dim_x) % dim_z])
+                        cnt += 1
+                
+                pyflex.set_positions(water_state)
+                for _ in range(40):
+                    pyflex.step()
+
+                state_dic = self.get_state()
+                water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
+                in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+                not_in_glass = 1 - in_glass
+                not_total_num = np.sum(not_in_glass)
+            
+            for _ in range(30):
                 pyflex.step()
         else:  # set to passed-in cached init states
             self.set_state(states)
@@ -368,9 +410,9 @@ class PourWaterPosControlEnv(FluidEnv):
             delta_reward = reward - self.prev_reward
             self.prev_reward = reward
         else:
-            reward_normalized = (reward - self.reward_min) / self.reward_range
+            reward = reward
 
-        return delta_reward if self.delta_reward else reward_normalized
+        return delta_reward if self.delta_reward else reward
 
     def _get_info(self):
         # Duplicate of the compute reward function!
@@ -387,7 +429,8 @@ class PourWaterPosControlEnv(FluidEnv):
         normalized_reward = (reward - self.reward_min) / self.reward_range
 
         return {
-            'performance': normalized_reward
+            'normalized_performance': normalized_reward,
+            'performance': reward
         }
 
     def _step(self, action):
