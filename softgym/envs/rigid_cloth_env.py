@@ -1,3 +1,5 @@
+from abc import ABC
+
 import numpy as np
 from gym.spaces import Box
 import pyflex
@@ -7,9 +9,8 @@ from softgym.envs.robot_env import RobotBase
 from copy import deepcopy
 
 
-class ClothEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.05, particle_radius=0.00625, **kwargs):
-        self.render_mode = render_mode
+class RigidClothEnv(FlexEnv):
+    def __init__(self, observation_mode, action_mode, num_pieces, num_picker=2, picker_radius=0.05, particle_radius=0.025, **kwargs):
         self.cloth_particle_radius = particle_radius
         super().__init__(**kwargs)
 
@@ -17,6 +18,7 @@ class ClothEnv(FlexEnv):
         assert action_mode in ['sphere', 'picker', 'pickerpickplace', 'sawyer', 'franka']
         self.observation_mode = observation_mode
         self.action_mode = action_mode
+        self.num_pieces = num_pieces
 
         if action_mode.startswith('key_point'):
             space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
@@ -38,7 +40,7 @@ class ClothEnv(FlexEnv):
             if observation_mode == 'key_point':
                 obs_dim = len(self._get_key_point_idx()) * 3
             else:
-                max_particles = 120 * 120
+                max_particles = 500 * num_pieces
                 obs_dim = max_particles * 3
                 self.particle_obs_dim = obs_dim
             if action_mode in ['picker']:
@@ -51,7 +53,8 @@ class ClothEnv(FlexEnv):
                                          dtype=np.float32)
 
     def _sample_cloth_size(self):
-        return np.random.randint(60, 120), np.random.randint(60, 120)
+        """ Size of just one piece"""
+        return np.random.randint(7, 15), np.random.randint(15, 30)
 
     def _get_flat_pos(self):
         config = self.get_current_config()
@@ -78,12 +81,12 @@ class ClothEnv(FlexEnv):
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
-        particle_radius = self.cloth_particle_radius
         config = {
-            'ClothPos': [-1.6, 2.0, -0.8],
-            'ClothSize': [int(0.6 / particle_radius), int(0.368 / particle_radius)],
-            'ClothStiff': [0.8, 1, 0.9],  # Stretch, Bend and Shear
+            'ClothSize': [20, 20],  # Size of one piece
             'camera_name': 'default_camera',
+            'inv_mass': 10,
+            'rigid_stiffness': 1,
+            'num_pieces': 2,
             'camera_params': {'default_camera':
                                   {'pos': np.array([-0.0, 1.2, 1.2]),
                                    'angle': np.array([0, -45 / 180. * np.pi, 0.]),
@@ -110,18 +113,14 @@ class ClothEnv(FlexEnv):
             pos = np.concatenate([pos.flatten(), shapes[:, 0:3].flatten()])
         return pos
 
-    # Cloth index looks like the following:
-    # 0, 1, ..., cloth_xdim -1
-    # ...
-    # cloth_xdim * (cloth_ydim -1 ), ..., cloth_xdim * cloth_ydim -1
-
     def _get_key_point_idx(self):
         """ The keypoints are defined as the four corner points of the cloth """
         dimx, dimy = self.current_config['ClothSize']
+        total_particle = dimx * dimy * self.num_pieces
         idx_p1 = 0
-        idx_p2 = dimx * (dimy - 1)
-        idx_p3 = dimx - 1
-        idx_p4 = dimx * dimy - 1
+        idx_p2 = dimy - 1
+        idx_p3 = total_particle - dimy - 1
+        idx_p4 = total_particle - 1
         return np.array([idx_p1, idx_p2, idx_p3, idx_p4])
 
     """
@@ -129,17 +128,12 @@ class ClothEnv(FlexEnv):
     """
 
     def set_scene(self, config, state=None):
-        if self.render_mode == 'particle':
-            render_mode = 1
-        elif self.render_mode == 'cloth':
-            render_mode = 2
-        elif self.render_mode == 'both':
-            render_mode = 3
+        print('set scene')
         camera_params = config['camera_params'][config['camera_name']]
-        env_idx = 9 if 'env_idx' not in config else config['env_idx']
-        mass = config['mass'] if 'mass' in config else 0.5
-        scene_params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
-                                 *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass])
+        env_idx = 14
+        scene_params = np.array(
+            [config['ClothSize'][0], 1, config['ClothSize'][1], config['num_pieces'], config['inv_mass'], config['rigid_stiffness'],
+             *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height']])
 
         if self.version == 2:
             robot_params = [0]
@@ -148,6 +142,8 @@ class ClothEnv(FlexEnv):
         elif self.version == 1:
             pyflex.set_scene(env_idx, scene_params, 0)
 
+
         if state is not None:
             self.set_state(state)
+
         self.current_config = deepcopy(config)
