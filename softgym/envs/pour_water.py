@@ -52,7 +52,7 @@ class PourWaterPosControlEnv(FluidEnv):
             if observation_mode == 'key_point':
                 obs_dim = 0
             else:
-                max_particle_num = 12 * 12 * 48
+                max_particle_num = 13 * 13 * 13 * 4
                 obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
@@ -83,9 +83,9 @@ class PourWaterPosControlEnv(FluidEnv):
         config = {
             'fluid': {
                 'radius': 0.033,
-                'rest_dis_coef': 0.5,
-                'cohesion': 0.03,  # not actually used, instead, is computed as viscosity * 0.01
-                'viscosity': 0.0001,
+                'rest_dis_coef': 0.55,
+                'cohesion': 0.1,  # not actually used, instead, is computed as viscosity * 0.01
+                'viscosity': 2,
                 'surfaceTension': 0,
                 'adhesion': 0.0, # not actually used, instead, is computed as viscosity * 0.001
                 'vorticityConfinement': 40,
@@ -220,6 +220,11 @@ class PourWaterPosControlEnv(FluidEnv):
                                'angle': np.array([0.45 * np.pi, -60 / 180. * np.pi, 0]),
                                'width': self.camera_width,
                                'height': self.camera_height},
+
+            # 'default_camera': {'pos': np.array([1.4, 1, 0.1]),
+            #                    'angle': np.array([0.45 * np.pi, -45 / 180. * np.pi, 0]),
+            #                    'width': self.camera_width,
+            #                    'height': self.camera_height},
             'cam_2d': {'pos': np.array([0.5, .7, 4.]),
                        'angle': np.array([0, 0, 0.]),
                        'width': self.camera_width,
@@ -329,6 +334,7 @@ class PourWaterPosControlEnv(FluidEnv):
             print("stablize water!")
             for _ in range(100):
                 pyflex.step()
+                # pyflex.render()
                 # time.sleep(0.1)
 
 
@@ -356,6 +362,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 pyflex.set_positions(water_state)
                 for _ in range(40):
                     pyflex.step()
+                    # pyflex.render()
 
                 state_dic = self.get_state()
                 water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
@@ -365,6 +372,7 @@ class PourWaterPosControlEnv(FluidEnv):
             
             for _ in range(30):
                 pyflex.step()
+                # pyflex.render()
         else:  # set to passed-in cached init states
             self.set_state(states)
 

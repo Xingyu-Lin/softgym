@@ -92,7 +92,7 @@ public:
 		g_numSubsteps = 2;
 
 		g_params.radius = radius;
-		g_params.dynamicFriction = 0.00f;
+		g_params.dynamicFriction = 0.01f;
 		g_params.viscosity =  viscosity; //2.0f;
 		g_params.numIterations = 4;
 		g_params.vorticityConfinement = vorticityConfinement;// 40.0f;

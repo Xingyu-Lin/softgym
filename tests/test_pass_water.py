@@ -35,10 +35,10 @@ def run_heuristic(args):
     horizon = dic['horizon']
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
 
-    if not args.use_cached_states:
-        dic['use_cached_states'] = False
-        dic['save_cache_states'] = True
-        dic['num_variations'] = 10
+    # if not args.use_cached_states:
+    #     dic['use_cached_states'] = False
+    #     dic['save_cache_states'] = True
+    #     dic['num_variations'] = 10
 
     env = PassWater1DEnv(**dic)
 
