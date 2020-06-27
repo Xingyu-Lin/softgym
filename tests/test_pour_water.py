@@ -28,7 +28,7 @@ def run_heuristic(args):
 
     dic = env_arg_dict[env_name]
     dic['headless'] = args.headless
-    dic['observation_mode'] = args.obs_mode
+    # dic['observation_mode'] = 'key_point'
     action_repeat = dic.get('action_repeat', 8)
     horizon = dic['horizon']
     
@@ -40,7 +40,6 @@ def run_heuristic(args):
     dic['render_mode'] = 'particle'
 
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
-
     env = PourWaterPosControlEnv(**dic)
 
     imgs = []
@@ -51,7 +50,10 @@ def run_heuristic(args):
     for idx in range(N):
         total_reward = 0
         env.reset()
-  
+        img = env.get_image(720, 720)
+        cv2.imshow('name', img)
+        cv2.waitKey()
+
         move_part = 15
         target_y = env.poured_height + 0.01
         target_x = env.glass_distance - env.poured_glass_dis_x / 2 - env.height - 0.1
@@ -59,12 +61,15 @@ def run_heuristic(args):
             action = np.array([target_x / action_repeat / move_part , target_y / action_repeat / move_part, 0.])
             obs, reward, done, info = env.step(action)
             total_reward += reward
+            img = env.get_image(84, 84)
+            cv2.imshow('name', img)
+            cv2.waitKey()
             imgs.append(env.render('rgb_array'))
             print(reward, info['performance'])
 
         
         rotate_part = 20
-        total_rotate = 0.55 * np.pi
+        total_rotate = 0.75 * np.pi
         for i in range(rotate_part):
             action = np.array([0.0002, 0.002, total_rotate / rotate_part / action_repeat])
             obs, reward, done, info = env.step(action)

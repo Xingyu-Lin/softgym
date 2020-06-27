@@ -58,7 +58,7 @@ class PassWater1DEnv(FluidEnv):
             if observation_mode == 'key_point':
                 obs_dim = 0
             else:
-                max_particle_num = 12 * 12 * 48
+                max_particle_num = 13 * 13 * 13 * 4
                 obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
