@@ -54,7 +54,7 @@ class RigidClothEnv(FlexEnv):
 
     def _sample_cloth_size(self):
         """ Size of just one piece"""
-        return np.random.randint(7, 15), np.random.randint(15, 30)
+        return np.random.randint(8, 16), np.random.randint(8, 16)
 
     def _get_flat_pos(self):
         config = self.get_current_config()
@@ -84,11 +84,11 @@ class RigidClothEnv(FlexEnv):
         config = {
             'ClothSize': [20, 20],  # Size of one piece
             'camera_name': 'default_camera',
-            'inv_mass': 10,
+            'inv_mass': 0.1,
             'rigid_stiffness': 1,
             'num_pieces': 2,
             'camera_params': {'default_camera':
-                                  {'pos': np.array([-0.0, 1.2, 1.2]),
+                                  {'pos': np.array([-0.0, 0.82, 0.82]),
                                    'angle': np.array([0, -45 / 180. * np.pi, 0.]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}

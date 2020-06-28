@@ -12,7 +12,7 @@ public:
 
 	SoftgymRigidCloth(const char* name) : Scene(name) {}
 
-    float radius = 0.025f;
+    float radius = 0.02f;
     int group=0;
 
     void Connect(int idx1, int idx2)

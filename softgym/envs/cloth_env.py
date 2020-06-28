@@ -85,7 +85,7 @@ class ClothEnv(FlexEnv):
             'ClothStiff': [0.8, 1, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([-0.0, 1.2, 1.2]),
+                                  {'pos': np.array([-0.0, 0.82, 0.82]),
                                    'angle': np.array([0, -45 / 180. * np.pi, 0.]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}

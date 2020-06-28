@@ -38,8 +38,8 @@ class ClothDropEnv(ClothEnv):
             'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([-0.5, 2., 1.5]),
-                                   'angle': np.array([20. / 180. * np.pi, -40. / 180. * np.pi, 0.]),
+                                  {'pos': np.array([-0.421384, 1.73644, 0.482753]),
+                                   'angle': np.array([0.757474, -0.689405, 0]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}
             # 'camera_params': {'default_camera':
