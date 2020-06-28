@@ -8,6 +8,8 @@ from softgym.envs.cloth_fold import ClothFoldEnv
 from softgym.envs.cloth_drop import ClothDropEnv
 from softgym.envs.cloth_fold_crumpled import ClothFoldCrumpledEnv
 from softgym.envs.cloth_fold_drop import ClothFoldDropEnv
+from softgym.envs.rigid_cloth_fold import RigidClothFoldEnv
+
 from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
 from softgym.envs.pass_water_multitask import PassWater1DGoalConditionedEnv
 from softgym.envs.cloth_manipulate import ClothManipulateEnv
@@ -63,6 +65,20 @@ env_arg_dict = {
                      'use_cached_states': True,
                      'delta_reward': False,
                      'deterministic': False},
+
+    'RigidClothFold': {'observation_mode': 'cam_rgb',
+                       'action_mode': 'picker',
+                       'num_picker': 2,
+                       'render': True,
+                       'headless': True,
+                       'horizon': 50,
+                       'action_repeat': 8,
+                       'num_pieces':2,
+                       'num_variations': 1000,
+                       'use_cached_states': True,
+                       'delta_reward': False,
+                       'deterministic': False},
+
     'ClothFlatten': {'observation_mode': 'cam_rgb',
                      'action_mode': 'picker',
                      'num_picker': 2,
@@ -221,6 +237,7 @@ SOFTGYM_ENVS = OrderedDict({
     'ClothFold': ClothFoldEnv,
     'ClothFoldCrumpled': ClothFoldCrumpledEnv,
     'ClothFoldDrop': ClothFoldDropEnv,
+    'RigidClothFold': RigidClothFoldEnv,
     'RopeFlatten': RopeFlattenEnv,
     'RopeAlphaBet': RopeAlphaBetEnv,
     'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,
