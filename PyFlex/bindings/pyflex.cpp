@@ -2734,6 +2734,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     // }
     g_scenes.push_back(softgym_PlasticDough);
     g_scenes.push_back(new SoftgymRigidCloth("Softgym Rigid Cloth"));
+    g_scenes.push_back(new Softgym_RigidFluid("Softgym Rigid Fluid"));
 
 
 
