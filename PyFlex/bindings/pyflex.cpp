@@ -1187,6 +1187,8 @@ void UpdateCamera() {
 
     g_camSmoothVel = Lerp(g_camSmoothVel, g_camVel, 0.1f);
     g_camPos += (forward * g_camSmoothVel.z + right * g_camSmoothVel.x + Cross(right, forward) * g_camSmoothVel.y);
+//    cout<<"g_camPos"<<g_camPos[0] << " " << g_camPos[1] << " " << g_camPos[2]<<endl;
+//    cout<<"g_camAngle"<<g_camAngle[0] << " "<< g_camAngle[1]<<" "<<g_camAngle[2]<<endl;
 }
 
 void UpdateMouse() {
@@ -3870,6 +3872,27 @@ py::array_t<int> pyflex_render(int capture, char *path) {
         GetViewRay(g_lastx, g_screenHeight - g_lasty, origin, dir);
 
         g_mousePos = origin + dir * g_mouseT;
+    }
+
+    if (!g_interop && g_render) {
+        // if not using interop then we read back fluid data to host
+        if (g_drawEllipsoids) {
+            NvFlexGetSmoothParticles(g_solver, g_buffers->smoothPositions.buffer, nullptr);
+            NvFlexGetAnisotropy(g_solver, g_buffers->anisotropy1.buffer, g_buffers->anisotropy2.buffer,
+                                g_buffers->anisotropy3.buffer, NULL);
+        }
+
+        // read back diffuse data to host
+        if (g_drawDensity)
+            NvFlexGetDensities(g_solver, g_buffers->densities.buffer, nullptr);
+
+        if (GetNumDiffuseRenderParticles(g_diffuseRenderBuffers)) {
+            NvFlexGetDiffuseParticles(g_solver, g_buffers->diffusePositions.buffer, g_buffers->diffuseVelocities.buffer,
+                                      g_buffers->diffuseCount.buffer);
+        }
+    } else if (g_render) {
+        // read back just the new diffuse particle count, render buffers will be updated during rendering
+        NvFlexGetDiffuseParticles(g_solver, nullptr, nullptr, g_buffers->diffuseCount.buffer);
     }
 
     // Original function for rendering and saving to disk

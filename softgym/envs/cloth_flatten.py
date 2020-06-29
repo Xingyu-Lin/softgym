@@ -24,25 +24,28 @@ class ClothFlattenEnv(ClothEnv):
             self.cached_states_path = osp.join(cur_dir, cached_states_path)
         else:
             self.cached_states_path = cached_states_path
-        success = self.get_cached_configs_and_states(cached_states_path)
-        if not success or not self.use_cached_states:
-            self.generate_env_variation(num_variations=self.num_variations, save_to_file=self.use_cached_states)
+
+        if self.use_cached_states:
+            success = self.get_cached_configs_and_states(cached_states_path)
+
+        if not self.use_cached_states or not success:
+            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
-    def initialize_camera(self, make_multitask_happy=None):
-        """
-        set the camera width, height, position and angle.
-        **Note: width and height is actually the screen width and screen height of FLex.
-        I suggest to keep them the same as the ones used in pyflex.cpp.
-        """
-        self.camera_name = 'default_camera'
-        self.camera_params['default_camera'] = {
-            'pos': np.array([0., 4., 0.]),
-            'angle': np.array([0, -70 / 180. * np.pi, 0.]),
-            'width': self.camera_width,
-            'height': self.camera_height
-        }
+    # def initialize_camera(self, make_multitask_happy=None):
+    #     """
+    #     set the camera width, height, position and angle.
+    #     **Note: width and height is actually the screen width and screen height of FLex.
+    #     I suggest to keep them the same as the ones used in pyflex.cpp.
+    #     """
+    #     self.camera_name = 'default_camera'
+    #     self.camera_params['default_camera'] = {
+    #         'pos': np.array([0., 4., 0.]),
+    #         'angle': np.array([0, -70 / 180. * np.pi, 0.]),
+    #         'width': self.camera_width,
+    #         'height': self.camera_height
+    #     }
 
     def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """

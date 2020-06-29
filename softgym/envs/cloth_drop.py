@@ -26,7 +26,7 @@ class ClothDropEnv(ClothEnv):
             self.cached_states_path = cached_states_path
         success = self.get_cached_configs_and_states(cached_states_path)
         if not success or not self.use_cached_states:
-            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.use_cached_states)
+            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
@@ -38,8 +38,8 @@ class ClothDropEnv(ClothEnv):
             'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([-0.5, 2., 1.5]),
-                                   'angle': np.array([20. / 180. * np.pi, -40. / 180. * np.pi, 0.]),
+                                  {'pos': np.array([-0.421384, 1.73644, 0.482753]),
+                                   'angle': np.array([0.757474, -0.689405, 0]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}
             # 'camera_params': {'default_camera':
@@ -128,7 +128,10 @@ class ClothDropEnv(ClothEnv):
             picker_low = middle_point - [0.2, 0.1, 0.5]
             picker_high = middle_point + [0.5, 0.1, 0.5]
             self.action_tool.update_picker_boundary(picker_low, picker_high)
-        return self._get_obs()
+        self.performance_init = None
+        obs = self._get_obs()
+        self.performance_init = obs['performance']
+        return obs
 
     def _step(self, action):
         # self.action_tool.visualize_picker_boundary()
@@ -190,17 +193,18 @@ class ClothDropEnv(ClothEnv):
             r = - curr_dist
         return r
 
-    @property
-    def performance_bound(self):
-        max_dist = 1.043
-        min_p = - max_dist
-        max_p = 0
-        return min_p, max_p
+    # @property
+    # def performance_bound(self):
+    #     max_dist = 1.043
+    #     min_p = - max_dist
+    #     max_p = 0
+    #     return min_p, max_p
 
     def _get_info(self):
         particle_pos = pyflex.get_positions()
         curr_dist = self._get_current_dist(particle_pos)
         performance = -curr_dist
-        pb = self.performance_bound
-        return {'performance': performance,
-                'normalized_performance': (performance - pb[0]) / (pb[1] - pb[0])}
+        performance_init = performance if self.performance_init is None else self.performance_init  # Use the original performance
+        return {
+            'performance': performance,
+            'normalized_performance': (performance - performance_init) / (0. - performance_init)}

@@ -171,9 +171,9 @@ class Picker(ActionToolBase):
         r = np.sqrt(self.num_picker - 1) * self.picker_radius * 2.
         pos = []
         for i in range(self.num_picker):
-            x = center[0] + np.cos(2 * np.pi * i / self.num_picker) * r
+            x = center[0] + np.sin(2 * np.pi * i / self.num_picker) * r
             y = center[1]
-            z = center[2] + np.sin(2 * np.pi * i / self.num_picker) * r
+            z = center[2] + np.cos(2 * np.pi * i / self.num_picker) * r
             pos.append([x, y, z])
         return np.array(pos)
 
