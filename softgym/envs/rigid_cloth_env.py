@@ -128,7 +128,6 @@ class RigidClothEnv(FlexEnv):
     """
 
     def set_scene(self, config, state=None):
-        print('set scene')
         camera_params = config['camera_params'][config['camera_name']]
         env_idx = 14
         scene_params = np.array(

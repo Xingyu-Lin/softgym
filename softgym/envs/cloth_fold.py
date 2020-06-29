@@ -146,9 +146,9 @@ class ClothFoldEnv(ClothEnv):
         self.prev_dist = np.mean(np.linalg.norm(pos_a - pos_b, axis=1))
 
         self.performance_init = None
-        obs = self._get_obs()
-        self.performance_init = obs['performance']
-        return obs
+        info = self._get_info()
+        self.performance_init = info['performance']
+        return self._get_obs()
 
     def _step(self, action):
         # self.action_tool.visualize_picker_boundary()

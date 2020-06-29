@@ -100,9 +100,9 @@ class RigidClothFoldEnv(RigidClothEnv):
         self.prev_dist = np.mean(np.linalg.norm(pos_a - pos_b, axis=1))
 
         self.performance_init = None
-        obs = self._get_obs()
-        self.performance_init = obs['performance']
-        return obs
+        info = self._get_info()
+        self.performance_init = info['performance']
+        return self._get_obs()
 
     def set_test_color(self, num_particles):
         """
@@ -166,6 +166,7 @@ class RigidClothFoldEnv(RigidClothEnv):
         fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         performance = -group_dist - 1.2 * fixation_dist
         performance_init = performance if self.performance_init is None else self.performance_init  # Use the original performance
+        print(performance, ' ',performance_init)
         return {
             'performance': performance,
             'normalized_performance': (performance - performance_init) / (0. - performance_init),
