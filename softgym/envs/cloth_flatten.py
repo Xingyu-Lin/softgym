@@ -29,7 +29,7 @@ class ClothFlattenEnv(ClothEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
 
         if not self.use_cached_states or not success:
-            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.use_cached_states)
+            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 

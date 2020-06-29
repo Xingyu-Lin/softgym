@@ -23,7 +23,7 @@ class ClothFoldEnv(ClothEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
 
         if not self.use_cached_states or not success:
-            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.use_cached_states)
+            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
@@ -145,7 +145,10 @@ class ClothFoldEnv(ClothEnv):
         pos_b = self.init_pos[self.fold_group_b, :]
         self.prev_dist = np.mean(np.linalg.norm(pos_a - pos_b, axis=1))
 
-        return self._get_obs()
+        self.performance_init = None
+        obs = self._get_obs()
+        self.performance_init = obs['performance']
+        return obs
 
     def _step(self, action):
         # self.action_tool.visualize_picker_boundary()
@@ -195,20 +198,20 @@ class ClothFoldEnv(ClothEnv):
         group_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
         fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         performance = -group_dist - 1.2 * fixation_dist
-        pb = self.performance_bound
+        performance_init = performance if self.performance_init is None else self.performance_init  # Use the original performance
         return {
             'performance': performance,
-            'normalized_performance': (performance - pb[0]) / (pb[1] - pb[0]),
+            'normalized_performance': (performance - performance_init) / (0. - performance_init),
             'neg_group_dist': -group_dist,
             'neg_fixation_dist': -fixation_dist
         }
 
-    @property
-    def performance_bound(self):
-        max_dist = 1.043
-        min_p = -2.2 * max_dist
-        max_p = 0
-        return min_p, max_p
+    # @property
+    # def performance_bound(self):
+    #     max_dist = 1.043
+    #     min_p = -2.2 * max_dist
+    #     max_p = 0
+    #     return min_p, max_p
 
     def _set_to_folded(self):
         config = self.get_current_config()
