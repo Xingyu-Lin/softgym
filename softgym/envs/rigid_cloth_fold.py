@@ -89,8 +89,12 @@ class RigidClothFoldEnv(RigidClothEnv):
         self.fold_group_b = np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]) + num_particles
         self.fold_group_b = self.fold_group_b.flatten()
 
-        # Visualize correspondence
+        # Visualize Keypoints
         # self.set_test_color(len(pyflex.get_positions())// 4)
+        # num_particles = len(pyflex.get_positions())// 4
+        # colors = np.zeros(num_particles)
+        # colors[self._get_key_point_idx()] = 5
+        # self.set_colors(colors)
         # for i in range(100000):
         #     pyflex.step(render=True)
 

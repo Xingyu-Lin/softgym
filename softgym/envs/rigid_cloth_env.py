@@ -116,12 +116,14 @@ class RigidClothEnv(FlexEnv):
     def _get_key_point_idx(self):
         """ The keypoints are defined as the four corner points of the cloth """
         dimx, dimy = self.current_config['ClothSize']
-        total_particle = dimx * dimy * self.num_pieces
+        piece_size = dimx * dimy
         idx_p1 = 0
         idx_p2 = dimy - 1
-        idx_p3 = total_particle - dimy - 1
-        idx_p4 = total_particle - 1
-        return np.array([idx_p1, idx_p2, idx_p3, idx_p4])
+        idx_p3 = piece_size - dimy
+        idx_p4 = piece_size - 1
+        points1 = np.array([idx_p1, idx_p2, idx_p3, idx_p4])
+        points2 = points1.copy() + piece_size
+        return np.concatenate([points1, points2])
 
     """
     There's always the same parameters that you can set 
