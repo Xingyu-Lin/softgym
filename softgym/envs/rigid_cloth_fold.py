@@ -85,7 +85,8 @@ class RigidClothFoldEnv(RigidClothEnv):
         config = self.get_current_config()
         num_particles = np.prod(config['ClothSize'], dtype=int)  # Per piece
         self.fold_group_a = np.array(list(range(num_particles)))
-        self.fold_group_b = np.flip(np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]), axis=0) + num_particles
+        # self.fold_group_b = np.flip(np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]), axis=0) + num_particles
+        self.fold_group_b = np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]) + num_particles
         self.fold_group_b = self.fold_group_b.flatten()
 
         # Visualize correspondence
@@ -166,7 +167,6 @@ class RigidClothFoldEnv(RigidClothEnv):
         fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         performance = -group_dist - 1.2 * fixation_dist
         performance_init = performance if self.performance_init is None else self.performance_init  # Use the original performance
-        print(performance, ' ',performance_init)
         return {
             'performance': performance,
             'normalized_performance': (performance - performance_init) / (0. - performance_init),
