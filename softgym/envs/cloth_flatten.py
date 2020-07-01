@@ -103,8 +103,11 @@ class ClothFlattenEnv(ClothEnv):
                 curr_pos = pyflex.get_positions()
                 self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
             generated_configs.append(deepcopy(config))
-            print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
+            self.current_config = config # Needed in _set_to_flatten function
+            generated_configs[-1]['flatten_area'] = self._set_to_flatten() # Record the maximum flatten area
+
+            print('config {}: camera params {}, flatten area: {}'.format(i, config['camera_params'], generated_configs[-1]['flatten_area']))
 
         if save_to_file:
             with open(self.cached_states_path, 'wb') as handle:
@@ -112,14 +115,15 @@ class ClothFlattenEnv(ClothEnv):
         return generated_configs, generated_states
 
     def _set_to_flatten(self):
+        # self._get_current_covered_area(pyflex.get_positions().reshape(-))
         cloth_dimx, cloth_dimz = self.get_current_config()['ClothSize']
         N = cloth_dimx * cloth_dimz
-        px = np.linspace(0, cloth_dimx * 0.05, cloth_dimx)
-        py = np.linspace(0, cloth_dimz * 0.05, cloth_dimz)
+        px = np.linspace(0, cloth_dimx * self.cloth_particle_radius, cloth_dimx)
+        py = np.linspace(0, cloth_dimz * self.cloth_particle_radius, cloth_dimz)
         xx, yy = np.meshgrid(px, py)
         new_pos = np.empty(shape=(N, 4), dtype=np.float)
         new_pos[:, 0] = xx.flatten()
-        new_pos[:, 1] = 0.05
+        new_pos[:, 1] = self.cloth_particle_radius
         new_pos[:, 2] = yy.flatten()
         new_pos[:, 3] = 1.
         new_pos[:, :3] -= np.mean(new_pos[:, :3], axis=0)
@@ -134,6 +138,9 @@ class ClothFlattenEnv(ClothEnv):
             cx, cy = self._get_center_point(curr_pos)
             self.action_tool.reset([cx, 0.5, cy])
 
+        self.init_covered_area = None
+        info = self._get_info()
+        self.init_covered_area = info['performance']
         return self._get_obs()
 
     def _step(self, action):
@@ -187,14 +194,15 @@ class ClothFlattenEnv(ClothEnv):
         slotted_x_high = np.minimum(np.round((offset[:, 0] + self.cloth_particle_radius) / span[0]).astype(int), 100)
         slotted_y_low = np.maximum(np.round((offset[:, 1] - self.cloth_particle_radius) / span[1]).astype(int), 0)
         slotted_y_high = np.minimum(np.round((offset[:, 1] + self.cloth_particle_radius) / span[1]).astype(int), 100)
-
         # Method 1
         grid = np.zeros(10000)  # Discretization
         listx = vectorized_range(slotted_x_low, slotted_x_high)
         listy = vectorized_range(slotted_y_low, slotted_y_high)
         listxx, listyy = vectorized_meshgrid(listx, listy)
         idx = listxx * 100 + listyy
-        grid[idx.flatten()] = 1
+        idx = np.clip(idx.flatten(), 0, 9999)
+        grid[idx] = 1
+
         return np.sum(grid) * span[0] * span[1]
 
         # Method 2
@@ -223,20 +231,21 @@ class ClothFlattenEnv(ClothEnv):
             r = curr_covered_area
         return r
 
-    @property
-    def performance_bound(self):
-        dimx, dimy = self.current_config['ClothSize']
-        max_area = dimx * self.cloth_particle_radius * dimy * self.cloth_particle_radius
-        min_p = 0
-        max_p = max_area
-        return min_p, max_p
+    # @property
+    # def performance_bound(self):
+    #     dimx, dimy = self.current_config['ClothSize']
+    #     max_area = dimx * self.cloth_particle_radius * dimy * self.cloth_particle_radius
+    #     min_p = 0
+    #     max_p = max_area
+    #     return min_p, max_p
 
     def _get_info(self):
         # Duplicate of the compute reward function!
         particle_pos = pyflex.get_positions()
         curr_covered_area = self._get_current_covered_area(particle_pos)
-        pb = self.performance_bound
+        init_covered_area = curr_covered_area if self.init_covered_area is None else self.init_covered_area
+        max_covered_area = self.get_current_config()['flatten_area']
         return {
             'performance': curr_covered_area,
-            'normalized_performance': (curr_covered_area - pb[0]) / (pb[1] - pb[0]),
+            'normalized_performance': (curr_covered_area - init_covered_area) / (max_covered_area - init_covered_area),
         }

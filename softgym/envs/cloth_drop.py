@@ -129,9 +129,9 @@ class ClothDropEnv(ClothEnv):
             picker_high = middle_point + [0.5, 0.1, 0.5]
             self.action_tool.update_picker_boundary(picker_low, picker_high)
         self.performance_init = None
-        obs = self._get_obs()
-        self.performance_init = obs['performance']
-        return obs
+        info = self._get_info()
+        self.performance_init = info['performance']
+        return self._get_obs()
 
     def _step(self, action):
         # self.action_tool.visualize_picker_boundary()
