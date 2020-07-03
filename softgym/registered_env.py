@@ -3,6 +3,7 @@ from softgym.envs.pour_water_amount import PourWaterAmountPosControlEnv
 from softgym.envs.pass_water import PassWater1DEnv
 from softgym.envs.pass_water_torus import PassWater1DTorusEnv
 from softgym.envs.rope_flatten import RopeFlattenEnv
+from softgym.envs.rope_flatten_new import RopeFlattenNewEnv
 from softgym.envs.rope_alphabet import RopeAlphaBetEnv
 from softgym.envs.cloth_flatten import ClothFlattenEnv
 from softgym.envs.cloth_fold import ClothFoldEnv
@@ -44,6 +45,37 @@ env_arg_dict = {
                         'horizon': 100,
                         'delta_reward': False,
                         'camera_name': 'default_camera'},
+
+    'RopeClothStraighten': {
+                    'observation_mode': 'cam_rgb',
+                    'action_mode': 'picker',
+                    'num_picker': 2,
+                    'render': True,
+                    'headless': True,
+                    'horizon': 75,
+                    'action_repeat': 8,
+                    'render_mode': 'cloth',
+                    'num_variations': 1000,
+                    'use_cached_states': True,
+                    'delta_reward': False,
+                    'deterministic': False
+    },
+
+    'RopeFlattenNew': {
+                    'observation_mode': 'cam_rgb',
+                    'action_mode': 'picker',
+                    'num_picker': 2,
+                    'render': True,
+                    'headless': True,
+                    'horizon': 75,
+                    'action_repeat': 8,
+                    'render_mode': 'cloth',
+                    'num_variations': 1000,
+                    'use_cached_states': True,
+                    'delta_reward': False,
+                    'deterministic': False
+    },
+
     'RopeFlatten': {'observation_mode': 'cam_rgb',
                     'action_mode': 'picker',
                     'num_picker': 2,
@@ -253,6 +285,7 @@ SOFTGYM_ENVS = OrderedDict({
     'ClothFoldDrop': ClothFoldDropEnv,
     'RigidClothFold': RigidClothFoldEnv,
     'RopeFlatten': RopeFlattenEnv,
+    'RopeFlattenNew': RopeFlattenNewEnv,
     'RopeAlphaBet': RopeAlphaBetEnv,
     'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,
     'PassWaterGoal': PassWater1DGoalConditionedEnv,

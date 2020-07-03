@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import pyflex
-from softgym.envs.rope_flatten import RopeFlattenEnv
+from softgym.envs.rope_flatten_new import RopeFlattenNewEnv
 from softgym.envs.rope_manipulate import RopeManipulateEnv
 import os, argparse, sys
 import softgym
@@ -22,21 +22,21 @@ args = args.parse_args()
 
 def run_heuristic(args):
     mode = args.mode
-    env_name = 'RopeFlatten' if mode != 'visual' else "RopeManipulate"
+    env_name = 'RopeFlattenNew' if mode != 'visual' else "RopeManipulate"
     dic = env_arg_dict[env_name]
     dic['headless'] = args.headless
     dic['observation_mode'] = args.obs_mode
 
-    # if not args.use_cached_states:
-    #     dic['use_cached_states'] = False
-    #     dic['save_cache_states'] = True
-    #     dic['num_variations'] = 10
+    if not args.use_cached_states:
+        dic['use_cached_states'] = False
+        dic['save_cache_states'] = True
+        dic['num_variations'] = 5
 
     action_repeat = 1
     dic['action_repeat'] = action_repeat
     horizon = dic['horizon']
     print("env name {} action repeat {} horizon {}".format(env_name, action_repeat, horizon))
-    env = RopeFlattenEnv(**dic) if mode != 'visual' else RopeManipulateEnv(**dic)
+    env = RopeFlattenNewEnv(**dic) if mode != 'visual' else RopeManipulateEnv(**dic)
 
     N = args.N
     imgs = []
@@ -44,15 +44,25 @@ def run_heuristic(args):
     final_performances = []
     for idx in range(N):
         env.reset()
+        rope_len = env.rope_length
+        print("rope segment: ", env.current_config['segment'])
+        print("theoretic rope length: ", env.current_config['segment'] * env.current_config['radius'] * 0.5)
+        print("rope initial len: ", rope_len)
+        print("current end point distance: ", env._get_endpoint_distance())
+        
+        # exit()
+
 
         # env.action_tool.visualize_picker_boundary()
 
         total_reward = 0
         
         pos = pyflex.get_positions().reshape((-1, 4))
-        corner1 = pos[0][:3]
+        corner1 = pos[4][:3]
         corner2 = pos[-1][:3]
 
+        print("moving up picker!")
+        time.sleep(1)
         steps = 5
         for i in range(steps):
             action = np.zeros((2, 4))
@@ -68,7 +78,10 @@ def run_heuristic(args):
         diff1 = corner1 - picker_pos[0]
         diff2 = corner2 - picker_pos[1]
 
-        steps = 15 
+        print("moving picker to corner!")
+
+        time.sleep(1)
+        steps = 50
         for i in range(steps):
             action = np.zeros((2, 4))
             action[0, :3] = diff1 / steps / env.action_repeat
@@ -81,27 +94,33 @@ def run_heuristic(args):
             imgs.append(env.get_image(720, 720))
 
 
-        picker_pos, _ = env.action_tool._get_pos()
-        target_pos_1 = np.array([0, 0.05, -0.5])
-        target_pos_2 = np.array([0, 0.05, 0.5])
+        target_pos_1 = np.array([rope_len / 2, 0.05, 0])
+        target_pos_2 = np.array([-rope_len / 2, 0.05, 0])
 
         picker_pos, _ = env.action_tool._get_pos()
         diff1 = target_pos_1 - picker_pos[0]
         diff2 = target_pos_2 - picker_pos[1]
 
-        steps = 30
+        print("moving picker to target location!")
+        print("picker pos 0: ", picker_pos[0])
+        print("picker pos 1: ", picker_pos[1])
+        print("difference 1: ", diff1)
+        print("difference 2: ", diff2)
+        time.sleep(1)
+        steps = 50
         for i in range(steps):
             action = np.ones((2, 4))
             action[0, :3] = diff1 / steps / env.action_repeat
             action[1, :3] = diff2 / steps / env.action_repeat
+            # print(action)
             _, reward, _ , info  = env.step(action)
             total_reward += reward
             print(reward, info['performance'])
-            # time.sleep(0.1)
+            time.sleep(0.2)
             # print(env.action_tool._get_pos()[0])
             imgs.append(env.get_image(720, 720))
 
-        steps = 35 
+        steps = 10
         for i in range(steps):
             action = np.zeros((2, 4))
             _, reward, _ , info  = env.step(action)

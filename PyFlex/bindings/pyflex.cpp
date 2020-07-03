@@ -2737,6 +2737,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     g_scenes.push_back(softgym_PlasticDough);
     g_scenes.push_back(new SoftgymRigidCloth("Softgym Rigid Cloth"));
     g_scenes.push_back(new Softgym_RigidFluid("Softgym Rigid Fluid"));
+    g_scenes.push_back(new Softgym_NewRope("Softgym New Rope"));
 
 
 
@@ -3835,25 +3836,37 @@ py::array_t<int> pyflex_render(int capture, char *path) {
         // UpdateScene();
     }
 
+
+    // printf("update scene over!\n");
+
     //-------------------------------------------------------------------
     // Render
 
     double renderBeginTime = GetSeconds();
+    // printf("after get seconds!\n");
 
     if (g_profile && (!g_pause || g_step)) {
         if (g_benchmark) {
             g_numDetailTimers = NvFlexGetDetailTimers(g_solver, &g_detailTimers);
         } else {
+            // printf("memset before!\n");
             memset(&g_timers, 0, sizeof(g_timers));
             NvFlexGetTimers(g_solver, &g_timers);
         }
     }
 
+    // printf("StartFrame before!\n");
     StartFrame(Vec4(g_clearColor, 1.0f));
+    // printf("Render scene before!\n");
 
     // main scene render
     RenderScene();
+
+    // printf("Render scene over!\n");
+
     RenderDebug();
+    // printf("Render debug over!\n");
+
 
     int newScene = DoUI();
 
