@@ -26,7 +26,8 @@ class ClothEnv(FlexEnv):
             self.action_tool = ParallelGripper(gripper_type='sphere')
             self.action_space = self.action_tool.action_space
         elif action_mode == 'picker':
-            self.action_tool = Picker(num_picker, picker_radius=picker_radius, particle_radius=particle_radius)
+            self.action_tool = Picker(num_picker, picker_radius=picker_radius, particle_radius=particle_radius,
+                                      picker_low=(-0.4, 0., -0.4), picker_high=(1.0, 0.5, 0.4))
             self.action_space = self.action_tool.action_space
         elif action_mode == 'pickerpickplace':
             self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self)

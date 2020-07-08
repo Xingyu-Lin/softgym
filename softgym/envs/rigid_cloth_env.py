@@ -58,7 +58,7 @@ class RigidClothEnv(FlexEnv):
 
     def _sample_cloth_size(self):
         """ Size of just one piece"""
-        return np.random.randint(8, 20), np.random.randint(8, 20)
+        return np.random.randint(8, 15), np.random.randint(8, 20)
 
     def _get_flat_pos(self):
         config = self.get_current_config()

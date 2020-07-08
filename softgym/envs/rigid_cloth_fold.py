@@ -87,7 +87,7 @@ class RigidClothFoldEnv(RigidClothEnv):
         config = self.get_current_config()
         num_particles = np.prod(config['ClothSize'], dtype=int)  # Per piece
         self.fold_group_a = np.array(list(range(num_particles)))
-        # self.fold_group_b = np.flip(np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]), axis=0) + num_particles
+        self.fold_group_b = np.flip(np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]), axis=0) + num_particles
         self.fold_group_b = np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]) + num_particles
         self.fold_group_b = self.fold_group_b.flatten()
 
