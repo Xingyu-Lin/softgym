@@ -108,15 +108,16 @@ public:
 		}
 
 
-        g_params.radius = radius ;
+        g_params.radius = radius*1.2f;
 //		g_params.fluidRestDistance = radius;
-		g_params.numIterations = 8;
-		g_params.dynamicFriction = 0.5f;
-		g_params.staticFriction = 0.5f;
+		g_params.numIterations = 30;
+		g_params.dynamicFriction = 0.75f;
+		g_params.particleFriction = 1.0f;
+		g_params.damping = 1.0f;
 		g_params.dissipation = 0.01f;
-		g_params.particleCollisionMargin = g_params.radius*0.05f;
+		g_params.particleCollisionMargin = 0.04;
 
-		g_numSubsteps = 5;
+		g_numSubsteps = 4;
 
         // CLoth env
         g_params.dissipation = 0.0f;
