@@ -89,7 +89,8 @@ class ClothEnv(FlexEnv):
                                   {'pos': np.array([-0.0, 0.82, 0.82]),
                                    'angle': np.array([0, -45 / 180. * np.pi, 0.]),
                                    'width': self.camera_width,
-                                   'height': self.camera_height}}
+                                   'height': self.camera_height}},
+            'flip_mesh': 0
         }
         return config
 
@@ -140,7 +141,8 @@ class ClothEnv(FlexEnv):
         env_idx = 9 if 'env_idx' not in config else config['env_idx']
         mass = config['mass'] if 'mass' in config else 0.5
         scene_params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
-                                 *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass])
+                                 *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass,
+                                 config['flip_mesh']])
 
         if self.version == 2:
             robot_params = [0]

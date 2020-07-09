@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 
+inline void swap(int &a, int &b) {int tmp =a ; a = b; b=tmp;}
+
 class softgym_FlagCloth : public Scene
 {
 public:
@@ -53,8 +55,33 @@ public:
 		float shearStiffness = ptr[7]; //0.9f;
 		int phase = NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseSelfCollideFilter);
 		float mass = float(ptr[17])/(dimx*dimz);	// avg bath towel is 500-700g
+		int flip_mesh = int(ptr[18]); // Flip half
 	    CreateSpringGrid(Vec3(initX, -initY, initZ), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness, shearStiffness, 0.0f, 1.0f/mass);
+	    // Flip the last half of the mesh for the folding task
+	    if (flip_mesh)
+	    {
+	        int size = g_buffers->triangles.size();
+//	        for (int j=int((dimz-1)*3/8); j<int((dimz-1)*5/8); ++j)
+//	            for (int i=int((dimx-1)*1/8); i<int((dimx-1)*3/8); ++i)
+//	            {
+//	                int idx = j *(dimx-1) + i;
+//
+//	                if ((i!=int((dimx-1)*3/8-1)) && (j!=int((dimz-1)*3/8)))
+//	                    swap(g_buffers->triangles[idx* 3 * 2], g_buffers->triangles[idx*3*2+1]);
+//	                if ((i != int((dimx-1)*1/8)) && (j!=int((dimz-1)*5/8)-1))
+//	                    swap(g_buffers->triangles[idx* 3 * 2 +3], g_buffers->triangles[idx*3*2+4]);
+//                }
+	        for (int j=0; j<int((dimz-1)); ++j)
+	            for (int i=int((dimx-1)*1/8); i<int((dimx-1)*1/8)+5; ++i)
+	            {
+	                int idx = j *(dimx-1) + i;
 
+	                if ((i!=int((dimx-1)*1/8+4)))
+	                    swap(g_buffers->triangles[idx* 3 * 2], g_buffers->triangles[idx*3*2+1]);
+	                if ((i != int((dimx-1)*1/8)))
+	                    swap(g_buffers->triangles[idx* 3 * 2 +3], g_buffers->triangles[idx*3*2+4]);
+                }
+        }
 		g_numSubsteps = 4;
 		g_params.numIterations = 30;
 

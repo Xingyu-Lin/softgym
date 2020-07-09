@@ -41,6 +41,16 @@ class ClothFoldEnv(ClothEnv):
     #         'height': self.camera_height
     #     }
 
+    def rotate_particles(self, angle):
+        pos = pyflex.get_positions().reshape(-1, 4)
+        center = np.mean(pos, axis=0)
+        pos -= center
+        new_pos = pos.copy()
+        new_pos[:, 0] = (np.cos(angle) * pos[:, 0] - np.sin(angle) * pos[:, 2])
+        new_pos[:, 2] = (np.sin(angle) * pos[:, 0] + np.cos(angle) * pos[:, 2])
+        new_pos += center
+        pyflex.set_positions(new_pos)
+
     def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
@@ -48,6 +58,7 @@ class ClothFoldEnv(ClothEnv):
         generated_configs, generated_states = [], []
         if config is None:
             default_config = self.get_default_config()
+            default_config['flip_mesh'] = 1
         else:
             default_config = config
         for i in range(num_variations):
@@ -115,6 +126,8 @@ class ClothFoldEnv(ClothEnv):
 
     def _reset(self):
         """ Right now only use one initial state"""
+        angle = (np.random.random()-0.5) * np.pi/2
+        self.rotate_particles(angle)
         if hasattr(self, 'action_tool'):
             x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
             x_off = np.random.random() * 0.1

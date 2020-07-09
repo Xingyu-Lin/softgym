@@ -75,7 +75,7 @@ class ClothDropEnv(ClothEnv):
             curr_pos = pyflex.get_positions().reshape((-1, 4))
 
             target_pos = curr_pos.copy()[:, :3]
-            target_pos[:, 1] = 0.05  # Set the cloth flatten on the ground. Assume that the particle radius is 0.05
+            target_pos[:, 1] = self.cloth_particle_radius  # Set the cloth flatten on the ground. Assume that the particle radius is 0.05
             config['target_pos'] = target_pos
 
             # Get height of the cloth without the gravity. With gravity, it will be longer
