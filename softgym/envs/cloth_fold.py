@@ -129,10 +129,10 @@ class ClothFoldEnv(ClothEnv):
         angle = (np.random.random()-0.5) * np.pi/2
         self.rotate_particles(angle)
         if hasattr(self, 'action_tool'):
-            x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
+            # x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
             x_off = np.random.random() * 0.1
             y_off = np.random.random() * 0.1 - 0.05
-            self.action_tool.reset([x + x_off, 0.1, 0 + y_off])
+            self.action_tool.reset([-0.3 + x_off, 0.1, 0 + y_off])
 
             # picker_low = self.action_tool.picker_low
             # picker_high = self.action_tool.picker_high
