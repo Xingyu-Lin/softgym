@@ -58,7 +58,7 @@ public:
 		    Vec3( ((cloth_dimx-0.5f)*radius + sx) * i, radius, 0.0f), // lower
 		    Vec3(sx, sy, sz), .0f, // scale and rotation
 		    radius,  Vec3(0.0f, 0.0f, 0.0f), // spacing and velocity
-		    invMass, true, rigidStiffness, NvFlexMakePhase(group, eNvFlexPhaseSelfCollide | eNvFlexPhaseSelfCollideFilter), true, 0.0f); //invMass, rigid, rigidStiffness, phase, skin, jitter
+		    invMass, true, rigidStiffness, NvFlexMakePhase(group++, eNvFlexPhaseSelfCollide | eNvFlexPhaseSelfCollideFilter), true, 0.0f); //invMass, rigid, rigidStiffness, phase, skin, jitter
 		}
 
         float stretchStiffness = 0.9f;

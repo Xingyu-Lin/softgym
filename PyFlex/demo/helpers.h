@@ -296,7 +296,6 @@ void CreateParticleShape(const Mesh* srcMesh, Vec3 lower, Vec3 scale, float rota
 		}
 
 	}
-	
 
 	if (skin)
 	{
