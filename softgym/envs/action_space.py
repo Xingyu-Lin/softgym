@@ -195,7 +195,7 @@ class Picker(ActionToolBase):
         for (i, centered_picker_pos) in enumerate(centered_picker_pos):
             shape_state[i] = np.hstack([centered_picker_pos, centered_picker_pos, [1, 0, 0, 0], [1, 0, 0, 0]])
         pyflex.set_shape_states(shape_state)
-        pyflex.step()
+        # pyflex.step() # Remove this as having an additional step here may affect the cloth drop env
         self.particle_inv_mass = pyflex.get_positions().reshape(-1, 4)[:, 3]
 
     @staticmethod

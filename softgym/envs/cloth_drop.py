@@ -38,25 +38,75 @@ class ClothDropEnv(ClothEnv):
             'ClothStiff': [0.9, 1.0, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([-0.421384, 1.73644, 0.482753]),
-                                   'angle': np.array([0.757474, -0.689405, 0]),
+                                  {'pos': np.array([1.07199, 0.94942, 1.15691]),
+                                   'angle': np.array([0.633549, -0.397932, 0]),
                                    'width': self.camera_width,
-                                   'height': self.camera_height}}
-            # 'camera_params': {'default_camera':
-            #                       {'pos': np.array([0, 7, 0.]),
-            #                        'angle': np.array([0., -90. / 180. * np.pi, 0.]),
-            #                        'width': self.camera_width,
-            #                        'height': self.camera_height}}
+                                   'height': self.camera_height}},
+            'flip_mesh': 0
         }
         return config
 
     def _get_drop_point_idx(self):
         return self._get_key_point_idx()[:2]
 
+    def _get_vertical_pos(self, x_low, height_low):
+        config = self.get_current_config()
+        dimx, dimy = config['ClothSize']
+
+        x = np.array([i * self.cloth_particle_radius for i in range(dimx)])
+        x = np.array(list(reversed(x)))
+        y = np.array([i * self.cloth_particle_radius for i in range(dimy)])
+        # x = x - np.mean(x)
+        y = y - np.mean(y)
+        xx, yy = np.meshgrid(x, y)
+
+        curr_pos = np.zeros([dimx * dimy, 3], dtype=np.float32)
+        curr_pos[:, 0] = x_low
+        curr_pos[:, 2] = yy.flatten()
+        curr_pos[:, 1] = xx.flatten() - np.min(xx) + height_low
+        return curr_pos
+
+    def _set_to_vertical(self, x_low, height_low):
+        curr_pos = pyflex.get_positions().reshape((-1, 4))
+        vertical_pos = self._get_vertical_pos(x_low, height_low)
+        curr_pos[:, :3] = vertical_pos
+        max_height = np.max(curr_pos[:, 1])
+        if max_height < 0.5:
+            curr_pos[:, 1] += 0.5 - max_height
+        pyflex.set_positions(curr_pos)
+        pyflex.step()
+
+    def _get_flat_pos(self):
+        config = self.get_current_config()
+        dimx, dimy = config['ClothSize']
+
+        x = np.array([i * self.cloth_particle_radius for i in range(dimx)])
+        y = np.array([i * self.cloth_particle_radius for i in range(dimy)])
+        # x = x - np.mean(x)
+        y = y - np.mean(y)
+        xx, yy = np.meshgrid(x, y)
+
+        curr_pos = np.zeros([dimx * dimy, 3], dtype=np.float32)
+        curr_pos[:, 0] = xx.flatten()
+        curr_pos[:, 2] = yy.flatten()
+        curr_pos[:, 1] = 5e-3  # Set specifally for particle radius of 0.00625
+        return curr_pos
+
+    def _set_to_flat(self):
+        curr_pos = pyflex.get_positions().reshape((-1, 4))
+        flat_pos = self._get_flat_pos()
+        curr_pos[:, :3] = flat_pos
+        pyflex.set_positions(curr_pos)
+        pyflex.step()
+
+    def _sample_cloth_size(self):
+        # return 100, 100
+        return np.random.randint(60, 100), np.random.randint(60, 100)
+
     def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
-        max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.2  # Cloth stable when all particles' vel are smaller than this
+        max_wait_step = 500  # Maximum number of steps waiting for the cloth to stablize
+        stable_vel_threshold = 0.1  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
         default_config = self.get_default_config()
 
@@ -72,41 +122,37 @@ class ClothDropEnv(ClothEnv):
             self.action_tool.reset([0., -1., 0.])
 
             pickpoints = self._get_drop_point_idx()[:2]  # Pick two corners of the cloth and wait until stablize
-            curr_pos = pyflex.get_positions().reshape((-1, 4))
 
-            target_pos = curr_pos.copy()[:, :3]
-            target_pos[:, 1] = self.cloth_particle_radius  # Set the cloth flatten on the ground. Assume that the particle radius is 0.05
-            config['target_pos'] = target_pos
+            config['target_pos'] = self._get_flat_pos()
+            self._set_to_vertical(x_low=-np.random.random() * 0.2, height_low=np.random.random() * 0.1 + 0.1)
+            # self._set_to_flat()
 
             # Get height of the cloth without the gravity. With gravity, it will be longer
             p1, _, p2, _ = self._get_key_point_idx()
-            cloth_height = np.linalg.norm(curr_pos[p1] - curr_pos[p2])
+            # cloth_height = np.linalg.norm(curr_pos[p1] - curr_pos[p2])
 
+            curr_pos = pyflex.get_positions().reshape(-1, 4)
             original_inv_mass = curr_pos[pickpoints, 3]
             curr_pos[pickpoints, 3] = 0  # Set mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
             pickpoint_pos = curr_pos[pickpoints, :3]
-            # pickpoint_pos[:, 1] += 1 + np.random.random(1)
-            pickpoint_pos[:, 1] = cloth_height + np.random.random() / 2.
             pyflex.set_positions(curr_pos.flatten())
+
+            picker_radius = self.action_tool.picker_radius
+            self.action_tool.update_picker_boundary([-0.3, 0.3, -0.5], [0.5, 2, 0.5])
+            self.action_tool.set_picker_pos(picker_pos=pickpoint_pos + np.array([0., picker_radius, 0.]))
 
             # Pick up the cloth and wait to stablize
             for j in range(0, max_wait_step):
                 pyflex.step()
                 curr_pos = pyflex.get_positions().reshape((-1, 4))
                 curr_vel = pyflex.get_velocities().reshape((-1, 3))
-                if np.alltrue(curr_vel < stable_vel_threshold) and j!=0:
+                if np.alltrue(curr_vel < stable_vel_threshold) and j > 300:
                     break
                 curr_pos[pickpoints, :3] = pickpoint_pos
-                curr_vel[pickpoints] = [0., 0., 0.]
                 pyflex.set_positions(curr_pos)
-                pyflex.set_velocities(curr_vel)
-
             curr_pos = pyflex.get_positions().reshape((-1, 4))
             curr_pos[pickpoints, 3] = original_inv_mass
             pyflex.set_positions(curr_pos.flatten())
-            # if self.action_mode == 'sphere' or self.action_mode.startswith('picker'):
-            #     curr_pos = pyflex.get_positions()
-            #     self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
@@ -123,11 +169,11 @@ class ClothDropEnv(ClothEnv):
             particle_pos = pyflex.get_positions().reshape(-1, 4)
             drop_point_pos = particle_pos[self._get_drop_point_idx(), :3]
             middle_point = np.mean(drop_point_pos, axis=0)
-            self.action_tool.reset(middle_point)
-            self.action_tool.set_picker_pos(picker_pos=drop_point_pos)
-            picker_low = middle_point - [0.2, 0.1, 0.5]
-            picker_high = middle_point + [0.5, 0.1, 0.5]
-            self.action_tool.update_picker_boundary(picker_low, picker_high)
+            self.action_tool.reset(middle_point)  # middle point is not really useful
+            picker_radius = self.action_tool.picker_radius
+            self.action_tool.update_picker_boundary([-0.3, 0.5, -0.5], [0.5, 2, 0.5])
+            self.action_tool.set_picker_pos(picker_pos=drop_point_pos + np.array([0., picker_radius, 0.]))
+            # self.action_tool.visualize_picker_boundary()
         self.performance_init = None
         info = self._get_info()
         self.performance_init = info['performance']

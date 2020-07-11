@@ -79,7 +79,7 @@ class RigidClothDropEnv(RigidClothEnv):
         curr_pos = np.zeros([dimx * dimy, 3], dtype=np.float32)
         curr_pos[:, 0] = x_low
         curr_pos[:, 2] = yy.flatten()
-        curr_pos[:, 1] = xx.flatten() - np.min(xx) + height_low  # Collision margin
+        curr_pos[:, 1] = xx.flatten() - np.min(xx) + height_low
         return curr_pos
 
     def _set_to_vertical(self, x_low, height_low):
@@ -129,7 +129,7 @@ class RigidClothDropEnv(RigidClothEnv):
 
             # Pick up the cloth and wait to stablize
             for j in range(0, max_wait_step):
-                pyflex.step(render=True)
+                pyflex.step()
                 curr_vel = pyflex.get_velocities().reshape((-1, 3))
                 if np.alltrue(curr_vel < stable_vel_threshold) and j != 0:
                     break
@@ -158,8 +158,9 @@ class RigidClothDropEnv(RigidClothEnv):
             middle_point = np.mean(drop_point_pos, axis=0)
             self.action_tool.reset(middle_point)  # middle point is not really useful
             picker_radius = self.action_tool.picker_radius
-            self.action_tool.set_picker_pos(picker_pos=drop_point_pos + np.array([0., picker_radius, 0.]))
             self.action_tool.update_picker_boundary([-0.3, 0.5, -0.5], [0.5, 2, 0.5])
+            self.action_tool.set_picker_pos(picker_pos=drop_point_pos + np.array([0., picker_radius, 0.]))
+
             # self.action_tool.visualize_picker_boundary()
         self.performance_init = None
         info = self._get_info()
