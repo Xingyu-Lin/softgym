@@ -50,10 +50,32 @@ public:
 		    radius,  Vec3(0.0f, 0.0f, 0.0f), // spacing and velocity
 		    invMass, true, rigidStiffness, NvFlexMakePhase(group++, 0), true, 0.0f); //invMass, rigid, rigidStiffness, phase, skin, jitter
 		}
+//		cout<<"here"<<g_buffers->triangles.size()<<end;
+//		cout<<g_mesh->m_colours.size()<<end;
+//		g_mesh->m_colours[i] = 1.25f*colors[((unsigned int)(phase))%7];
+
+        if (numPiece ==1)
+        {
+            const Colour colors[7] =
+            {
+                Colour(0.0f, 0.5f, 1.0f),
+                Colour(0.797f, 0.354f, 0.000f),
+                Colour(0.000f, 0.349f, 0.173f),
+                Colour(0.875f, 0.782f, 0.051f),
+                Colour(0.01f, 0.170f, 0.453f),
+                Colour(0.673f, 0.111f, 0.000f),
+                Colour(0.612f, 0.194f, 0.394f)
+            };
+
+            for (int i=0; i<int(g_mesh->GetNumVertices()*0.6); ++i)
+                g_mesh->m_colours[i] = 1.5f*colors[5];
+            for (int i=int(g_mesh->GetNumVertices()*0.6); i<g_mesh->GetNumVertices(); ++i)
+                g_mesh->m_colours[i] = 1.5f*colors[6];
+        }
 
         g_params.radius = radius ;
 		g_params.fluidRestDistance = radius;
-		g_params.numIterations = 8;
+		g_params.numIterations = 15;
 		g_params.dynamicFriction = 0.5f;
 		g_params.staticFriction = 2.f;
 		g_params.dissipation = 0.01f;

@@ -102,7 +102,7 @@ class RigidClothDropEnv(RigidClothEnv):
     def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 500  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.2  # Cloth stable when all particles' vel are smaller than this
+        stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
         default_config = self.get_default_config()
 
@@ -119,8 +119,7 @@ class RigidClothDropEnv(RigidClothEnv):
 
             target_pos = self._get_flat_pos()
             config['target_pos'] = target_pos
-            # self._set_to_vertical(x_low=-np.random.random() * 0.2, height_low=np.random.random() * 0.15 + 0.1)
-            self._set_to_flat()
+            self._set_to_vertical(x_low=-np.random.random() * 0.2, height_low=np.random.random() * 0.15 + 0.1)
 
 
             pickpoints = self._get_drop_point_idx()[:2]  # Pick two corners of the cloth and wait until stablize
@@ -131,13 +130,11 @@ class RigidClothDropEnv(RigidClothEnv):
             # Pick up the cloth and wait to stablize
             for j in range(0, max_wait_step):
                 pyflex.step(render=True)
-
                 curr_vel = pyflex.get_velocities().reshape((-1, 3))
                 if np.alltrue(curr_vel < stable_vel_threshold) and j != 0:
                     break
-
-                curr_vel[pickpoints] = [0., 0., 0.]
                 pyflex.set_positions(curr_pos)
+                pyflex.set_velocities(np.zeros_like(curr_pos))
 
             curr_pos = pyflex.get_positions().reshape((-1, 4))
             curr_pos[pickpoints, 3] = original_inv_mass
