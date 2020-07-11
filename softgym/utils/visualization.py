@@ -44,9 +44,9 @@ def make_grid(array, nrow=1, padding=0, pad_value=120):
     for i in range(nrow):
         row = np.pad(array[idx], [[padding if i == 0 else 0, padding], [padding, padding], [0, 0]], constant_values=pad_value)
         for j in range(1, ncol):
+            idx += 1
             cur_img = np.pad(array[idx], [[padding if i == 0 else 0, padding], [0, padding], [0, 0]], constant_values=pad_value)
             row = np.hstack([row, cur_img])
-            idx += 1
         if i == 0:
             grid_img = row
         else:

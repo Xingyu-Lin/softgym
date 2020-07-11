@@ -27,6 +27,16 @@ class RigidClothFoldEnv(RigidClothEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
+    def rotate_particles(self, angle):
+        pos = pyflex.get_positions().reshape(-1, 4)
+        center = np.mean(pos, axis=0)
+        pos -= center
+        new_pos = pos.copy()
+        new_pos[:, 0] = (np.cos(angle) * pos[:, 0] - np.sin(angle) * pos[:, 2])
+        new_pos[:, 2] = (np.sin(angle) * pos[:, 0] + np.cos(angle) * pos[:, 2])
+        new_pos += center
+        pyflex.set_positions(new_pos)
+
     def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
@@ -71,6 +81,8 @@ class RigidClothFoldEnv(RigidClothEnv):
 
     def _reset(self):
         """ Right now only use one initial state"""
+        angle = (np.random.random() - 0.5) * np.pi / 2
+        self.rotate_particles(angle)
         if hasattr(self, 'action_tool'):
             x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
             x_off = np.random.random() * 0.1
@@ -87,7 +99,8 @@ class RigidClothFoldEnv(RigidClothEnv):
         config = self.get_current_config()
         num_particles = np.prod(config['ClothSize'], dtype=int)  # Per piece
         self.fold_group_a = np.array(list(range(num_particles)))
-        self.fold_group_b = np.flip(np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]), axis=0) + num_particles
+        self.fold_group_b = np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]) + num_particles
+        # self.fold_group_b = np.flip(np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]), axis=0) + num_particles
         self.fold_group_b = np.reshape(self.fold_group_a, [config['ClothSize'][0], config['ClothSize'][1]]) + num_particles
         self.fold_group_b = self.fold_group_b.flatten()
 

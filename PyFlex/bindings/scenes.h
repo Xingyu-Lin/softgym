@@ -63,7 +63,7 @@ public:
 #include "softgym_scenes/softgym_cloth_new.h"
 #include "softgym_scenes/softgym_pourwater.h"
 #include "softgym_scenes/softgym_softbody.h"
-#include "softgym_scenes/softgym_rigid_cloth.h"
+#include "softgym_scenes/softgym_rigid_cloth_detached.h"
 #include "softgym_scenes/softgym_rigid_fluid.h"
 #include "softgym_scenes/softgym_new_rope.h"
 
