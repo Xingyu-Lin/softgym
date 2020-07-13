@@ -132,6 +132,7 @@ class ClothDropEnv(ClothEnv):
             # cloth_height = np.linalg.norm(curr_pos[p1] - curr_pos[p2])
 
             curr_pos = pyflex.get_positions().reshape(-1, 4)
+            curr_pos[0] += np.random.random() * 0.001  # Add small jittering
             original_inv_mass = curr_pos[pickpoints, 3]
             curr_pos[pickpoints, 3] = 0  # Set mass of the pickup point to infinity so that it generates enough force to the rest of the cloth
             pickpoint_pos = curr_pos[pickpoints, :3]
