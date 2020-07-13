@@ -65,6 +65,7 @@ class ClothFlattenEnv(ClothEnv):
             self.set_scene(config)
 
             self.action_tool.reset([0., -1., 0.])
+            pyflex.step()
 
             num_particle = cloth_dimx * cloth_dimy
             pickpoint = random.randint(0, num_particle - 1)
@@ -137,7 +138,7 @@ class ClothFlattenEnv(ClothEnv):
             curr_pos = pyflex.get_positions()
             cx, cy = self._get_center_point(curr_pos)
             self.action_tool.reset([cx, 0.5, cy])
-
+        pyflex.step()
         self.init_covered_area = None
         info = self._get_info()
         self.init_covered_area = info['performance']
