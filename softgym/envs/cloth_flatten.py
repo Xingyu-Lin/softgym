@@ -137,7 +137,7 @@ class ClothFlattenEnv(ClothEnv):
         if hasattr(self, 'action_tool'):
             curr_pos = pyflex.get_positions()
             cx, cy = self._get_center_point(curr_pos)
-            self.action_tool.reset([cx, 0.5, cy])
+            self.action_tool.reset([cx, 0.2, cy])
         pyflex.step()
         self.init_covered_area = None
         info = self._get_info()
