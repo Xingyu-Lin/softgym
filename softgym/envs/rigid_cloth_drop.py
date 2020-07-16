@@ -34,8 +34,8 @@ class RigidClothDropEnv(RigidClothEnv):
         """ Set the default config of the environment and load it to self.config """
         config = {
             'ClothSize': [20, 20],  # Size of one piece
-            'inv_mass': 0.001,
-            'rigid_stiffness': 1,
+            'inv_mass': 0.0001,
+            'rigid_stiffness': 1.5,
             'num_pieces': 1,
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
@@ -58,11 +58,9 @@ class RigidClothDropEnv(RigidClothEnv):
         dimx, dimy = config['ClothSize']
         x = np.array([i * self.cloth_particle_radius for i in range(dimx)])
         y = np.array([i * self.cloth_particle_radius for i in range(dimy)])
-        x += 0.1
         # x = x - np.mean(x)
         y = y - np.mean(y)
         yy, xx = np.meshgrid(y, x)
-        xx = np.flip(xx, axis=0)
         curr_pos = np.zeros([dimx * dimy, 3], dtype=np.float32)
         curr_pos[:, 0] = xx.flatten()
         curr_pos[:, 2] = yy.flatten()
@@ -121,13 +119,12 @@ class RigidClothDropEnv(RigidClothEnv):
 
             target_pos = self._get_flat_pos()
             config['target_pos'] = target_pos
-            self._set_to_vertical(x_low=-np.random.random() * 0.2, height_low=np.random.random() * 0.1 + 0.15)
+            self._set_to_vertical(x_low=np.random.random() * 0.2 - 0.1, height_low=np.random.random() * 0.1 + 0.1)
             # self._set_to_flat()
             # colors = self.get_colors()
             # colors[:10] = 2
             # self.set_colors(colors)
             # while (1):
-            #     print('here')
             #     pyflex.step(render=True)
 
             pickpoints = self._get_drop_point_idx()[:2]  # Pick two corners of the cloth and wait until stablize
@@ -166,7 +163,7 @@ class RigidClothDropEnv(RigidClothEnv):
             middle_point = np.mean(drop_point_pos, axis=0)
             self.action_tool.reset(middle_point)  # middle point is not really useful
             picker_radius = self.action_tool.picker_radius
-            self.action_tool.update_picker_boundary([-0.3, 0.5, -0.5], [0.5, 2, 0.5])
+            self.action_tool.update_picker_boundary([-0.3, 0.05, -0.5], [0.5, 2, 0.5])
             self.action_tool.set_picker_pos(picker_pos=drop_point_pos + np.array([0., picker_radius, 0.]))
 
             # self.action_tool.visualize_picker_boundary()

@@ -82,12 +82,9 @@ class ClothDropEnv(ClothEnv):
 
         x = np.array([i * self.cloth_particle_radius for i in range(dimx)])
         y = np.array([i * self.cloth_particle_radius for i in range(dimy)])
-        x += 0.1
         # x = x - np.mean(x)
         y = y - np.mean(y)
         xx, yy = np.meshgrid(x, y)
-        xx = np.flip(xx, axis=1)
-        yy = np.flip(yy, axis=1)
         curr_pos = np.zeros([dimx * dimy, 3], dtype=np.float32)
         curr_pos[:, 0] = xx.flatten()
         curr_pos[:, 2] = yy.flatten()
@@ -102,7 +99,6 @@ class ClothDropEnv(ClothEnv):
         pyflex.step()
 
     def _sample_cloth_size(self):
-        # return 100, 100
         return np.random.randint(60, 100), np.random.randint(60, 100)
 
     def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
@@ -126,7 +122,7 @@ class ClothDropEnv(ClothEnv):
             pickpoints = self._get_drop_point_idx()[:2]  # Pick two corners of the cloth and wait until stablize
 
             config['target_pos'] = self._get_flat_pos()
-            self._set_to_vertical(x_low=-np.random.random() * 0.2, height_low=np.random.random() * 0.1 + 0.1)
+            self._set_to_vertical(x_low=np.random.random() * 0.2 - 0.1, height_low=np.random.random() * 0.1 + 0.1)
             # self._set_to_flat()
 
             # colors = self.get_colors()
@@ -135,6 +131,10 @@ class ClothDropEnv(ClothEnv):
             # while (1):
             #     print('here')
             #     pyflex.step(render=True)
+            # while (1):
+            #     pyflex.step(render=True)
+            #     while (1):
+            #         pass
 
             # Get height of the cloth without the gravity. With gravity, it will be longer
             p1, _, p2, _ = self._get_key_point_idx()
@@ -148,7 +148,7 @@ class ClothDropEnv(ClothEnv):
             pyflex.set_positions(curr_pos.flatten())
 
             picker_radius = self.action_tool.picker_radius
-            self.action_tool.update_picker_boundary([-0.3, 0.3, -0.5], [0.5, 2, 0.5])
+            self.action_tool.update_picker_boundary([-0.3, 0.05, -0.5], [0.5, 2, 0.5])
             self.action_tool.set_picker_pos(picker_pos=pickpoint_pos + np.array([0., picker_radius, 0.]))
 
             # Pick up the cloth and wait to stablize
