@@ -82,10 +82,12 @@ class ClothDropEnv(ClothEnv):
 
         x = np.array([i * self.cloth_particle_radius for i in range(dimx)])
         y = np.array([i * self.cloth_particle_radius for i in range(dimy)])
+        x += 0.1
         # x = x - np.mean(x)
         y = y - np.mean(y)
         xx, yy = np.meshgrid(x, y)
-
+        xx = np.flip(xx, axis=1)
+        yy = np.flip(yy, axis=1)
         curr_pos = np.zeros([dimx * dimy, 3], dtype=np.float32)
         curr_pos[:, 0] = xx.flatten()
         curr_pos[:, 2] = yy.flatten()
@@ -126,6 +128,13 @@ class ClothDropEnv(ClothEnv):
             config['target_pos'] = self._get_flat_pos()
             self._set_to_vertical(x_low=-np.random.random() * 0.2, height_low=np.random.random() * 0.1 + 0.1)
             # self._set_to_flat()
+
+            # colors = self.get_colors()
+            # colors[:10] = 2
+            # self.set_colors(colors)
+            # while (1):
+            #     print('here')
+            #     pyflex.step(render=True)
 
             # Get height of the cloth without the gravity. With gravity, it will be longer
             p1, _, p2, _ = self._get_key_point_idx()

@@ -58,9 +58,11 @@ class RigidClothDropEnv(RigidClothEnv):
         dimx, dimy = config['ClothSize']
         x = np.array([i * self.cloth_particle_radius for i in range(dimx)])
         y = np.array([i * self.cloth_particle_radius for i in range(dimy)])
+        x += 0.1
         # x = x - np.mean(x)
         y = y - np.mean(y)
         yy, xx = np.meshgrid(y, x)
+        xx = np.flip(xx, axis=0)
         curr_pos = np.zeros([dimx * dimy, 3], dtype=np.float32)
         curr_pos[:, 0] = xx.flatten()
         curr_pos[:, 2] = yy.flatten()
@@ -119,8 +121,14 @@ class RigidClothDropEnv(RigidClothEnv):
 
             target_pos = self._get_flat_pos()
             config['target_pos'] = target_pos
-            self._set_to_vertical(x_low=-np.random.random() * 0.2, height_low=np.random.random() * 0.15 + 0.1)
-
+            self._set_to_vertical(x_low=-np.random.random() * 0.2, height_low=np.random.random() * 0.1 + 0.15)
+            # self._set_to_flat()
+            # colors = self.get_colors()
+            # colors[:10] = 2
+            # self.set_colors(colors)
+            # while (1):
+            #     print('here')
+            #     pyflex.step(render=True)
 
             pickpoints = self._get_drop_point_idx()[:2]  # Pick two corners of the cloth and wait until stablize
             curr_pos = pyflex.get_positions().reshape((-1, 4))
