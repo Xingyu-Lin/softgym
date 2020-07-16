@@ -14,6 +14,7 @@ class NormalizedEnv(object):
       obs_alpha=0.001,
       reward_alpha=0.001,
       clip=True,
+      clip_obs=None
     ):
         self._wrapped_env = env
         self._scale_reward = scale_reward
@@ -26,6 +27,7 @@ class NormalizedEnv(object):
         self._reward_mean = 0.
         self._reward_var = 1.
         self._clip = clip
+        self._clip_obs = clip_obs
 
     def _update_obs_estimate(self, obs):
         flat_obs = self._wrapped_env.observation_space.flatten(obs)
@@ -47,6 +49,8 @@ class NormalizedEnv(object):
 
     def reset(self, **kwargs):
         ret = self._wrapped_env.reset(**kwargs)
+        if self._clip_obs is not None:
+            ret = np.clip(ret, self._clip_obs[0], self._clip_obs[1])
         if self._normalize_obs:
             return self._apply_normalize_obs(ret)
         else:
@@ -72,6 +76,10 @@ class NormalizedEnv(object):
             scaled_action = action
         wrapped_step = self._wrapped_env.step(scaled_action, **kwargs)
         next_obs, reward, done, info = wrapped_step
+        if self._clip_obs is not None:
+            # print(np.max(next_obs), np.min(next_obs))
+            next_obs = np.clip(next_obs, self._clip_obs[0], self._clip_obs[1])
+
         if self._normalize_obs:
             next_obs = self._apply_normalize_obs(next_obs)
         if self._normalize_reward:
