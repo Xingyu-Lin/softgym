@@ -165,8 +165,8 @@ class RigidClothFoldEnv(RigidClothEnv):
         pos_group_a = pos[self.fold_group_a]
         pos_group_b = pos[self.fold_group_b]
         pos_group_b_init = self.init_pos[self.fold_group_b]
-        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + \
-                    1.2 * np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
+        curr_dist = np.minimum(np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)), 0.5) + \
+                    1.2 * np.minimum(np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1)), 0.5)
         if self.delta_reward:
             reward = self.prev_dist - curr_dist
             if set_prev_reward:

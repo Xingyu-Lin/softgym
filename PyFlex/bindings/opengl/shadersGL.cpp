@@ -3301,7 +3301,7 @@ void InitRenderHeadless(const RenderInitOptions& options, int width, int height)
     {
         int egl_index = atoi(s);
         
-        static const int MAX_DEVICES = 8;
+        static const int MAX_DEVICES = 10;
         EGLDeviceEXT eglDevs[MAX_DEVICES];
         EGLint numDevices;
 
