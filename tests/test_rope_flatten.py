@@ -17,7 +17,7 @@ args.add_argument("--mode", type=str, default='debug')
 args.add_argument("--headless", type=int, default=0)
 args.add_argument("--obs_mode", type=str, default='cam_rgb')
 args.add_argument("--use_cached_states", type=str, default=False)
-args.add_argument("--N", type=str, default=1)
+args.add_argument("--N", type=int, default=1)
 args = args.parse_args()
 
 def run_heuristic(args):
@@ -27,10 +27,10 @@ def run_heuristic(args):
     dic['headless'] = args.headless
     dic['observation_mode'] = args.obs_mode
 
-    if not args.use_cached_states:
-        dic['use_cached_states'] = False
-        dic['save_cache_states'] = True
-        dic['num_variations'] = 5
+    # if not args.use_cached_states:
+    #     dic['use_cached_states'] = False
+    #     dic['save_cache_states'] = True
+    #     dic['num_variations'] = 5
 
     action_repeat = 1
     dic['action_repeat'] = action_repeat
@@ -50,8 +50,7 @@ def run_heuristic(args):
         print("rope initial len: ", rope_len)
         print("current end point distance: ", env._get_endpoint_distance())
         
-        # exit()
-
+        time.sleep(2)
 
         # env.action_tool.visualize_picker_boundary()
 
@@ -71,7 +70,8 @@ def run_heuristic(args):
             total_reward += reward
             # print(env.action_tool._get_pos()[0])
             # time.sleep(0.1)
-            print(reward, info['performance'])
+            print("obs: ", obs)
+            # print(reward, info['performance'])
             imgs.append(env.get_image(720, 720))
 
         picker_pos, _ = env.action_tool._get_pos()
@@ -86,11 +86,13 @@ def run_heuristic(args):
             action = np.zeros((2, 4))
             action[0, :3] = diff1 / steps / env.action_repeat
             action[1, :3] = diff2 / steps / env.action_repeat
-            _, reward, _, info = env.step(action)
+            obs, reward, _, info = env.step(action)
             total_reward += reward
+            print("obs:", obs)
+
             # print(env.action_tool._get_pos()[0])
             # time.sleep(0.1)
-            print(reward, info['performance'])
+            # print(reward, info['performance'])
             imgs.append(env.get_image(720, 720))
 
 
@@ -101,11 +103,11 @@ def run_heuristic(args):
         diff1 = target_pos_1 - picker_pos[0]
         diff2 = target_pos_2 - picker_pos[1]
 
-        print("moving picker to target location!")
-        print("picker pos 0: ", picker_pos[0])
-        print("picker pos 1: ", picker_pos[1])
-        print("difference 1: ", diff1)
-        print("difference 2: ", diff2)
+        # print("moving picker to target location!")
+        # print("picker pos 0: ", picker_pos[0])
+        # print("picker pos 1: ", picker_pos[1])
+        # print("difference 1: ", diff1)
+        # print("difference 2: ", diff2)
         time.sleep(1)
         steps = 50
         for i in range(steps):
@@ -113,9 +115,10 @@ def run_heuristic(args):
             action[0, :3] = diff1 / steps / env.action_repeat
             action[1, :3] = diff2 / steps / env.action_repeat
             # print(action)
-            _, reward, _ , info  = env.step(action)
+            obs, reward, _ , info  = env.step(action)
+            print("obs: ", obs)
             total_reward += reward
-            print(reward, info['performance'])
+            # print(reward, info['performance'])
             time.sleep(0.2)
             # print(env.action_tool._get_pos()[0])
             imgs.append(env.get_image(720, 720))
@@ -128,7 +131,7 @@ def run_heuristic(args):
             if i == steps - 1:
                 final_performances.append(reward)
             time.sleep(0.1)
-            print(reward, info['performance'])
+            # print(reward, info['performance'])
             imgs.append(env.get_image(720, 720))
 
 
