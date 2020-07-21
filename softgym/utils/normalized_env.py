@@ -77,7 +77,6 @@ class NormalizedEnv(object):
         wrapped_step = self._wrapped_env.step(scaled_action, **kwargs)
         next_obs, reward, done, info = wrapped_step
         if self._clip_obs is not None:
-            # print(np.max(next_obs), np.min(next_obs))
             next_obs = np.clip(next_obs, self._clip_obs[0], self._clip_obs[1])
 
         if self._normalize_obs:
