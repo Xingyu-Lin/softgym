@@ -80,6 +80,7 @@ public:
 		g_params.staticFriction = 2.f;
 		g_params.dissipation = 0.01f;
 		g_params.particleCollisionMargin = g_params.radius*0.05f;
+		g_params.particleFriction = 100000.;
 
 
 		g_numSubsteps = 5;
