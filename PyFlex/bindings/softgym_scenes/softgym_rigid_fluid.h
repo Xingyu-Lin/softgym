@@ -45,19 +45,22 @@ public:
 		float lowerx = ptr[4];
 		float torus_height = ptr[5];
 		float lowerz = ptr[6];
-	    cam_x = ptr[7];
-		cam_y = ptr[8];
-		cam_z = ptr[9];
-		cam_angle_x = ptr[10];
-		cam_angle_y = ptr[11];
-		cam_angle_z = ptr[12];
-		cam_width = int(ptr[13]);
-		cam_height = int(ptr[14]);
-		int render = int(ptr[15]);
+		float static_friction = float(ptr[7]);
+		float dynamic_friction = float(ptr[8]);
+
+	    cam_x = ptr[9];
+		cam_y = ptr[10];
+		cam_z = ptr[11];
+		cam_angle_x = ptr[12];
+		cam_angle_y = ptr[13];
+		cam_angle_z = ptr[14];
+		cam_width = int(ptr[15]);
+		cam_height = int(ptr[16]);
+		int render = int(ptr[17]);
 
 
-		printf("num: %d  size: %f\n", num, size);
-		printf("radius: %f \n", radius);
+		// printf("num: %d  size: %f\n", num, size);
+		// printf("radius: %f \n", radius);
 
 		/*
 		The main particle radius is set via NvFlexParams::radius, which is the “interaction radius”.
@@ -69,8 +72,8 @@ public:
 			// CreateParticleShape(GetFilePathByPlatform("../../data/torus.obj").c_str(), Vec3(4.5f, 2.0f + radius*2.0f*i, 1.0f), size, 0.0f, radius*0.5f, Vec3(0.0f, 0.0f, 0.0f), 0.125f, true, 1.0f, NvFlexMakePhase(group++, 0), true, 0.0f);
 			// void CreateParticleShape(const Mesh* srcMesh, Vec3 lower, Vec3 scale, float rotation, float spacing, Vec3 velocity, float invMass, bool rigid, float rigidStiffness, int phase, bool skin, 
 			// 		float jitter=0.005f, Vec3 skinOffset=0.0f, float skinExpand=0.0f, Vec4 color=Vec4(0.0f), float springStiffness=0.0f)
-			CreateParticleShape(make_path(torus_path, "/data/torus.obj"), Vec3(lowerx + rand_float(-torus_height / 2, torus_height / 2.), 
-				torus_height*i, lowerz + rand_float(-torus_height / 2, torus_height / 2.)), size, 0.0f, radius*0.5f, Vec3(0.0f, 0.0f, 0.0f), 0.125f, true, 1.0f, NvFlexMakePhase(group++, 0), true, 0.0f);
+			CreateParticleShape(make_path(torus_path, "/data/torus.obj"), Vec3(lowerx + (i % 3) * torus_height / 3., 
+				torus_height*(i+1), lowerz + (i % 3) * torus_height / 3.), size, 0.0f, radius*0.5f, Vec3(0.0f, 0.0f, 0.0f), 0.125f, true, 1.0f, NvFlexMakePhase(group++, 0), true, 0.0f);
 
 		g_numSolidParticles = g_buffers->positions.size();	
 
@@ -95,8 +98,11 @@ public:
 
 		g_params.radius = radius;
 		g_params.numIterations = 4;
-		g_params.fluidRestDistance = restDistance;
-		// g_params.collisionDistance = 0.03f;
+		g_params.staticFriction = static_friction;
+		g_params.dynamicFriction = dynamic_friction;
+		// g_params.fluidRestDistance = restDistance;
+		// g_params.collisionDistance = restDistance;
+		// g_params.shapeCollisionMargin = radius / 10.;
 
 		g_maxDiffuseParticles = 0;
 		g_diffuseScale = 0.5f;
