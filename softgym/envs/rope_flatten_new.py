@@ -45,7 +45,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
             config['camera_params'] = deepcopy(self.camera_params)
             self.action_tool.reset([0., -1., 0.])
 
-            self._random_pick_and_place(pick_num=2, pick_scale=0.005)
+            self._random_pick_and_place(pick_num=4, pick_scale=0.005)
             self._center_object()
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
@@ -76,7 +76,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
         if hasattr(self, 'action_tool'):
             curr_pos = pyflex.get_positions().reshape([-1, 4])[4:] # a hack to remove the first 4 cloth particles
             cx, cy = self._get_center_point(curr_pos)
-            self.action_tool.reset([cx, 0.2, cy])
+            self.action_tool.reset([cx, 0.1, cy])
             # self.action_tool.init_particle_pos = rope_init_pos
             # self.action_tool.init_particle_pos = None
 

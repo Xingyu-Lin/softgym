@@ -31,9 +31,9 @@ class PassWater1DEnv(FluidEnv):
         self.wall_num = 5  # number of glass walls. floor/left/right/front/back
         self.distance_coef = 1.
         self.water_penalty_coef = 10.
-        self.terminal_x = 1.
+        self.terminal_x = 1.2
         self.min_x = -0.25
-        self.max_x = 1.25
+        self.max_x = 1.4
         self.prev_reward = 0
 
         self.reward_min = self.distance_coef * min(self.min_x - self.terminal_x, self.terminal_x - self.max_x) - \
@@ -62,18 +62,20 @@ class PassWater1DEnv(FluidEnv):
                 obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
-            obs_dim += 5  # Pos (x) and shape (w, h, l) reset of the cup, as well as the water height.
+            obs_dim += 7  # Pos (x) and shape (w, h, l) reset of the cup, as well as the water height.
+            # also: frac of water in, frac of water out
             self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
 
         default_config = self.get_default_config()
-        border = default_config['glass']['border']
+        # raidus = default_config['fluid']['radius'] * default_config['fluid']['rest_dis_coef']
+        border = default_config['glass']['border'] #* default_config['fluid']['rest_dis_coef']
         if action_mode == 'direct':
             self.action_direct_dim = 1
-            action_low = np.array([-border])
-            action_high = np.array([border])
+            action_low = np.array([-border * 0.5])
+            action_high = np.array([border * 0.5])
             self.action_space = Box(action_low, action_high, dtype=np.float32)
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
@@ -86,7 +88,7 @@ class PassWater1DEnv(FluidEnv):
                 'radius': 0.03, # if self.action_mode in ['sawyer', 'franka'] else 0.1,
                 'rest_dis_coef': 0.5,
                 'cohesion': 0.02,
-                'viscosity': 0.2,
+                'viscosity': 0.1,
                 'surfaceTension': 0.,
                 'adhesion': 0.0,
                 'vorticityConfinement': 40,
@@ -96,7 +98,7 @@ class PassWater1DEnv(FluidEnv):
                 'dim_z': 8,
             },
             'glass': {
-                'border': 0.005, # if self.action_mode in ['sawyer', 'franka'] else 0.025, 
+                'border': 0.022, # if self.action_mode in ['sawyer', 'franka'] else 0.025, 
                 'height': 0.6, # this won't be used, will be overwritten by generating variation
             },
             'camera_name': 'default_camera',
@@ -139,10 +141,11 @@ class PassWater1DEnv(FluidEnv):
 
         else:
             for idx in range(num_variations):
+                print("pass water variations {}".format(idx))
                 dim_x = random.choice(dim_xs)
                 dim_z = random.choice(dim_zs)
                 m = min(dim_x, dim_z)
-                p = np.random.rand()
+                p = np.random.uniform()
                 water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef']
                 # if p < 1. / 3.:  # small water volume
                 #     print("small volume water")
@@ -157,14 +160,14 @@ class PassWater1DEnv(FluidEnv):
                     v = dim_x * dim_y * dim_z
                     h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 2
                     print("h {}".format(h))
-                    glass_height = h + (np.random.rand() - 0.5) * 0.001
+                    glass_height = h #+ (np.random.rand() - 0.5) * 0.001
                 else:
                     print("large volume water")
                     dim_y = 4 * m
                     v = dim_x * dim_y * dim_z
                     h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 3
                     print("h {}".format(h))
-                    glass_height = h  +  (m + np.random.rand()) * 0.002
+                    glass_height = h  +  m * 0.0015
 
                 print("dim_x {} dim_y {} dim_z {} glass_height {}".format(dim_x, dim_y, dim_z, glass_height))
                 config_variations[idx]['fluid']['dim_x'] = dim_x
@@ -202,6 +205,9 @@ class PassWater1DEnv(FluidEnv):
         return the initial observation.
         '''
         self.inner_step = 0
+        self.performance_init = None
+        info = self._get_info()
+        self.performance_init = info['performance']
         return self._get_obs()
 
     def get_state(self):
@@ -235,12 +241,20 @@ class PassWater1DEnv(FluidEnv):
         '''
         # if self.action_mode in ['sawyer', 'franka']:
         self.camera_params = {
-            'default_camera': {'pos': np.array([0.5, 1.4, 0.85]),
-                            'angle': np.array([0 * np.pi, -60 / 180. * np.pi, 0]),
+            'default_camera': {'pos': np.array([0.64, 1.8, 0.85]),
+                            'angle': np.array([0 * np.pi, -65 / 180. * np.pi, 0]),
                             'width': self.camera_width,
                             'height': self.camera_height},
             'cam_2d': {'pos': np.array([0.5, .7, 4.]),
                     'angle': np.array([0, 0, 0.]),
+                    'width': self.camera_width,
+                    'height': self.camera_height},
+            'left_side': {'pos': np.array([-1, .2, 0]),
+                    'angle': np.array([-0.5 * np.pi, 0, 0]),
+                    'width': self.camera_width,
+                    'height': self.camera_height},
+            'right_side': {'pos': np.array([2, .2, 0]),
+                    'angle': np.array([0.5 * np.pi, 0, 0]),
                     'width': self.camera_width,
                     'height': self.camera_height}
         }
@@ -329,6 +343,7 @@ class PassWater1DEnv(FluidEnv):
             print("stablize water!")
             for _ in range(100):
                 pyflex.step()
+                # pyflex.render()
                 # time.sleep(0.1)
 
             state_dic = self.get_state()
@@ -355,6 +370,7 @@ class PassWater1DEnv(FluidEnv):
                 pyflex.set_positions(water_state)
                 for _ in range(100):
                     pyflex.step()
+                    # pyflex.render()
                     # time.sleep(0.1)
 
                 state_dic = self.get_state()
@@ -365,6 +381,7 @@ class PassWater1DEnv(FluidEnv):
             
             for _ in range(30):
                 pyflex.step()
+                # pyflex.render()
 
         else:  # set to passed-in cached init states
             self.set_state(states)
@@ -383,7 +400,15 @@ class PassWater1DEnv(FluidEnv):
                 pos[:len(particle_pos)] = particle_pos
             else:
                 pos = np.empty(0, dtype=np.float)
-            cup_state = np.array([self.glass_x, self.glass_dis_x, self.glass_dis_z, self.height, self._get_current_water_height()])
+
+            water_state = pyflex.get_positions().reshape([-1, 4])
+            water_num = len(water_state)
+            in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+            out_glass = water_num - in_glass
+            in_glass = float(in_glass) / water_num
+            out_glass = float(out_glass) / water_num
+            cup_state = np.array([self.glass_x, self.glass_dis_x, self.glass_dis_z, self.height, 
+                self._get_current_water_height(), in_glass, out_glass])
             return np.hstack([pos, cup_state]).flatten()
         else:
             raise NotImplementedError
@@ -421,9 +446,13 @@ class PassWater1DEnv(FluidEnv):
         out_glass = water_num - in_glass
         reward = -self.water_penalty_coef * (float(out_glass) / water_num)
         reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
-        normalized_reward = (reward - self.reward_min) / self.reward_range
-        return {'performance': reward,
-                'normalized_performance': normalized_reward,
+
+        performance = reward
+        performance_init =  performance if self.performance_init is None else self.performance_init  # Use the original performance
+        normalized_performance = (performance - performance_init) / (self.reward_max - performance_init)
+
+        return {'performance': performance,
+                'normalized_performance': normalized_performance,
                 'distance_to_target': np.abs((self.terminal_x - self.glass_x)),
                 'out_water': (out_glass / water_num)}
 

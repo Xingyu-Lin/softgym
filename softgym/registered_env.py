@@ -205,6 +205,16 @@ env_arg_dict = {
                            delta_reward=False,
                            deterministic=False,
                            num_variations=1000),
+    'TransportTorus': dict(observation_mode='cam_rgb',
+                           action_mode='direct',
+                           render=True,
+                           headless=True,
+                           horizon=75,
+                           action_repeat=8,
+                           render_mode='torus',
+                           delta_reward=False,
+                           deterministic=False,
+                           num_variations=1000),
 
     'PassWaterGoal': {
         "observation_mode": 'point_cloud',  # will be later wrapped by ImageEnv

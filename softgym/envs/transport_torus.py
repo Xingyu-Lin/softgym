@@ -14,11 +14,13 @@ import yaml, pickle
 import os.path as osp
 
 
-class PassWater1DTorusEnv(FluidTorusEnv):
-    def __init__(self, observation_mode, action_mode, config=None, cached_states_path='pass_water_torus_init_states.pkl', **kwargs):
+class TransportTorus1D(FluidTorusEnv):
+    def __init__(self, observation_mode, action_mode, config=None, cached_states_path='transport_torus_init_states.pkl', **kwargs):
         '''
-        This class implements a pouring water task.
-        
+        This class implements a transport torus task.
+        The torus is put on a box. You need to move the box to a target location.
+        This is a 1D task.
+
         observation_mode: "cam_rgb" or "full_state"
         action_mode: "direct"
         
@@ -28,7 +30,7 @@ class PassWater1DTorusEnv(FluidTorusEnv):
 
         self.observation_mode = observation_mode
         self.action_mode = action_mode
-        self.wall_num = 5  # number of glass walls. floor/left/right/front/back
+        self.wall_num = 5  # number of box walls. floor/left/right/front/back
         self.distance_coef = 1.
         self.torus_penalty_coef = 10.
         self.terminal_x = 1.2
@@ -61,20 +63,18 @@ class PassWater1DTorusEnv(FluidTorusEnv):
                 max_particle_num = 13 * 13 * 13 * 4
                 obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
-            # z and theta of the second cup (poured_glass) does not change and thus are omitted.
-            obs_dim += 7  # Pos (x) and shape (w, h, l) reset of the cup, as well as inside/outside water fraction.
+            # z and theta of the second cup (poured_box) does not change and thus are omitted.
+            obs_dim += 7  # Pos (x) and shape (w, h, l) reset of the cup, torus x, torus y, if on box.
             self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
 
         default_config = self.get_default_config()
-        # raidus = default_config['torus']['radius'] * default_config['torus']['rest_dis_coef']
-        border = default_config['glass']['border'] #* default_config['fluid']['rest_dis_coef']
         if action_mode == 'direct':
             self.action_direct_dim = 1
-            action_low = np.array([-border * 0.5])
-            action_high = np.array([border * 0.5])
+            action_low = np.array([-0.011])
+            action_high = np.array([0.011])
             self.action_space = Box(action_low, action_high, dtype=np.float32)
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
@@ -89,10 +89,13 @@ class PassWater1DTorusEnv(FluidTorusEnv):
                 'num': 5,
                 'size': 0.2,
             },
-            'glass': {
-                'border': 0.022, # if self.action_mode in ['sawyer', 'franka'] else 0.025, 
-                'height': 0.6, # this won't be used, will be overwritten by generating variation
+            'box': { # all these will be overwritten by generate_env_variations
+                'box_dis_x': 0.6,
+                'box_dis_z': 0.6,
+                'height': 0.6, 
             },
+            'static_friction': 0.5,
+            'dynamic_friction': 0.5,
             'camera_name': 'default_camera',
         }
         return config
@@ -103,8 +106,10 @@ class PassWater1DTorusEnv(FluidTorusEnv):
         """
         num_low = 1
         num_high = 2
-        size_low = 0.08
-        size_high = 0.24
+        size_low = 0.12
+        size_high = 0.28
+        box_height_low = 0.1
+        box_height_high = 0.3
         self.cached_configs = []
         self.cached_init_states = []
 
@@ -121,21 +126,22 @@ class PassWater1DTorusEnv(FluidTorusEnv):
             height = num * estimated_particle_num_height * particle_radius + num * size * 4 * particle_radius
             
             estimated_particle_num_width = int(size / 0.05 * 3 + 2)
-            glass_dis_x = estimated_particle_num_width * particle_radius + particle_radius  # glass floor length
-            glass_dis_z = estimated_particle_num_width * particle_radius + particle_radius  # glass width
+            box_dis_x = estimated_particle_num_width * particle_radius + particle_radius  # box floor length
+            box_dis_z = estimated_particle_num_width * particle_radius + particle_radius  # box width
 
-            config_variations[idx]['torus']['height'] = estimated_particle_num_height * particle_radius
-            config_variations[idx]['torus']['lower_x'] = - glass_dis_x / 2.
-            config_variations[idx]['torus']['lower_z'] = - glass_dis_z / 2.
+            config_variations[idx]['torus']['lower_x'] = - box_dis_x / 2.
+            config_variations[idx]['torus']['lower_z'] = - box_dis_z / 2.
 
             print("num {} size {}".format(num, config['torus']['size']))
             config_variations[idx]['torus']['num'] = num
             config_variations[idx]['torus']['size'] = size
 
-            config_variations[idx]['glass']['height'] = height
-            config_variations[idx]['glass']['glass_dis_x'] = glass_dis_x
-            config_variations[idx]['glass']['glass_dis_z'] = glass_dis_z
-            print("glass x, y, z: ", glass_dis_x, height, glass_dis_z)
+            config_variations[idx]['box']['height'] = np.random.uniform(box_height_low, box_height_high)
+            config_variations[idx]['torus']['height'] = estimated_particle_num_height * particle_radius + \
+                config_variations[idx]['box']['height']
+            config_variations[idx]['box']['box_dis_x'] = box_dis_x
+            config_variations[idx]['box']['box_dis_z'] = box_dis_z
+            print("box x, y, z: ", box_dis_x, height, box_dis_z)
 
             if self.set_scene(config_variations[idx]):
                 init_state = copy.deepcopy(self.get_state())
@@ -180,18 +186,18 @@ class PassWater1DTorusEnv(FluidTorusEnv):
         particle_vel = pyflex.get_velocities()
         shape_position = pyflex.get_shape_states()
         return {'particle_pos': particle_pos, 'particle_vel': particle_vel, 'shape_pos': shape_position,
-                'glass_x': self.glass_x, 'glass_states': self.glass_states, 'glass_params': self.glass_params, 'config_id': self.current_config_id}
+                'box_x': self.box_x, 'box_states': self.box_states, 'box_params': self.box_params, 'config_id': self.current_config_id}
 
     def set_state(self, state_dic):
         '''
         set the postion, velocity of flex particles, and postions of flex shapes.
         '''
-        self.glass_params = state_dic['glass_params']
+        self.box_params = state_dic['box_params']
         pyflex.set_positions(state_dic["particle_pos"])
         pyflex.set_velocities(state_dic["particle_vel"])
         pyflex.set_shape_states(state_dic["shape_pos"])
-        self.glass_x = state_dic['glass_x']
-        self.glass_states = state_dic['glass_states']
+        self.box_x = state_dic['box_x']
+        self.box_states = state_dic['box_states']
         for _ in range(5):
             pyflex.step()
 
@@ -224,21 +230,20 @@ class PassWater1DTorusEnv(FluidTorusEnv):
         #                'height': self.camera_height}
         # }
 
-    def set_glass_params(self, config=None):
-        params = config['glass']
+    def set_box_params(self, config=None):
+        params = config['box']
 
-        self.border = params['border']
         self.height = params['height']
 
-        # TODO: correctly determine the glass size
+        # TODO: correctly determine the box size
         particle_radius = config['torus']['radius'] * config['torus']['rest_dis_coef']
-        self.glass_dis_x = params['glass_dis_x']
-        self.glass_dis_z = params['glass_dis_z']
+        self.box_dis_x = params['box_dis_x']
+        self.box_dis_z = params['box_dis_z']
         
         self.x_center = 0
-        params['glass_x_center'] = 0
+        params['box_x_center'] = 0
 
-        self.glass_params = params
+        self.box_params = params
 
     def set_scene(self, config, states=None):
         '''
@@ -247,47 +252,33 @@ class PassWater1DTorusEnv(FluidTorusEnv):
         # create fluid
         super().set_scene(config)  # do not sample fluid parameters, as it's very likely to generate very strange fluid
 
-        # compute glass params
+        # compute box params
         if states is None:
-            self.set_glass_params(config)
+            self.set_box_params(config)
         else:
-            glass_params = states['glass_params']
-            self.border = glass_params['border']
-            self.height = glass_params['height']
-            self.glass_dis_x = glass_params['glass_dis_x']
-            self.glass_dis_z = glass_params['glass_dis_z']
-            self.glass_params = glass_params
+            box_params = states['box_params']
+            self.height = box_params['height']
+            self.box_dis_x = box_params['box_dis_x']
+            self.box_dis_z = box_params['box_dis_z']
+            self.box_params = box_params
             self.x_center = 0
 
+        # create box
+        self.create_box(self.box_dis_x, self.box_dis_z, self.height)
 
-        # create glass
-        self.create_glass(self.glass_dis_x, self.glass_dis_z, self.height, self.border)
+        # move box to be at ground or on the table
+        self.box_states = self.init_box_state(self.x_center, 0, self.box_dis_x, self.box_dis_z, self.height)
 
-        # move glass to be at ground or on the table
-        self.glass_states = self.init_glass_state(self.x_center, 0, self.glass_dis_x, self.glass_dis_z, self.height, self.border)
+        pyflex.set_shape_states(self.box_states)
 
-        pyflex.set_shape_states(self.glass_states)
-
-        # record glass floor center x
-        self.glass_x = self.x_center
+        # record box floor center x
+        self.box_x = self.x_center
 
         # no cached init states passed in 
         if states is None:
-            for _ in range(200):
+            for _ in range(50):
                 pyflex.step()
-                # pyflex.render()
-
-            state_dic = self.get_state()
-            particle_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
-
-            in_glass = self.in_glass(particle_state, self.glass_states, self.border, self.height, return_sum=False)
-            out_glass = 1 - in_glass
-
-            on_ground = particle_state[:, 1] <= config['torus']['height']
-            if np.sum(np.logical_and(on_ground, out_glass)) > 0:
-                print("error! a torus dropped out of the glass during set scene")
-                time.sleep(5)
-                return False    
+                pyflex.render()
 
             return True
 
@@ -309,34 +300,30 @@ class PassWater1DTorusEnv(FluidTorusEnv):
             else:
                 pos = np.empty(0, dtype=np.float)
 
-            torso_state = pyflex.get_positions().reshape([-1, 4])
-            torso_particle_num = len(torso_state)
-            in_glass_torso_particle_num = self.in_glass(torso_state, self.glass_states, self.border, self.height)
-            out_glass_torso_particle_num = torso_particle_num - in_glass_torso_particle_num
-            in_glass_frac = float(in_glass_torso_particle_num) / torso_particle_num
-            out_glass_frac = float(out_glass_torso_particle_num) / torso_particle_num
+            particle_state = pyflex.get_positions().reshape((-1, self.dim_position))
+            torus_center_y = np.mean(particle_state[:, 1])
+            torus_center_x = np.mean(particle_state[:, 0])
 
-            cup_state = np.array([self.glass_x, self.glass_dis_x, self.glass_dis_z, self.height, 
-                self._get_current_water_height(), in_glass_frac, out_glass_frac])
+            on_box = float(torus_center_y >= self.height)
+            cup_state = np.array([self.box_x, self.box_dis_x, self.box_dis_z, self.height, 
+                torus_center_x, torus_center_y, on_box])
             return np.hstack([pos, cup_state]).flatten()
         else:
             raise NotImplementedError
 
     def compute_reward(self, obs=None, action=None, set_prev_reward=False):
         """
-        The reward is computed as the fraction of torus particles in the poured glass and the distance to the target
-        NOTE: the obs and action params are made here to be compatiable with the MultiTask env wrapper.
+        The reward is the negative distance to the target.
+        If the torus falls off the box, give a large negative penalty.
         """
 
         state_dic = self.get_state()
         particle_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
-        torus_particle_num = len(particle_state)
+        torus_center_y = np.mean(particle_state[:, 1])
 
-        in_glass_sum = self.in_glass(particle_state, self.glass_states, self.border, self.height)
-        out_glass_sum = torus_particle_num - in_glass_sum
-
-        reward = -self.torus_penalty_coef * (float(out_glass_sum) / torus_particle_num)
-        reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
+        reward = -self.distance_coef * np.abs((self.terminal_x - self.box_x))
+        if torus_center_y < self.height:
+            reward -= self.torus_penalty_coef
 
         if self.delta_reward:
             delta_reward = reward - self.prev_reward
@@ -349,12 +336,11 @@ class PassWater1DTorusEnv(FluidTorusEnv):
     def _get_info(self):
         state_dic = self.get_state()
         particle_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
-        particle_num = len(particle_state)
+        torus_center_y = np.mean(particle_state[:, 1])
 
-        in_glass = self.in_glass(particle_state, self.glass_states, self.border, self.height)
-        out_glass = particle_num - in_glass
-        reward = -self.torus_penalty_coef * (float(out_glass) / particle_num)
-        reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
+        reward = -self.distance_coef * np.abs((self.terminal_x - self.box_x))
+        if torus_center_y < self.height:
+            reward -= self.torus_penalty_coef
 
         performance = reward
         performance_init =  performance if self.performance_init is None else self.performance_init  # Use the original performance
@@ -362,8 +348,8 @@ class PassWater1DTorusEnv(FluidTorusEnv):
 
         return {'performance': performance,
                 'normalized_performance': normalized_performance,
-                'distance_to_target': np.abs((self.terminal_x - self.glass_x)),
-                'out_water': (out_glass / particle_num)}
+                'distance_to_target': np.abs((self.terminal_x - self.box_x)),
+                'torus_on': float(torus_center_y >= self.height)}
 
     def _step(self, action):
         '''
@@ -372,53 +358,35 @@ class PassWater1DTorusEnv(FluidTorusEnv):
         # make action as increasement, clip its range
         dx = action[0]
         dx = np.clip(dx, a_min=self.action_space.low[0], a_max=self.action_space.high[0])
-        x = self.glass_x + dx
+        x = self.box_x + dx
 
-        # move the glass
-        new_states = self.move_glass(self.glass_states, x)
-        self.glass_states = new_states
-        self.glass_x = x
-        self.glass_x = np.clip(self.glass_x, a_min=self.min_x, a_max=self.max_x)
+        # move the box
+        new_states = self.move_box(self.box_states, x)
+        self.box_states = new_states
+        self.box_x = x
+        self.box_x = np.clip(self.box_x, a_min=self.min_x, a_max=self.max_x)
 
-        # pyflex takes a step to update the glass and the water fluid
-        pyflex.set_shape_states(self.glass_states)
+        # pyflex takes a step to update the box and the water fluid
+        pyflex.set_shape_states(self.box_states)
         pyflex.step()
 
         self.inner_step += 1
 
-    def create_glass(self, glass_dis_x, glass_dis_z, height, border):
+    def create_box(self, box_dis_x, box_dis_z, height):
         """
-        the glass is a box, with each wall of it being a very thin box in Flex.
-        each wall of the real box is represented by a box object in Flex with really small thickness (determined by the param border)
-        dis_x: the length of the glass
-        dis_z: the width of the glass
-        height: the height of the glass.
-        border: the thickness of the glass wall.
+        create a box.
+        dis_x: the length of the box
+        dis_z: the width of the box
+        height: the height of the box.
 
         the halfEdge determines the center point of each wall.
-        Note: this is merely setting the length of each dimension of the wall, but not the actual position of them.
-        That's why left and right walls have exactly the same params, and so do front and back walls.   
         """
         center = np.array([0., 0., 0.])
         quat = quatFromAxisAngle([0, 0, -1.], 0.)
         boxes = []
 
-        # floor
-        halfEdge = np.array([glass_dis_x / 2. + border, border / 2., glass_dis_z / 2. + border])
-        boxes.append([halfEdge, center, quat])
-
-        # left wall
-        halfEdge = np.array([border / 2., (height) / 2., glass_dis_z / 2. + border])
-        boxes.append([halfEdge, center, quat])
-
-        # right wall
-        boxes.append([halfEdge, center, quat])
-
-        # back wall
-        halfEdge = np.array([(glass_dis_x) / 2., (height) / 2., border / 2.])
-        boxes.append([halfEdge, center, quat])
-
-        # front wall
+        # a single box
+        halfEdge = np.array([box_dis_x / 2., height / 2., box_dis_z / 2.])
         boxes.append([halfEdge, center, quat])
 
         for i in range(len(boxes)):
@@ -429,10 +397,9 @@ class PassWater1DTorusEnv(FluidTorusEnv):
 
         return boxes
 
-    def move_glass(self, prev_states, x):
+    def move_box(self, prev_states, x):
         '''
-        given the previous states of the glass, move it in 1D along x-axis.
-        update the states of the 5 boxes that form the box: floor, left/right wall, back/front wall. 
+        given the previous states of the box, move it in 1D along x-axis.
         
         state:
         0-3: current (x, y, z) coordinate of the center point
@@ -440,85 +407,47 @@ class PassWater1DTorusEnv(FluidTorusEnv):
         6-10: current quat 
         10-14: previous quat 
         '''
-        dis_x, dis_z = self.glass_dis_x, self.glass_dis_z
         quat_curr = quatFromAxisAngle([0, 0, -1.], 0.)
+        states = np.zeros((1, self.dim_shape_state))
 
-        border = self.border
-
-        # states of 5 walls
-        states = np.zeros((5, self.dim_shape_state))
-
-        for i in range(5):
+        for i in range(1):
             states[i][3:6] = prev_states[i][:3]
             states[i][10:] = prev_states[i][6:10]
 
         x_center = x
-        y = 0
+        y = self.height / 2.
 
         # floor: center position does not change
         states[0, :3] = np.array([x_center, y, 0.])
-
-        # left wall: center must move right and move down. 
-        relative_coord = np.array([-(dis_x + border) / 2., (self.height + border) / 2., 0.])
-        states[1, :3] = states[0, :3] + relative_coord
-
-        # right wall
-        relative_coord = np.array([(dis_x + border) / 2., (self.height + border) / 2., 0.])
-        states[2, :3] = states[0, :3] + relative_coord
-
-        # back wall
-        relative_coord = np.array([0, (self.height + border) / 2., -(dis_z + border) / 2.])
-        states[3, :3] = states[0, :3] + relative_coord
-
-        # front wall
-        relative_coord = np.array([0, (self.height + border) / 2., (dis_z + border) / 2.])
-        states[4, :3] = states[0, :3] + relative_coord
-
         states[:, 6:10] = quat_curr
 
         return states
 
-    def init_glass_state(self, x, y, glass_dis_x, glass_dis_z, height, border):
+    def init_box_state(self, x, y, box_dis_x, box_dis_z, height):
         '''
-        set the initial state of the glass.
+        set the initial state of the box.
         '''
-        dis_x, dis_z = glass_dis_x, glass_dis_z
+        dis_x, dis_z = box_dis_x, box_dis_z
         x_center, y_curr, y_last = x, y, 0.
         if self.action_mode in ['sawyer', 'franka']:
             y_curr = y_last = 0.56 # NOTE: robotics table
         quat = quatFromAxisAngle([0, 0, -1.], 0.)
 
-        # states of 5 walls
-        states = np.zeros((5, self.dim_shape_state))
+        # states of a single box
+        states = np.zeros((1, self.dim_shape_state))
 
-        # floor 
-        states[0, :3] = np.array([x_center, y_curr, 0.])
-        states[0, 3:6] = np.array([x_center, y_last, 0.])
-
-        # left wall
-        states[1, :3] = np.array([x_center - (dis_x + border) / 2., (height + border) / 2. + y_curr, 0.])
-        states[1, 3:6] = np.array([x_center - (dis_x + border) / 2., (height + border) / 2. + y_last, 0.])
-
-        # right wall
-        states[2, :3] = np.array([x_center + (dis_x + border) / 2., (height + border) / 2. + y_curr, 0.])
-        states[2, 3:6] = np.array([x_center + (dis_x + border) / 2., (height + border) / 2. + y_last, 0.])
-
-        # back wall
-        states[3, :3] = np.array([x_center, (height + border) / 2. + y_curr, -(dis_z + border) / 2.])
-        states[3, 3:6] = np.array([x_center, (height + border) / 2. + y_last, -(dis_z + border) / 2.])
-
-        # front wall
-        states[4, :3] = np.array([x_center, (height + border) / 2. + y_curr, (dis_z + border) / 2.])
-        states[4, 3:6] = np.array([x_center, (height + border) / 2. + y_last, (dis_z + border) / 2.])
+        # a single box
+        states[0, :3] = np.array([x_center, height / 2., 0.])
+        states[0, 3:6] = np.array([x_center, height / 2., 0.])
 
         states[:, 6:10] = quat
         states[:, 10:] = quat
 
         return states
 
-    def in_glass(self, water, glass_states, border, height, return_sum=True):
+    def in_box(self, water, box_states, border, height, return_sum=True):
         '''
-        judge whether a water particle is in the poured glass
+        judge whether a water particle is in the poured box
         water: [x, y, z, 1/m] water particle state.
         '''
         # floor, left, right, back, front
@@ -527,12 +456,12 @@ class PassWater1DTorusEnv(FluidTorusEnv):
         # 3-6: previous (x, y, z) coordinate of the center point
         # 6-10: current quat 
         # 10-14: previous quat 
-        x_lower = glass_states[1][0] - border / 2.
-        x_upper = glass_states[2][0] + border / 2.
-        z_lower = glass_states[3][2] - border / 2.
-        z_upper = glass_states[4][2] + border / 2
-        # y_lower = glass_states[0][1] - border / 2.
-        # y_upper = glass_states[0][1] + height + border / 2.
+        x_lower = box_states[1][0] - border / 2.
+        x_upper = box_states[2][0] + border / 2.
+        z_lower = box_states[3][2] - border / 2.
+        z_upper = box_states[4][2] + border / 2
+        # y_lower = box_states[0][1] - border / 2.
+        # y_upper = box_states[0][1] + height + border / 2.
         # x, y, z = water[:, 0], water[:, 1], water[:, 2]
         x, z = water[:, 0], water[:, 2]
 

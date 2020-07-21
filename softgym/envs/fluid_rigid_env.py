@@ -19,7 +19,8 @@ class FluidTorusEnv(FlexEnv):
         radius, rest_dist_coef, num, size = config['torus']['radius'], config['torus']['rest_dis_coef'], \
                 config['torus']['num'], config['torus']['size']
         lower_x, torus_height, lower_z = config['torus']['lower_x'], config['torus']['height'], config['torus']['lower_z']
-        torus_params = np.array([radius, rest_dist_coef, num, size, lower_x, torus_height, lower_z])
+        torus_params = np.array([radius, rest_dist_coef, num, size, lower_x, torus_height, lower_z, 
+            config['static_friction'], config['dynamic_friction']])
 
         # set camera parameters. 
         self.initialize_camera()
@@ -38,7 +39,7 @@ class FluidTorusEnv(FlexEnv):
             pyflex.set_scene(15, scene_params, 0)
         
         self.particle_num = pyflex.get_n_particles()
-        print("particle num: ", self.particle_num)
+        # print("particle num: ", self.particle_num)
         # print("particle pos: ", pyflex.get_positions().reshape([-1, 4])[:, :3])
 
     def rand_float(self, lo, hi):

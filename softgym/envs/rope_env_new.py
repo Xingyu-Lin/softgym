@@ -20,16 +20,16 @@ class RopeNewEnv(FlexEnv):
 
         if action_mode == 'picker':
             self.action_tool = Picker(num_picker, picker_radius=picker_radius, 
-                picker_low=(-0.5, 0., -0.5), picker_high=(0.5, 0.4, 0.5))
+                picker_low=(-0.35, 0., -0.35), picker_high=(0.35, 0.3, 0.35))
             self.action_space = self.action_tool.action_space
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
 
         if observation_mode in ['key_point', 'point_cloud']:
             if observation_mode == 'key_point':
-                obs_dim = 10 * 3
+                obs_dim = 10 * 3 + 2
             else:
-                max_particles = int(0.6 / 0.00625 * 1.1)
+                max_particles = 41
                 obs_dim = max_particles * 3
                 self.particle_obs_dim = obs_dim
             if action_mode in ['picker']:
@@ -56,7 +56,7 @@ class RopeNewEnv(FlexEnv):
             'scale': 0.5,
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([0, 1.3, 0]),
+                                  {'pos': np.array([0, 0.85, 0]),
                                    'angle': np.array([0 * np.pi, -90 / 180. * np.pi, 0]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}}
@@ -73,7 +73,10 @@ class RopeNewEnv(FlexEnv):
         elif self.observation_mode == 'key_point':
             particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[4:, :3]
             keypoint_pos = particle_pos[self.key_point_indices, :3]
-            pos = keypoint_pos
+            pos = keypoint_pos.flatten()
+            more_info = np.array([self.rope_length, self._get_endpoint_distance()])
+            pos = np.hstack([more_info, pos])
+            # print("in _get_obs, pos is: ", pos)
 
         if self.action_mode in ['sphere', 'picker']:
             shapes = pyflex.get_shape_states()
@@ -82,10 +85,11 @@ class RopeNewEnv(FlexEnv):
         return pos
 
     def _get_key_point_idx(self, num=None):
-        indices = [0, num - 1]
+        indices = [0]
         interval = (num - 2) // 8
         for i in range(1, 9):
             indices.append(i * interval)
+        indices.append(num - 1)
 
         return indices
 

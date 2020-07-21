@@ -56,7 +56,8 @@ class PourWaterPosControlEnv(FluidEnv):
                 obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
-            obs_dim += 11  # Pos (x, z, theta) and shape (w, h, l) of the two cups and the water height.
+            obs_dim += 13 # Pos (x, z, theta) and shape (w, h, l) of the two cups and the water height. 
+            # add: frac of water in control cup, frac of water in target cup
             self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
@@ -68,8 +69,8 @@ class PourWaterPosControlEnv(FluidEnv):
         if action_mode == 'direct':
             self.action_direct_dim = 3
             # control the (x, y) corrdinate of the floor center, and theta its rotation angle.
-            action_low = np.array([-border, -border, -0.015])
-            action_high = np.array([border, border, 0.015])
+            action_low = np.array([-border * 0.5, -border * 0.5, -0.015])
+            action_high = np.array([border * 0.5, border * 0.5, 0.015])
             self.action_space = Box(action_low, action_high, dtype=np.float32)
         else:
             raise NotImplementedError
@@ -95,7 +96,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 'dim_z': 8,
             },
             'glass': {
-                'border': 0.01,
+                'border': 0.02,
                 'height': 0.6,
                 'glass_distance': 1.0,
                 'poured_border': 0.01,
@@ -117,6 +118,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
         config_variations = [copy.deepcopy(config) for _ in range(num_variations)]
         for idx in range(num_variations):
+            print("pour water generate env variations {}".format(idx))
             dim_x = random.choice(dim_xs)
             dim_z = random.choice(dim_zs)
             m = min(dim_x, dim_z)
@@ -153,7 +155,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
             config_variations[idx]['glass']['height'] = glass_height
             config_variations[idx]['glass']['poured_height'] = glass_height + np.random.rand() * 0.1
-            config_variations[idx]['glass']['glass_distance'] = self.rand_float(0.05 * m, 0.09 * m) + dim_x * water_radius / 2.
+            config_variations[idx]['glass']['glass_distance'] = self.rand_float(0.05 * m, 0.09 * m) + (dim_x + 4) * water_radius / 2.
             config_variations[idx]['glass']['poured_border'] = self.rand_float(0.008, 0.01)
 
             self.set_scene(config_variations[idx])
@@ -185,6 +187,9 @@ class PourWaterPosControlEnv(FluidEnv):
         return the initial observation.
         '''
         self.inner_step = 0
+        self.performance_init = None
+        info = self._get_info()
+        self.performance_init = info['performance']
         return self._get_obs()
 
     def get_state(self):
@@ -392,9 +397,15 @@ class PourWaterPosControlEnv(FluidEnv):
             else:
                 pos = np.empty(0, dtype=np.float)
 
+            water_state = pyflex.get_positions().reshape([-1, 4])
+            in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)
+            in_control_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
+            in_poured_glass = float(np.sum(in_poured_glass)) / len(water_state)
+            in_control_glass = float(np.sum(in_control_glass)) / len(water_state)
+
             cup_state = np.array([self.glass_x, self.glass_y, self.glass_rotation, self.glass_dis_x, self.glass_dis_z, self.height,
                                   self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z,
-                                  self._get_current_water_height()])
+                                  self._get_current_water_height(), in_poured_glass, in_control_glass])
             return np.hstack([pos, cup_state]).flatten()
         else:
             raise NotImplementedError
@@ -433,12 +444,12 @@ class PourWaterPosControlEnv(FluidEnv):
         good_water = in_poured_glass * (1 - in_control_glass)
         good_water_num = np.sum(good_water)
 
-        reward = float(good_water_num) / water_num
-        normalized_reward = (reward - self.reward_min) / self.reward_range
+        performance = float(good_water_num) / water_num
+        performance_init =  performance if self.performance_init is None else self.performance_init  # Use the original performance
 
         return {
-            'normalized_performance': normalized_reward,
-            'performance': reward
+            'normalized_performance': (performance - performance_init) / (self.reward_max - performance_init),
+            'performance': performance
         }
 
     def _step(self, action):
