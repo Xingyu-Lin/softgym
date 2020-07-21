@@ -29,7 +29,7 @@ class RopeNewEnv(FlexEnv):
             if observation_mode == 'key_point':
                 obs_dim = 10 * 3 + 2
             else:
-                max_particles = int(0.6 / 0.00625 * 1.1)
+                max_particles = 41
                 obs_dim = max_particles * 3
                 self.particle_obs_dim = obs_dim
             if action_mode in ['picker']:
@@ -76,7 +76,7 @@ class RopeNewEnv(FlexEnv):
             pos = keypoint_pos.flatten()
             more_info = np.array([self.rope_length, self._get_endpoint_distance()])
             pos = np.hstack([more_info, pos])
-            print("in _get_obs, pos is: ", pos)
+            # print("in _get_obs, pos is: ", pos)
 
         if self.action_mode in ['sphere', 'picker']:
             shapes = pyflex.get_shape_states()
