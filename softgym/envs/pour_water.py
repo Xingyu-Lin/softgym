@@ -190,6 +190,7 @@ class PourWaterPosControlEnv(FluidEnv):
         self.performance_init = None
         info = self._get_info()
         self.performance_init = info['performance']
+        pyflex.step(render=True)
         return self._get_obs()
 
     def get_state(self):
@@ -477,7 +478,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
         # pyflex takes a step to update the glass and the water fluid
         self.set_shape_states(self.glass_states, self.poured_glass_states)
-        pyflex.step()
+        pyflex.step(render=True)
 
         self.inner_step += 1
 
