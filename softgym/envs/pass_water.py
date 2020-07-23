@@ -393,13 +393,13 @@ class PassWater1DEnv(FluidEnv):
         '''
         if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_width, self.camera_height)
-        elif self.observation_mode in ['point_cloud', 'key_point']:
-            if self.observation_mode == 'point_cloud':
-                particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
-                pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
-                pos[:len(particle_pos)] = particle_pos
-            else:
-                pos = np.empty(0, dtype=np.float)
+        elif self.observation_mode == 'point_cloud':
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
+            pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+            pos[:len(particle_pos)] = particle_pos
+            return pos.flatten()
+        elif self.observation_mode == 'key_point':
+            pos = np.empty(0, dtype=np.float)
 
             water_state = pyflex.get_positions().reshape([-1, 4])
             water_num = len(water_state)

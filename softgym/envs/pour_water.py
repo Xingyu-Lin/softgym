@@ -51,12 +51,12 @@ class PourWaterPosControlEnv(FluidEnv):
         if observation_mode in ['point_cloud', 'key_point']:
             if observation_mode == 'key_point':
                 obs_dim = 0
+                obs_dim += 13 # Pos (x, z, theta) and shape (w, h, l) of the two cups and the water height. 
             else:
                 max_particle_num = 13 * 13 * 13 * 4
                 obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_glass) does not change and thus are omitted.
-            obs_dim += 13 # Pos (x, z, theta) and shape (w, h, l) of the two cups and the water height. 
             # add: frac of water in control cup, frac of water in target cup
             self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         elif observation_mode == 'cam_rgb':
@@ -389,13 +389,13 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_width, self.camera_height)
-        elif self.observation_mode in ['point_cloud', 'key_point']:
-            if self.observation_mode == 'point_cloud':
-                particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
-                pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
-                pos[:len(particle_pos)] = particle_pos
-            else:
-                pos = np.empty(0, dtype=np.float)
+        elif self.observation_mode == 'point_cloud':
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
+            pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+            pos[:len(particle_pos)] = particle_pos
+            return pos.flatten()
+        elif self.observation_mode == 'key_point':
+            pos = np.empty(0, dtype=np.float)
 
             water_state = pyflex.get_positions().reshape([-1, 4])
             in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)
