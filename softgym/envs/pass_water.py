@@ -208,6 +208,7 @@ class PassWater1DEnv(FluidEnv):
         self.performance_init = None
         info = self._get_info()
         self.performance_init = info['performance']
+        pyflex.step(render=True)
         return self._get_obs()
 
     def get_state(self):
@@ -400,14 +401,13 @@ class PassWater1DEnv(FluidEnv):
             return pos.flatten()
         elif self.observation_mode == 'key_point':
             pos = np.empty(0, dtype=np.float)
-
             water_state = pyflex.get_positions().reshape([-1, 4])
             water_num = len(water_state)
             in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
             out_glass = water_num - in_glass
             in_glass = float(in_glass) / water_num
             out_glass = float(out_glass) / water_num
-            cup_state = np.array([self.glass_x, self.glass_dis_x, self.glass_dis_z, self.height, 
+            cup_state = np.array([self.glass_x, self.glass_dis_x, self.glass_dis_z, self.height,
                 self._get_current_water_height(), in_glass, out_glass])
             return np.hstack([pos, cup_state]).flatten()
         else:
@@ -474,7 +474,7 @@ class PassWater1DEnv(FluidEnv):
 
         # pyflex takes a step to update the glass and the water fluid
         pyflex.set_shape_states(self.glass_states)
-        pyflex.step()
+        pyflex.step(render=True)
 
         self.inner_step += 1
 
