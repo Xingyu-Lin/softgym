@@ -37,6 +37,10 @@ class RigidClothFoldEnv(RigidClothEnv):
         new_pos += center
         pyflex.set_positions(new_pos)
 
+    def _sample_cloth_size(self):
+        """ Size of just one piece"""
+        return np.random.randint(8, 15), np.random.randint(10, 20)
+
     def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
@@ -68,6 +72,10 @@ class RigidClothFoldEnv(RigidClothEnv):
 
             self._center_object()
 
+            keypoints = self._get_key_point_idx()[4:]
+            pos = pyflex.get_positions().reshape(-1, 4)
+            pos[keypoints, 3] = 0
+            pyflex.set_positions(pos.flatten()) # Nail one of the plates on the ground
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
@@ -84,10 +92,10 @@ class RigidClothFoldEnv(RigidClothEnv):
         angle = (np.random.random() - 0.5) * np.pi / 2
         self.rotate_particles(angle)
         if hasattr(self, 'action_tool'):
-            x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
-            x_off = np.random.random() * 0.1
+            x, y = np.mean(pyflex.get_positions().reshape((-1, 4))[self._get_key_point_idx()[:4]][:, (0,2)], axis=0)
+            x_off = np.random.random() * 0.1 - 0.05
             y_off = np.random.random() * 0.1 - 0.05
-            self.action_tool.reset([x+x_off, 0.1, 0 + y_off])
+            self.action_tool.reset([x+x_off, 0.1, y + y_off])
             # picker_low = self.action_tool.picker_low
             # picker_high = self.action_tool.picker_high
             # offset_x = self.action_tool._get_pos()[0][0][0] - picker_low[0] - 0.3
