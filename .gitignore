@@ -1,3 +1,4 @@
+softgym/envs/corl_cached_state_backup
 softgym/envs/*.pkl
 data
 __pycache__/
