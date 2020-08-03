@@ -1,23 +1,20 @@
-# TODO
-- [ ] Make it into a python package that can be easily installed
-
 # SoftGym
 
 ### Prerequisite
-This codebase is tested with Ubuntu 16.04 LTS and CUDA 9.1. Other versions might work but are not guaranteed. Following command will install some necessary dependencies.
+This codebase is tested with Ubuntu 16.04 LTS, CUDA 9.2 and Nvidia driver version 440.64. Other versions might work but are not guaranteed, especially with a different driver version. 
+
+Following command will install some necessary dependencies.
 
     sudo apt-get install build-essential libgl1-mesa-dev freeglut3-dev
 
 ### Compile PyFleX
-1. Go to the root folder of softgym and run `. ./prepare.sh`
-2. Compile PyFleX with CMake & Pybind11
+1. Go to the root folder of softgym and run `. ./prepare_1.0.sh`
+2. Compile PyFleX with CMake & Pybind11 by running `. ./prepare.sh`
 
-    
-    cd PyFlex/bindings/
-    mkdir build; cd build; cmake ..; make -j
-    
-<!-- 1. Create a conda environment and activate it: `conda env create -f environment.yml && . activate softgym`-->
+### Create conda environment
+Create a conda environment and activate it: `conda env create -f environment.yml && . activate softgym`
 
+### Run test examples    
 
 ### PyFleX APIs
 
