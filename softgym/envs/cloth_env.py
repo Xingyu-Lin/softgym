@@ -50,7 +50,6 @@ class ClothEnv(FlexEnv):
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
-
     def _sample_cloth_size(self):
         return np.random.randint(60, 120), np.random.randint(60, 120)
 
