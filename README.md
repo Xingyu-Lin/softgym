@@ -1,7 +1,7 @@
 # SoftGym
 
 ### Prerequisite
-This codebase is tested with Ubuntu 16.04 LTS, CUDA 9.2 and Nvidia driver version 440.64. Other versions might work but are not guaranteed, especially with a different driver version. 
+This codebase is tested with Ubuntu 16.04 LTS, CUDA 9.1 and Nvidia driver version 440.64. Other versions might work but are not guaranteed, especially with a different driver version. 
 
 Following command will install some necessary dependencies.
 
