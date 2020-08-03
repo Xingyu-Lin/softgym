@@ -82,6 +82,8 @@ class ClothFoldEnv(ClothEnv):
                     break
 
             self._center_object()
+            angle = (np.random.random() - 0.5) * np.pi / 2
+            self.rotate_particles(angle)
 
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
@@ -125,14 +127,13 @@ class ClothFoldEnv(ClothEnv):
         self.set_colors(colors)
 
     def _reset(self):
-        """ Right now only use one initial state"""
-        angle = (np.random.random()-0.5) * np.pi/2
-        self.rotate_particles(angle)
+        """ Right now only use one initial state. Need to make sure _reset always give the same result. Otherwise CEM will fail."""
         if hasattr(self, 'action_tool'):
-            # x = pyflex.get_positions().reshape((-1, 4))[0][0]  # x coordinate of left-top corner
-            x_off = np.random.random() * 0.1
-            y_off = np.random.random() * 0.1 - 0.05
-            self.action_tool.reset([-0.3 + x_off, 0.1, 0 + y_off])
+            particle_pos = pyflex.get_positions().reshape(-1, 4)
+            p1, p2, p3, p4 = self._get_key_point_idx()
+            key_point_pos = particle_pos[(p1, p4) , :3]
+            middle_point = np.mean(key_point_pos, axis=0)
+            self.action_tool.reset([middle_point[0], 0.1, middle_point[2]])
 
             # picker_low = self.action_tool.picker_low
             # picker_high = self.action_tool.picker_high
