@@ -2,7 +2,6 @@ import os.path as osp
 import argparse
 import numpy as np
 
-
 from softgym.registered_env import env_arg_dict, SOFTGYM_ENVS
 from softgym.utils.normalized_env import normalize
 from softgym.utils.visualization import save_numpy_as_gif
@@ -10,7 +9,7 @@ from softgym.utils.visualization import save_numpy_as_gif
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
-    # ['ClothFold', 'ClothFlatten', 'ClothDrop', 'ClothFoldCrumpled', 'ClothFoldDrop']
+    # ['PassWater', 'PourWater', 'PourWaterAmount', 'RopeFlattenNew', 'ClothFold', 'ClothFlatten', 'ClothDrop', 'ClothFoldCrumpled', 'ClothFoldDrop']
     parser.add_argument('--env_name', type=str, default='PourWater')
     parser.add_argument('--headless', type=int, default=0, help='Whether to run the environment with headless rendering')
     parser.add_argument('--num_variations', type=int, default=1, help='Number of environment variations to be generated')
