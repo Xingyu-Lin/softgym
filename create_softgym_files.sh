@@ -2,7 +2,6 @@ rm -rf softgym_files
 mkdir softgym_files
 
 # only in Pyflex
-cp -r PyFlex/bindings/build softgym_files/
 cp PyFlex/bindings/CMakeLists.txt softgym_files/
 cp PyFlex/bindings/pyflex.cpp softgym_files/
 cp -r PyFlex/bindings/softgym_scenes softgym_files/
@@ -27,4 +26,4 @@ cp PyFlex/external/SDL2-2.0.4/lib/x64/libSDL2_test.a softgym_files/
 cp PyFlex/external/glad/include/glad/glad_egl.h softgym_files/
 cp PyFlex/external/glad/src/glad_egl.c softgym_files/
 cp PyFlex/external/SDL2-2.0.4/lib/x64/libSDL2-2.0.so.0 softgym_files/
-rm -rf softgym_files/build/pyflex*.so
+#rm -rf softgym_files/build/pyflex*.so softgym_files/build/CMakeCache.txt softgym_files/build/CMakeFiles

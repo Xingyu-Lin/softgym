@@ -5,7 +5,6 @@ mv FleX PyFlex
 cd PyFlex
 cp -r demo/ bindings/
 cd ..
-cp -r softgym_files/build PyFlex/bindings/
 cp softgym_files/CMakeLists.txt PyFlex/bindings/
 cp softgym_files/pyflex.cpp PyFlex/bindings/
 cp -r softgym_files/softgym_scenes PyFlex/bindings/
