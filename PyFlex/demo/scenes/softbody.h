@@ -1,5 +1,4 @@
-#include <iostream>
-using namespace std;
+
 
 class SoftBody : public Scene
 {
@@ -129,7 +128,7 @@ public:
 		}
 	}
 
-	virtual void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
+	virtual void Initialize()
 	{
 		float radius = mRadius;
 
@@ -366,5 +365,45 @@ public:
 
 			DrawMesh(&m, instance.mColor);
 		}
+	}
+};
+
+
+class SoftBodyFixed : public SoftBody
+{
+public:
+
+	SoftBodyFixed(const char* name) : SoftBody(name) 
+	{}
+
+	virtual void Initialize()
+	{
+		SoftBody::Initialize();
+
+		// fix any particles in the wall
+		for (int i = 0; i < int(g_buffers->positions.size()); ++i)
+			if (g_buffers->positions[i].x < mRadius)
+				g_buffers->positions[i].w = 0.0f;
+	}
+
+	virtual void AddStack(Instance instance, int zStack)
+	{
+		float clusterStiffness = instance.mClusterStiffness;
+		Vec3 translation = instance.mTranslation;
+
+		for (int z = 0; z < zStack; ++z)
+		{
+			instance.mClusterStiffness = sqr(clusterStiffness*(z + 1));
+			instance.mTranslation = translation + Vec3(0.0f, 0.0f, -z*(instance.mScale.z + 1))*mRadius;
+			this->mInstances.push_back(instance);
+		}
+	}
+
+	virtual void PostInitialize()
+	{
+		SoftBody::PostInitialize();
+
+		(Vec4&)g_params.planes[1] = Vec4(1.0f, 0.0f, 0.0f, 0.0f);
+		g_params.numPlanes = 2;
 	}
 };

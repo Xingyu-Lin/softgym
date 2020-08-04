@@ -20,13 +20,9 @@ public:
 
 		const float mass[] = {1.0f, 0.25f, 0.005f };
 
-		char sphere_path[100];
-		strcpy(sphere_path, getenv("PYFLEXROOT"));
-		strcat(sphere_path, "/data/sphere.ply");
-
 		for (int j=0; j < 1; ++j)
 			for (int i=0; i < n; ++i)
-				CreateParticleShape(GetFilePathByPlatform(sphere_path).c_str(), Vec3(spacing - 0.5f*size.x + i*spacing * 2, 2.0f + j*size.y*1.2f, 0.6f), size, 0.0f, sampling, Vec3(0.0f, 0.0f, 0.0f), mass[i], true, 1.0f, NvFlexMakePhase(group++, 0), true, 0.0001f);
+				CreateParticleShape(GetFilePathByPlatform("../../data/sphere.ply").c_str(), Vec3(spacing - 0.5f*size.x + i*spacing * 2, 2.0f + j*size.y*1.2f, 0.6f), size, 0.0f, sampling, Vec3(0.0f, 0.0f, 0.0f), mass[i], true, 1.0f, NvFlexMakePhase(group++, 0), true, 0.0001f);
 				
 		g_numSolidParticles = g_buffers->positions.size();	
 
