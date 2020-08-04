@@ -12,7 +12,6 @@ cp -r PyFlex/bindings/utils softgym_files/
 cp PyFlex/bindings/helpers.h softgym_files/
 cp PyFlex/bindings/opengl/shadersGL.cpp softgym_files/
 cp PyFlex/bindings/scenes.h softgym_files/
-cp PyFlex/bindings/shaders.h softgym_files/
 cp PyFlex/external/SDL2-2.0.4/lib/x64/libSDL2.a softgym_files/
 cp PyFlex/external/SDL2-2.0.4/lib/x64/libSDL2.la softgym_files/
 cp PyFlex/external/SDL2-2.0.4/lib/x64/libSDL2main.a softgym_files/
@@ -28,3 +27,4 @@ cp PyFlex/external/SDL2-2.0.4/lib/x64/libSDL2_test.a softgym_files/
 cp PyFlex/external/glad/include/glad/glad_egl.h softgym_files/
 cp PyFlex/external/glad/src/glad_egl.c softgym_files/
 cp PyFlex/external/SDL2-2.0.4/lib/x64/libSDL2-2.0.so.0 softgym_files/
+rm -rf softgym_files/build/pyflex*.so

@@ -32,6 +32,8 @@ namespace py = pybind11;
 
 #include "bindings/utils/utils.h"
 
+void InitRenderHeadless(const RenderInitOptions& options, int width, int height);
+
 SDL_Window *g_window;           // window handle
 unsigned int g_windowId;        // window id
 

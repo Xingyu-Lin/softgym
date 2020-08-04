@@ -13,7 +13,6 @@ cp -r softgym_files/utils PyFlex/bindings/
 cp softgym_files/helpers.h PyFlex/bindings/
 cp softgym_files/shadersGL.cpp PyFlex/bindings/opengl/
 cp softgym_files/scenes.h PyFlex/bindings/
-cp softgym_files/shaders.h PyFlex/bindings/
 cp softgym_files/libSDL2.a PyFlex/external/SDL2-2.0.4/lib/x64/
 cp softgym_files/libSDL2.la PyFlex/external/SDL2-2.0.4/lib/x64/
 cp softgym_files/libSDL2main.a PyFlex/external/SDL2-2.0.4/lib/x64/
