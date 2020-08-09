@@ -1,7 +1,3 @@
-//
-// Created by xingyu on 2019-10-12.
-//
-
 #ifndef PYFLEX_UTILS_H
 #define PYFLEX_UTILS_H
 

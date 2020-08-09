@@ -1,4 +1,5 @@
-#include <iostream>
+
+
 class SoftBody : public Scene
 {
 
@@ -32,6 +33,7 @@ public:
 	struct Instance
 	{
 		Instance(const char* mesh) :
+
 			mFile(mesh),
 			mColor(0.5f, 0.5f, 1.0f),
 
@@ -55,8 +57,8 @@ public:
 
 			mClusterPlasticThreshold(0.0f),
 			mClusterPlasticCreep(0.0f)
-		{
-		}
+		{}
+
 		const char* mFile;
 		Vec3 mColor;
 

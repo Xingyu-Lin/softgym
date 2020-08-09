@@ -245,7 +245,7 @@ class FlexEnv(gym.Env):
                     config_id = np.random.randint(low=eval_beg, high=len(self.cached_configs)) if not self.deterministic else eval_beg
                 else:
                     train_high = int(0.8 * len(self.cached_configs))
-                    config_id = np.random.randint(low=0, high=train_high) if not self.deterministic else 0
+                    config_id = np.random.randint(low=0, high=max(train_high, 1)) if not self.deterministic else 0
 
             self.current_config = self.cached_configs[config_id]
             self.current_config_id = config_id

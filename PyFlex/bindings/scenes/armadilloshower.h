@@ -40,10 +40,7 @@ public:
 
 		g_diffuseScale = 1.0f;
 
-		char armadillo_path[100];
-		strcpy(armadillo_path, getenv("PYFLEXROOT"));
-		strcat(armadillo_path, "/data/armadillo.ply");
-		NvFlexDistanceFieldId sdf = CreateSDF(GetFilePathByPlatform(armadillo_path).c_str(), 128);
+		NvFlexDistanceFieldId sdf = CreateSDF(GetFilePathByPlatform("../../data/armadillo.ply").c_str(), 128);
 		AddSDF(sdf, Vec3(2.0f, 0.0f, -1.0f), Quat(), 2.0f);
 
 		Vec3 meshLower, meshUpper;

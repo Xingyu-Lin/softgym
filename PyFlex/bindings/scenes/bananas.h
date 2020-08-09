@@ -28,10 +28,7 @@ public:
 			{
 				for (int z = 0; z < dimz; ++z)
 				{
-				    char banana_path[100];
-					strcpy(banana_path, getenv("PYFLEXROOT"));
-					strcat(banana_path, "/data/banana.obj");
-					CreateParticleShape(GetFilePathByPlatform(banana_path).c_str(), lower + (s*1.1f)*Vec3(float(x), y*0.4f, float(z)), Vec3(s), 0.0f, radius*0.95f, Vec3(0.0f), 1.0f, true, 0.8f, NvFlexMakePhase(group++, 0), true, radius*0.1f, 0.0f, 0.0f, 1.25f*Vec4(0.875f, 0.782f, 0.051f, 1.0f));
+					CreateParticleShape(GetFilePathByPlatform("../../data/banana.obj").c_str(), lower + (s*1.1f)*Vec3(float(x), y*0.4f, float(z)), Vec3(s), 0.0f, radius*0.95f, Vec3(0.0f), 1.0f, true, 0.8f, NvFlexMakePhase(group++, 0), true, radius*0.1f, 0.0f, 0.0f, 1.25f*Vec4(0.875f, 0.782f, 0.051f, 1.0f));
 				}
 			}
 		}

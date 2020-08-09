@@ -24,15 +24,12 @@ public:
 
 		if (1)
 		{
-			char box_path[100];
-			strcpy(box_path, getenv("PYFLEXROOT"));
-			strcat(box_path, "/data/box.ply");
 			// create a basic grid
 			for (int y=0; y < dimy; ++y)
 				for (int z=0; z < dimz; ++z)
 					for (int x=0; x < dimx; ++x)
 						CreateParticleShape(
-						GetFilePathByPlatform(box_path).c_str(),
+						GetFilePathByPlatform("../../data/box.ply").c_str(), 
 						(g_params.radius*0.905f)*Vec3(float(x*sx), float(y*sy), float(z*sz)) + (g_params.radius*0.1f)*Vec3(float(x),float(y),float(z)) + lower,
 						g_params.radius*0.9f*Vec3(float(sx), float(sy), float(sz)), 0.0f, g_params.radius*0.9f, Vec3(0.0f), 1.0f, true, 1.0f, NvFlexMakePhase(group++, 0), true, 0.001f);
 
@@ -87,11 +84,8 @@ public:
 		}
 
 
-		char banana_path[100];
-		strcpy(banana_path, getenv("PYFLEXROOT"));
-		strcat(banana_path, "/data/banana.obj");
 		for (int i=0; i < 50; ++i)
-			CreateParticleShape(GetFilePathByPlatform(banana_path).c_str(), Vec3(0.4f, 8.5f + i*0.25f, 0.25f) + RandomUnitVector()*radius*0.25f, Vec3(1), 0.0f, radius, Vec3(0.0f), 1.0f, true, 0.5f, NvFlexMakePhase(group++, 0), true, radius*0.1f, 0.0f, 0.0f, 1.25f*Vec4(0.875f, 0.782f, 0.051f, 1.0f));
+			CreateParticleShape(GetFilePathByPlatform("../../data/banana.obj").c_str(), Vec3(0.4f, 8.5f + i*0.25f, 0.25f) + RandomUnitVector()*radius*0.25f, Vec3(1), 0.0f, radius, Vec3(0.0f), 1.0f, true, 0.5f, NvFlexMakePhase(group++, 0), true, radius*0.1f, 0.0f, 0.0f, 1.25f*Vec4(0.875f, 0.782f, 0.051f, 1.0f));		
 		
 
 		//g_numExtraParticles = 32*1024;		
