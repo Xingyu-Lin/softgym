@@ -32,6 +32,8 @@ def main():
         print('Waiting to generate environment variations. May take 1 minute for each variation...')
     env = normalize(SOFTGYM_ENVS[args.env_name](**env_kwargs))
     env.reset()
+    # import pyflex
+    # pyflex.set_shape_color([0.3, 0.5, 0.2])
     frames = [env.get_image(args.img_size, args.img_size)]
     for i in range(env.horizon):
         action = env.action_space.sample()
