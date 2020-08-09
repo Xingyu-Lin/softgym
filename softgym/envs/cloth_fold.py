@@ -27,6 +27,20 @@ class ClothFoldEnv(ClothEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
+    # def initialize_camera(self):
+    #     """
+    #     set the camera width, height, position and angle.
+    #     **Note: width and height is actually the screen width and screen height of FLex.
+    #     I suggest to keep them the same as the ones used in pyflex.cpp.
+    #     """
+    #     self.camera_name = 'default_camera'
+    #     self.camera_params['default_camera'] = {
+    #         'pos': np.array([0.0, 0.9, 0.75]),
+    #         'angle': np.array([0, -45 / 180. * np.pi, 0.]),
+    #         'width': self.camera_width,
+    #         'height': self.camera_height
+    #     }
+
     def rotate_particles(self, angle):
         pos = pyflex.get_positions().reshape(-1, 4)
         center = np.mean(pos, axis=0)
@@ -47,7 +61,6 @@ class ClothFoldEnv(ClothEnv):
             default_config['flip_mesh'] = 1
         else:
             default_config = config
-
         for i in range(num_variations):
             config = deepcopy(default_config)
             self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
@@ -82,6 +95,24 @@ class ClothFoldEnv(ClothEnv):
 
         return generated_configs, generated_states
 
+    # def set_scene(self, config, **kwargs):
+    #     """ Setup the cloth scene and split particles into two groups for folding """
+    #     super().set_scene(config, **kwargs)
+    #     # Set folding group
+    #     num_particles = np.prod(config['ClothSize'])
+    #     particle_grid_idx = np.array(list(range(num_particles))).reshape(*config['ClothSize'])
+    #
+    #     cloth_dimx = config['ClothSize'][0]
+    #     x_split = cloth_dimx // 2
+    #     self.fold_group_a = particle_grid_idx[:, :x_split].flatten()
+    #     self.fold_group_b = particle_grid_idx[:, cloth_dimx:x_split - 1:-1].flatten()
+    #
+    #     colors = np.zeros(num_particles)
+    #     colors[self.fold_group_b] = 1
+    #
+    #     self.set_colors(colors)
+    # self.set_test_color(num_particles)
+
     def set_test_color(self, num_particles):
         """
         Assign random colors to group a and the same colors for each corresponding particle in group b
@@ -100,7 +131,7 @@ class ClothFoldEnv(ClothEnv):
         if hasattr(self, 'action_tool'):
             particle_pos = pyflex.get_positions().reshape(-1, 4)
             p1, p2, p3, p4 = self._get_key_point_idx()
-            key_point_pos = particle_pos[(p1, p4), :3]
+            key_point_pos = particle_pos[(p1, p4) , :3]
             middle_point = np.mean(key_point_pos, axis=0)
             self.action_tool.reset([middle_point[0], 0.1, middle_point[2]])
 

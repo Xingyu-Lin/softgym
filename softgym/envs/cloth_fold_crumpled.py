@@ -12,18 +12,15 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
         kwargs['cached_states_path'] = 'cloth_fold_crumpled_init_states.pkl'
         super().__init__(**kwargs)
 
-    def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True, config=None):
+    def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
-        max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
-        stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
+        max_wait_step = 2000  # Maximum number of steps waiting for the cloth to stablize
+        stable_vel_threshold = 0.2  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
-        if config is None:
-            default_config = self.get_default_config()
-            default_config['flip_mesh'] = 1
-        else:
-            default_config = config
+        default_config = self.get_default_config()
 
         for i in range(num_variations):
+            print('generating variation {}'.format(i))
             config = deepcopy(default_config)
             self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
             if vary_cloth_size:
@@ -32,9 +29,33 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
             else:
                 cloth_dimx, cloth_dimy = config['ClothSize']
             self.set_scene(config)
-
             self.action_tool.reset([0., -1., 0.])
-            pyflex.step()
+
+            # Test
+            # print('start')
+            # for i in range(50):
+            #     pyflex.step()
+            # pos = pyflex.get_positions().copy().reshape((-1, 4))
+            # pos[:, :3] -= np.mean(pos, axis=0)[:3]
+            # pos = pos.flatten()
+            # pyflex.set_positions(pos)
+            # for _ in range(10):
+            #     pyflex.step()
+            # pos = pyflex.get_positions()
+            # self._set_to_flat()
+            # pos2 = pyflex.get_positions()
+            # print(pos.dtype, pos2.dtype)
+            # # for i in range(100):
+            # #     if i % 2 == 0:
+            # #         pyflex.set_positions(pos)
+            # #         print('pos:',  np.mean(pos.reshape(-1, 4), axis=0))
+            # #     else:
+            # #         pyflex.set_positions(pos2)
+            # #         print('pos2', np.mean(pos2.reshape(-1, 4), axis=0))
+            # #     for _ in range(50):
+            # #         pyflex.step()
+            # print(np.max(np.abs(pos- pos2)))
+            # assert np.allclose(pos, pos2, atol=1e-5)
 
             num_particle = cloth_dimx * cloth_dimy
             pickpoint = random.randint(0, num_particle - 1)
@@ -46,11 +67,11 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
             pyflex.set_positions(curr_pos)
 
             # Pick up the cloth and wait to stablize
-            for _ in range(0, max_wait_step):
+            for i in range(0, max_wait_step):
                 pyflex.step()
                 curr_pos = pyflex.get_positions()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < stable_vel_threshold):
+                if np.alltrue(curr_vel < stable_vel_threshold) and i > 0:
                     break
                 curr_pos[pickpoint * 4: pickpoint * 4 + 3] = pickpoint_pos
                 curr_vel[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
@@ -69,24 +90,22 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
 
             self._center_object()
 
-            if self.action_mode == 'sphere' or self.action_mode.startswith('picker'):
-                curr_pos = pyflex.get_positions()
-                self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
             generated_configs.append(deepcopy(config))
+            print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
-            self.current_config = config  # Needed in _set_to_flatten function
-
-            print('config {}: camera params {}'.format(i, config['camera_params']))
 
         if save_to_file:
             with open(self.cached_states_path, 'wb') as handle:
                 pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
+
         return generated_configs, generated_states
 
     def _reset(self):
         """ Right now only use one initial state"""
         if hasattr(self, 'action_tool'):
+            # curr_pos = pyflex.get_positions()
             self.action_tool.reset([0., 0.2, 0.])
+            # self.action_tool.update_picker_boundary(picker_low=[-0.5, 0., -0.5], picker_high=[0.5, 0.5, 0.5])
 
         config = self.get_current_config()
         self.flat_pos = self._get_flat_pos()
@@ -109,10 +128,6 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
 
         self.prev_dist = np.mean(np.linalg.norm(pos_a - pos_b, axis=1))
 
-        self.performance_init = None
-        info = self._get_info()
-        self.performance_init = info['performance']
-
         return self._get_obs()
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
@@ -126,7 +141,7 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
         pos_group_a = pos[self.fold_group_a]
         pos_group_b = pos[self.fold_group_b]
         pos_group_b_init = self.flat_pos[self.fold_group_b]
-        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + 1.2 * np.linalg.norm(np.mean(pos_group_b - pos_group_b_init, axis=1))
+        curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + 1.2 * np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         if self.delta_reward:
             reward = self.prev_dist - curr_dist
             if set_prev_reward:
@@ -135,20 +150,27 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
             reward = -curr_dist
         return reward
 
+    @property
+    def performance_bound(self):
+        max_dist = 1.043
+        min_p = -2.2 * max_dist
+        max_p = 0
+        return min_p, max_p
+
     def _get_info(self):
         # Duplicate of the compute reward function!
         pos = pyflex.get_positions()
         pos = pos.reshape((-1, 4))[:, :3]
         pos_group_a = pos[self.fold_group_a]
         pos_group_b = pos[self.fold_group_b]
-        pos_group_b_init = self.init_pos[self.fold_group_b]
+        pos_group_b_init = self.flat_pos[self.fold_group_b]
         group_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1))
         fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         performance = -group_dist - 1.2 * fixation_dist
-        performance_init = performance if self.performance_init is None else self.performance_init  # Use the original performance
+        pb = self.performance_bound
         return {
             'performance': performance,
-            'normalized_performance': (performance - performance_init) / (0. - performance_init),
+            'normalized_performance': (performance - pb[0]) / (pb[1] - pb[0]),
             'neg_group_dist': -group_dist,
             'neg_fixation_dist': -fixation_dist
         }

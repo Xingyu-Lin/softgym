@@ -123,6 +123,18 @@ class ClothDropEnv(ClothEnv):
 
             config['target_pos'] = self._get_flat_pos()
             self._set_to_vertical(x_low=np.random.random() * 0.2 - 0.1, height_low=np.random.random() * 0.1 + 0.1)
+            # self._set_to_flat()
+
+            # colors = self.get_colors()
+            # colors[:10] = 2
+            # self.set_colors(colors)
+            # while (1):
+            #     print('here')
+            #     pyflex.step(render=True)
+            # while (1):
+            #     pyflex.step(render=True)
+            #     while (1):
+            #         pass
 
             # Get height of the cloth without the gravity. With gravity, it will be longer
             p1, _, p2, _ = self._get_key_point_idx()
