@@ -30,8 +30,10 @@ class ClothEnv(FlexEnv):
                                       picker_low=(-0.4, 0., -0.4), picker_high=(1.0, 0.5, 0.4))
             self.action_space = self.action_tool.action_space
         elif action_mode == 'pickerpickplace':
-            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self)
+            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self,
+                                               picker_low=(-0.3, 0., -0.3), picker_high=(0.3, 0.3, 0.3))
             self.action_space = self.action_tool.action_space
+            # assert self.action_repeat == 1
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
 
@@ -50,6 +52,7 @@ class ClothEnv(FlexEnv):
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
+
     def _sample_cloth_size(self):
         return np.random.randint(60, 120), np.random.randint(60, 120)
 

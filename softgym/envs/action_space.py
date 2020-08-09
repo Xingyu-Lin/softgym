@@ -159,7 +159,6 @@ class Picker(ActionToolBase):
         quat = np.array([1., 0., 0., 0.])
         pyflex.add_box(halfEdge, center, quat)
 
-
     def _apply_picker_boundary(self, picker_pos):
         clipped_picker_pos = picker_pos.copy()
         for i in range(3):
@@ -288,9 +287,15 @@ class Picker(ActionToolBase):
 
 
 class PickerPickPlace(Picker):
-    def __init__(self, num_picker, env=None, **kwargs):
-        super().__init__(num_picker=num_picker, **kwargs)
-        self.delta_move = 0.005
+    def __init__(self, num_picker, env=None, picker_low=None, picker_high=None, **kwargs):
+        super().__init__(num_picker=num_picker,
+                         picker_low=picker_low,
+                         picker_high=picker_high,
+                         **kwargs)
+        picker_low, picker_high = list(picker_low), list(picker_high)
+        self.action_space = Box(np.array([*picker_low, 0.] * self.num_picker),
+                                np.array([*picker_high, 1.] * self.num_picker), dtype=np.float32)
+        self.delta_move = 0.01
         self.env = env
 
     def step(self, action):
@@ -300,19 +305,21 @@ class PickerPickPlace(Picker):
         """
         action = action.reshape(-1, 4)
         curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
-        end_pos = action[:, :3]
+
+        end_pos = np.vstack(self._apply_picker_boundary(picker_pos) for picker_pos in action[:, :3])
         dist = np.linalg.norm(curr_pos - end_pos, axis=1)
-        num_step = np.max(dist / self.delta_move)
+        num_step = np.max(np.ceil(dist / self.delta_move))
+        if num_step < 0.1:
+            return
         delta = (end_pos - curr_pos) / num_step
         norm_delta = np.linalg.norm(delta)
         while True:
             curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
-            end_pos = action[:, :3]
             dist = np.linalg.norm(end_pos - curr_pos, axis=1)
             if np.alltrue(dist < norm_delta):
                 delta = end_pos - curr_pos
             super().step(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
-            pyflex.step()
+            pyflex.step(render=True)
             if self.env is not None and self.env.recording:
                 self.env.video_frames.append(self.env.render(mode='rgb_array'))
             if np.alltrue(dist < self.delta_move):
