@@ -1738,12 +1738,13 @@ void SyncScene()
     g_scene->Sync();
 }
 
-void UpdateScene()
+void UpdateScene(py::array_t<float> control_params = py::array_t<float>())
 {
     // give scene a chance to make changes to particle buffers
     if (!g_experiment)
     {
         g_scene->Update();
+        g_scene->Step(control_params); // For robot control
     }
 }
 
@@ -3635,7 +3636,7 @@ void UpdateFrame(py::array_t<float> update_params)
 			UpdateEmitters();
 			UpdateMouse();
 			UpdateWind();
-			UpdateScene();
+			UpdateScene(update_params);
 		}
 		
 	}
@@ -3646,7 +3647,7 @@ void UpdateFrame(py::array_t<float> update_params)
 
 		UpdateEmitters();
 		UpdateWind();
-		UpdateScene();
+		UpdateScene(update_params);
 	}
 
     //-------------------------------------------------------------------
@@ -6575,6 +6576,9 @@ py::array_t<int> pyflex_render(int capture, char *path) {
 
 void pyflex_set_sensor_segment(bool flag) {g_sensor_segment=flag;}
 
+py::array_t<float> pyflex_get_robot_state(){return g_scene->GetRobotState();}
+void pyflex_set_robot_state(py::array_t<float> robot_state){g_scene->SetRobotState(robot_state);}
+
 int main() {
     cout<<"PyFlexRobotics loaded" <<endl;
     pyflex_init();
@@ -6590,7 +6594,7 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("scene_idx"),
           py::arg("scene_params") = nullptr,
           py::arg("thread_idx") = 0,
-          py::arg("robot_params") = nullptr);
+          py::arg("robot_params") = py::array_t<float>());
     m.def("clean", &pyflex_clean);
     m.def("step", &pyflex_step,
           py::arg("update_params") = nullptr,
@@ -6644,6 +6648,9 @@ PYBIND11_MODULE(pyflex, m) {
 
     m.def("get_scene_upper", &pyflex_get_sceneUpper);
     m.def("get_scene_lower", &pyflex_get_sceneLower);
+    m.def("get_robot_state", &pyflex_get_robot_state);
+    m.def("set_robot_state", &pyflex_set_robot_state);
+
 
 //    m.def("add_rigid_body", &pyflex_add_rigid_body);
 }

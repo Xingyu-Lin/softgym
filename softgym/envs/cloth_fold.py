@@ -151,7 +151,10 @@ class ClothFoldEnv(ClothEnv):
             pyflex.set_positions(cur_pos.flatten())
         else:
             self.action_tool.step(action)
-            pyflex.step()
+            if self.action_mode in ['sawyer', 'franka']:
+                pyflex.step(self.action_tool.next_action)
+            else:
+                pyflex.step()
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """

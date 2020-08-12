@@ -80,7 +80,35 @@ public:
 	}
 
 	virtual void PreSimulation() {}
+    void Step(py::array_t<float> control_params = py::array_t<float>())
+    {
+        ptrRobot = getPtrRobot();
+        if (ptrRobot != NULL) ptrRobot->Step(control_params);
+        else
+        {
+            std::cout<<"WARNING: Calling step function in scenes without a robot."<<std::endl;
+        }
+    }
 
+    py::array_t<float>  GetRobotState()
+    {
+        ptrRobot = getPtrRobot();
+        if (ptrRobot != NULL) return ptrRobot->GetState();
+        else
+        {
+            std::cout<<"WARNING: Calling GetRobotState function in scenes without a robot."<<std::endl;
+        }
+    }
+
+    void SetRobotState(py::array_t<float> robot_state)
+    {
+        ptrRobot = getPtrRobot();
+        if (ptrRobot != NULL) ptrRobot->SetState(robot_state);
+        else
+        {
+            std::cout<<"WARNING: Calling GetRobotState function in scenes without a robot."<<std::endl;
+        }
+    }
 };
 
 
@@ -209,18 +237,17 @@ inline void RegisterScene(const char* name, std::function<Scene*()> factory, boo
 inline void RegisterPhysicsScenes()
 {
     // PlaceHolder scenes such that the index is compatible with those in the 1.0 version.
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-
-    RegisterScene("SoftGym Cloth", []() { return new softgym_FlagCloth(); });
-    RegisterScene("SoftGym Cloth Flatten", []() { return new softgym_FlattenCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth Flatten", []() { return new SoftgymCloth(); });
     RegisterScene("SoftGym Water", []() { return new softgym_PourWater; });
 
     RegisterScene("Soft Rope", []() { return new SoftgymSoftRope(); });
