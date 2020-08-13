@@ -4,7 +4,7 @@ import os.path as osp
 import pyflex
 from softgym.envs.rope_env_new import RopeNewEnv
 from copy import deepcopy
-from softgym.utils.pyflex_utils import center_object, random_pick_and_place
+from softgym.utils.pyflex_utils import random_pick_and_place, center_object
 
 class RopeFlattenNewEnv(RopeNewEnv):
     def __init__(self, cached_states_path='rope_flatten_new_init_states.pkl', **kwargs):
@@ -18,10 +18,12 @@ class RopeFlattenNewEnv(RopeNewEnv):
         self.prev_distance_diff = None
         self.get_cached_configs_and_states(cached_states_path, self.num_variations)
 
-    def generate_env_variation(self, config=None, num_variations=1, save_to_file=False, **kwargs):
+    def generate_env_variation(self, num_variations=1, config=None, save_to_file=False, **kwargs):
         """ Generate initial states. Note: This will also change the current states! """
         generated_configs, generated_states = [], []
-        default_config = config
+        if config is None:
+            config = self.get_default_config()
+        default_config = config            
         for i in range(num_variations):
             config = deepcopy(default_config)
             config['segment'] = self.get_random_rope_seg_num()
@@ -52,7 +54,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
         self.key_point_indices = self._get_key_point_idx(rope_particle_num)
 
         if hasattr(self, 'action_tool'):
-            curr_pos = pyflex.get_positions().reshape([-1, 4])[4:]  # a hack to remove the first 4 cloth particles
+            curr_pos = pyflex.get_positions().reshape([-1, 4])
             cx, cy = self._get_center_point(curr_pos)
             self.action_tool.reset([cx, 0.1, cy])
 
@@ -71,7 +73,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
         return
 
     def _get_endpoint_distance(self):
-        pos = pyflex.get_positions().reshape(-1, 4)[4:]  # a hack to remove tha false cloth particles
+        pos = pyflex.get_positions().reshape(-1, 4)
         p1, p2 = pos[0, :3], pos[-1, :3]
         return np.linalg.norm(p1 - p2).squeeze()
 

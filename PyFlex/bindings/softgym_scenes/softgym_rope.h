@@ -43,10 +43,10 @@ public:
 
 
 		int group = 0;
-		float bendStiffness = 0.8f;
-		float shearStiffness = 0.8f;
-		// Yufei: I am not sure why, but the render gives an error if I do not add this cloth here.
-		CreateSpringGrid(Vec3(-5, 0, 0.0f), 2, 2, 1, radius, NvFlexMakePhase(group++, eNvFlexPhaseSelfCollide), stretchstiffness, bendStiffness, shearStiffness, Vec3(0.0f), 1.1f);
+		// float bendStiffness = 0.8f;
+		// float shearStiffness = 0.8f;
+		// // Yufei: I am not sure why, but the render gives an error if I do not add this cloth here.
+		// CreateSpringGrid(Vec3(-5, 0, 0.0f), 2, 2, 1, radius, NvFlexMakePhase(group++, eNvFlexPhaseSelfCollide), stretchstiffness, bendStiffness, shearStiffness, Vec3(0.0f), 1.1f);
 
         Rope r;
 
