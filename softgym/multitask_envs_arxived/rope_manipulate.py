@@ -1,6 +1,4 @@
-from gym.spaces import Box, Dict
-import random
-import os
+from gym.spaces import Dict
 import os.path as osp
 import pyflex
 from softgym.core.multitask_env import MultitaskEnv

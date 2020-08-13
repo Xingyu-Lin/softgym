@@ -19,16 +19,7 @@ class RigidClothDropEnv(RigidClothEnv):
         super().__init__(**kwargs)
         assert self.action_tool.num_picker == 2  # Two drop points for this task
         self.prev_dist = None  # Should not be used until initialized
-        if not cached_states_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_states_path = osp.join(cur_dir, cached_states_path)
-        else:
-            self.cached_states_path = cached_states_path
-        success = self.get_cached_configs_and_states(cached_states_path)
-        if not success or not self.use_cached_states:
-            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
-            success = self.get_cached_configs_and_states(cached_states_path)
-            assert success
+        self.get_cached_configs_and_states(cached_states_path, self.num_variations)
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
@@ -99,7 +90,7 @@ class RigidClothDropEnv(RigidClothEnv):
         pyflex.set_positions(curr_pos)
         pyflex.step()
 
-    def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
+    def generate_env_variation(self, num_variations=1, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 500  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
@@ -148,10 +139,6 @@ class RigidClothDropEnv(RigidClothEnv):
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
-
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
         return generated_configs, generated_states
 
     def _reset(self):

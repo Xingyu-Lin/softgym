@@ -1,5 +1,4 @@
 import numpy as np
-import random
 import pickle
 import os.path as osp
 import pyflex
@@ -17,17 +16,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
 
         super().__init__(**kwargs)
         self.prev_distance_diff = None
-        if not cached_states_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_states_path = osp.join(cur_dir, cached_states_path)
-        else:
-            self.cached_states_path = cached_states_path
-
-        if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
-            config = self.get_default_config()
-            self.generate_env_variation(config, self.num_variations, save_to_file=self.save_cache_states)
-            success = self.get_cached_configs_and_states(cached_states_path)
-            assert success
+        self.get_cached_configs_and_states(cached_states_path, self.num_variations)
 
     def generate_env_variation(self, config=None, num_variations=1, save_to_file=False, **kwargs):
         """ Generate initial states. Note: This will also change the current states! """
@@ -48,9 +37,6 @@ class RopeFlattenNewEnv(RopeNewEnv):
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
 
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
         return generated_configs, generated_states
 
     def get_random_rope_seg_num(self):
@@ -66,7 +52,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
         self.key_point_indices = self._get_key_point_idx(rope_particle_num)
 
         if hasattr(self, 'action_tool'):
-            curr_pos = pyflex.get_positions().reshape([-1, 4])[4:] # a hack to remove the first 4 cloth particles
+            curr_pos = pyflex.get_positions().reshape([-1, 4])[4:]  # a hack to remove the first 4 cloth particles
             cx, cy = self._get_center_point(curr_pos)
             self.action_tool.reset([cx, 0.1, cy])
 
@@ -85,7 +71,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
         return
 
     def _get_endpoint_distance(self):
-        pos = pyflex.get_positions().reshape(-1, 4)[4:] # a hack to remove tha false cloth particles
+        pos = pyflex.get_positions().reshape(-1, 4)[4:]  # a hack to remove tha false cloth particles
         p1, p2 = pos[0, :3], pos[-1, :3]
         return np.linalg.norm(p1 - p2).squeeze()
 
@@ -101,10 +87,10 @@ class RopeFlattenNewEnv(RopeNewEnv):
         curr_distance_diff = -np.abs(curr_endpoint_dist - self.rope_length)
 
         performance = curr_distance_diff
-        performance_init =  performance if self.performance_init is None else self.performance_init  # Use the original performance
+        performance_init = performance if self.performance_init is None else self.performance_init  # Use the original performance
 
         return {
             'performance': performance,
             'normalized_performance': (performance - performance_init) / (self.reward_max - performance_init),
             'end_point_distance': curr_endpoint_dist
-            }
+        }

@@ -1,5 +1,4 @@
 import numpy as np
-import random
 import pickle
 import os.path as osp
 import pyflex
@@ -13,20 +12,7 @@ class RigidClothFoldEnv(RigidClothEnv):
         self.fold_group_a = self.fold_group_b = None
         self.init_pos, self.prev_dist = None, None
         super().__init__(**kwargs)
-
-        if not cached_states_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_states_path = osp.join(cur_dir, cached_states_path)
-        else:
-            self.cached_states_path = cached_states_path
-
-        if self.use_cached_states:
-            success = self.get_cached_configs_and_states(cached_states_path)
-
-        if not self.use_cached_states or not success:
-            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
-            success = self.get_cached_configs_and_states(cached_states_path)
-            assert success
+        self.get_cached_configs_and_states(cached_states_path, self.num_variations)
 
     def rotate_particles(self, angle):
         pos = pyflex.get_positions().reshape(-1, 4)
@@ -42,15 +28,12 @@ class RigidClothFoldEnv(RigidClothEnv):
         """ Size of just one piece"""
         return np.random.randint(8, 15), np.random.randint(10, 20)
 
-    def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
+    def generate_env_variation(self, num_variations=2, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 1000  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.2  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
-        if config is None:
-            default_config = self.get_default_config()
-        else:
-            default_config = config
+        default_config = self.get_default_config()
         for i in range(num_variations):
             config = deepcopy(default_config)
             self.update_camera(config['camera_name'], config['camera_params'][config['camera_name']])
@@ -80,11 +63,6 @@ class RigidClothFoldEnv(RigidClothEnv):
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
-
-        if save_to_file:
-            print('Saving to ', self.cached_states_path)
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         return generated_configs, generated_states
 

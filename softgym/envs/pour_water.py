@@ -3,23 +3,15 @@ from gym.spaces import Box
 
 import pyflex
 from softgym.envs.fluid_env import FluidEnv
-import time
 import copy
-import os
 from softgym.utils.misc import rotate_rigid_object, quatFromAxisAngle
-from pyquaternion import Quaternion
-import random
-from shapely.geometry import Polygon, LineString
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import yaml, pickle
-import os.path as osp
+from shapely.geometry import Polygon
 import random
 
 
 class PourWaterPosControlEnv(FluidEnv):
-    def __init__(self, observation_mode, action_mode, 
-                config=None, cached_states_path='pour_water_init_states.pkl', **kwargs):
+    def __init__(self, observation_mode, action_mode,
+                 config=None, cached_states_path='pour_water_init_states.pkl', **kwargs):
         '''
         This class implements a pouring water task.
         
@@ -34,24 +26,12 @@ class PourWaterPosControlEnv(FluidEnv):
         self.observation_mode = observation_mode
         self.action_mode = action_mode
         self.wall_num = 5  # number of glass walls. floor/left/right/front/back
-
         super().__init__(**kwargs)
-
-        if not cached_states_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_states_path = osp.join(cur_dir, cached_states_path)
-        else:
-            self.cached_states_path = cached_states_path
-
-        if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
-            if config is None:
-                config = self.get_default_config()
-            self.generate_env_variation(config, num_variations=self.num_variations, save_to_file=self.save_cache_states)
-
+        self.get_cached_configs_and_states(cached_states_path, self.num_variations)
         if observation_mode in ['point_cloud', 'key_point']:
             if observation_mode == 'key_point':
                 obs_dim = 0
-                obs_dim += 13 # Pos (x, z, theta) and shape (w, h, l) of the two cups and the water height. 
+                obs_dim += 13  # Pos (x, z, theta) and shape (w, h, l) of the two cups and the water height.
             else:
                 max_particle_num = 13 * 13 * 13 * 4
                 obs_dim = max_particle_num * 3
@@ -62,7 +42,6 @@ class PourWaterPosControlEnv(FluidEnv):
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
-
 
         default_config = self.get_default_config()
         border = default_config['glass']['border']
@@ -88,7 +67,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 'cohesion': 0.1,  # not actually used, instead, is computed as viscosity * 0.01
                 'viscosity': 2,
                 'surfaceTension': 0,
-                'adhesion': 0.0, # not actually used, instead, is computed as viscosity * 0.001
+                'adhesion': 0.0,  # not actually used, instead, is computed as viscosity * 0.001
                 'vorticityConfinement': 40,
                 'solidpressure': 0.,
                 'dim_x': 8,
@@ -106,7 +85,7 @@ class PourWaterPosControlEnv(FluidEnv):
         }
         return config
 
-    def generate_env_variation(self, config, num_variations=5, save_to_file=False, **kwargs):
+    def generate_env_variation(self, num_variations=5, config=None **kwargs):
         """
         TODO: add more randomly generated configs instead of using manually specified configs. 
         """
@@ -115,7 +94,8 @@ class PourWaterPosControlEnv(FluidEnv):
 
         self.cached_configs = []
         self.cached_init_states = []
-
+        if config is None:
+            config = self.get_default_config()
         config_variations = [copy.deepcopy(config) for _ in range(num_variations)]
         for idx in range(num_variations):
             print("pour water generate env variations {}".format(idx))
@@ -126,7 +106,7 @@ class PourWaterPosControlEnv(FluidEnv):
             water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef']
             if p < 0.5:  # midium water volumes
                 print("medium volume water")
-                dim_y = int(3.5 * m) 
+                dim_y = int(3.5 * m)
                 v = dim_x * dim_y * dim_z
                 h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 2
                 print("h {}".format(h))
@@ -137,7 +117,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 v = dim_x * dim_y * dim_z
                 h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 3
                 print("h {}".format(h))
-                glass_height = h  +  (m + np.random.rand()) * 0.001
+                glass_height = h + (m + np.random.rand()) * 0.001
 
             print("dim_x {} dim_y {} dim_z {} glass_height {}".format(dim_x, dim_y, dim_z, glass_height))
             config_variations[idx]['fluid']['dim_x'] = dim_x
@@ -158,10 +138,6 @@ class PourWaterPosControlEnv(FluidEnv):
             self.cached_init_states.append(init_state)
 
         combined = [self.cached_configs, self.cached_init_states]
-
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         return self.cached_configs, self.cached_init_states
 
@@ -318,11 +294,11 @@ class PourWaterPosControlEnv(FluidEnv):
             fluid_radius = self.fluid_params['radius'] * self.fluid_params['rest_dis_coef']
             # fluid_dis = np.array([1.2 * fluid_radius, fluid_radius * 0.45, 1.2 * fluid_radius])
             fluid_dis = np.array([1.0 * fluid_radius, fluid_radius * 0.5, 1.0 * fluid_radius])
-            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2. + self.glass_params['border'] 
-            lower_z = -self.glass_params['glass_dis_z'] / 2 + self.glass_params['border'] 
-            lower_y = self.glass_params['border'] 
+            lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 2. + self.glass_params['border']
+            lower_z = -self.glass_params['glass_dis_z'] / 2 + self.glass_params['border']
+            lower_y = self.glass_params['border']
             if self.action_mode in ['sawyer', 'franka']:
-                lower_y += 0.56 # NOTE: robotics table
+                lower_y += 0.56  # NOTE: robotics table
             lower = np.array([lower_x, lower_y, lower_z])
             cnt = 0
             rx = int(self.fluid_params['dim_x'] * 1)
@@ -341,7 +317,6 @@ class PourWaterPosControlEnv(FluidEnv):
                 # pyflex.render()
                 # time.sleep(0.1)
 
-
             state_dic = self.get_state()
             water_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
             in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
@@ -351,18 +326,18 @@ class PourWaterPosControlEnv(FluidEnv):
             while not_total_num > 0:
                 max_height_now = np.max(water_state[:, 1])
                 fluid_dis = np.array([1.0 * fluid_radius, fluid_radius * 1, 1.0 * fluid_radius])
-                lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 4 
-                lower_z = -self.glass_params['glass_dis_z'] / 4 
+                lower_x = self.glass_params['glass_x_center'] - self.glass_params['glass_dis_x'] / 4
+                lower_z = -self.glass_params['glass_dis_z'] / 4
                 lower_y = max_height_now
                 lower = np.array([lower_x, lower_y, lower_z])
-                cnt = 0 
+                cnt = 0
                 dim_x = config['fluid']['dim_x']
                 dim_z = config['fluid']['dim_z']
                 for w_idx in range(len(water_state)):
                     if not in_glass[w_idx]:
                         water_state[w_idx][:3] = lower + fluid_dis * np.array([cnt % dim_x, cnt // (dim_x * dim_z), (cnt // dim_x) % dim_z])
                         cnt += 1
-                
+
                 pyflex.set_positions(water_state)
                 for _ in range(40):
                     pyflex.step()
@@ -373,7 +348,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 in_glass = self.in_glass(water_state, self.glass_states, self.border, self.height)
                 not_in_glass = 1 - in_glass
                 not_total_num = np.sum(not_in_glass)
-            
+
             for _ in range(30):
                 pyflex.step()
                 # pyflex.render()
@@ -422,7 +397,7 @@ class PourWaterPosControlEnv(FluidEnv):
         good_water_num = np.sum(good_water)
 
         reward = float(good_water_num) / water_num
-        return  reward
+        return reward
 
     def _get_info(self):
         # Duplicate of the compute reward function!
@@ -436,7 +411,7 @@ class PourWaterPosControlEnv(FluidEnv):
         good_water_num = np.sum(good_water)
 
         performance = float(good_water_num) / water_num
-        performance_init =  performance if self.performance_init is None else self.performance_init  # Use the original performance
+        performance_init = performance if self.performance_init is None else self.performance_init  # Use the original performance
 
         return {
             'normalized_performance': (performance - performance_init) / (self.reward_max - performance_init),
@@ -462,7 +437,7 @@ class PourWaterPosControlEnv(FluidEnv):
         if not self.judge_glass_collide(new_states, theta) and self.above_floor(new_states, theta):
             self.glass_states = new_states
             self.glass_x, self.glass_y, self.glass_rotation = x, y, theta
-        else: # invalid move, old state becomes the same as the current state
+        else:  # invalid move, old state becomes the same as the current state
             self.glass_states[:, 3:6] = self.glass_states[:, :3].copy()
             self.glass_states[:, 10:] = self.glass_states[:, 6:10].copy()
 
@@ -642,10 +617,12 @@ class PourWaterPosControlEnv(FluidEnv):
 
         # build the corner of the front wall of the control glass
         r_corner1_relative_cord = np.array([self.border / 2., self.height / 2., self.glass_dis_z / 2 + self.border])
-        r_corner1_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner1_relative_cord)
+        r_corner1_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
+                                             relative=r_corner1_relative_cord)
 
         r_corner3_relative_cord = np.array([self.border / 2., -self.height / 2., self.glass_dis_z / 2 - self.border])
-        r_corner3_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation, relative=r_corner3_relative_cord)
+        r_corner3_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
+                                             relative=r_corner3_relative_cord)
 
         r_corner5_relative_cord = np.array([-self.border / 2., -self.height / 2., self.glass_dis_z / 2 + self.border])
         r_corner5_real = rotate_rigid_object(center=pouring_left_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
@@ -676,7 +653,7 @@ class PourWaterPosControlEnv(FluidEnv):
         '''
         judge all the floors are above the ground.
         '''
-        
+
         floor_center = states[0][:3]
         corner_relative = [
             np.array([self.glass_dis_x / 2., -self.border / 2., self.glass_dis_z / 2.]),
@@ -691,9 +668,9 @@ class PourWaterPosControlEnv(FluidEnv):
         ]
 
         for corner_rel in corner_relative:
-            corner_real = rotate_rigid_object(center=floor_center, axis=np.array([0, 0, -1]), angle=rotation, 
-                relative=corner_rel)
+            corner_real = rotate_rigid_object(center=floor_center, axis=np.array([0, 0, -1]), angle=rotation,
+                                              relative=corner_rel)
             if corner_real[1] < - self.border:
                 return False
-        
+
         return True

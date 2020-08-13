@@ -32,7 +32,7 @@ class ClothFoldDropEnv(ClothFoldEnv):
         }
         return config
 
-    def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
+    def generate_env_variation(self, num_variations=1, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 500  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.1  # Cloth stable when all particles' vel are smaller than this
@@ -86,9 +86,6 @@ class ClothFoldDropEnv(ClothFoldEnv):
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
 
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
         return generated_configs, generated_states
 
     def _reset(self):
