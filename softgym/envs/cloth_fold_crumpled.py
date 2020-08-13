@@ -1,27 +1,23 @@
 import numpy as np
 import random
-import pickle
-import os.path as osp
 import pyflex
 from copy import deepcopy
 from softgym.envs.cloth_fold import ClothFoldEnv
-from utils.pyflex_utils import center_object
+from softgym.utils.pyflex_utils import center_object
+
 
 class ClothFoldCrumpledEnv(ClothFoldEnv):
     def __init__(self, **kwargs):
         kwargs['cached_states_path'] = 'cloth_fold_crumpled_init_states.pkl'
         super().__init__(**kwargs)
 
-    def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True, config=None):
+    def generate_env_variation(self, num_variations=1, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
         generated_configs, generated_states = [], []
-        if config is None:
-            default_config = self.get_default_config()
-            default_config['flip_mesh'] = 1
-        else:
-            default_config = config
+        default_config = self.get_default_config()
+        default_config['flip_mesh'] = 1
 
         for i in range(num_variations):
             config = deepcopy(default_config)
@@ -75,12 +71,8 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
             generated_configs.append(deepcopy(config))
             generated_states.append(deepcopy(self.get_state()))
             self.current_config = config  # Needed in _set_to_flatten function
-
             print('config {}: camera params {}'.format(i, config['camera_params']))
 
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
         return generated_configs, generated_states
 
     def _reset(self):

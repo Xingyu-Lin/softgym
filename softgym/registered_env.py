@@ -2,7 +2,6 @@ from softgym.envs.pour_water import PourWaterPosControlEnv
 from softgym.envs.pour_water_amount import PourWaterAmountPosControlEnv
 from softgym.envs.pass_water import PassWater1DEnv
 from softgym.envs.pass_water_torus import PassWater1DTorusEnv
-from softgym.envs.rope_flatten import RopeFlattenEnv
 from softgym.envs.rope_flatten_new import RopeFlattenNewEnv
 from softgym.envs.rope_configuration import RopeConfigurationEnv
 from softgym.envs.cloth_flatten import ClothFlattenEnv
@@ -71,29 +70,17 @@ env_arg_dict = {
         'use_cached_states': True,
         'deterministic': False
     },
-
-    'RopeFlatten': {'observation_mode': 'cam_rgb',
-                    'action_mode': 'picker',
-                    'num_picker': 2,
-                    'render': True,
-                    'headless': True,
-                    'horizon': 75,
-                    'action_repeat': 8,
-                    'render_mode': 'cloth',
-                    'num_variations': 1000,
-                    'use_cached_states': True,
-                    'deterministic': False},
     'RopeConfiguration': {'observation_mode': 'cam_rgb',
-                     'action_mode': 'picker',
-                     'num_picker': 2,
-                     'render': True,
-                     'headless': True,
-                     'horizon': 100,  # this task is harder than just straigtening rope, therefore has larger horizon.
-                     'action_repeat': 8,
-                     'render_mode': 'cloth',
-                     'num_variations': 1000,
-                     'use_cached_states': True,
-                     'deterministic': False},
+                          'action_mode': 'picker',
+                          'num_picker': 2,
+                          'render': True,
+                          'headless': True,
+                          'horizon': 100,  # this task is harder than just straigtening rope, therefore has larger horizon.
+                          'action_repeat': 8,
+                          'render_mode': 'cloth',
+                          'num_variations': 1000,
+                          'use_cached_states': True,
+                          'deterministic': False},
 
     'RigidClothFold': {'observation_mode': 'cam_rgb',
                        'action_mode': 'picker',
@@ -305,7 +292,6 @@ SOFTGYM_ENVS = OrderedDict({
     'ClothFoldCrumpled': ClothFoldCrumpledEnv,
     'ClothFoldDrop': ClothFoldDropEnv,
     'RigidClothFold': RigidClothFoldEnv,
-    'RopeFlatten': RopeFlattenEnv,
     'RopeFlattenNew': RopeFlattenNewEnv,
     'RopeConfiguration': RopeConfigurationEnv,
     'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,

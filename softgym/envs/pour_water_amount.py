@@ -3,18 +3,9 @@ from gym.spaces import Box
 
 import pyflex
 from softgym.envs.pour_water import PourWaterPosControlEnv
-import time
 import copy
-import os
-from softgym.utils.misc import rotate_rigid_object, quatFromAxisAngle
-from pyquaternion import Quaternion
-import random
-from shapely.geometry import Polygon, LineString
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import yaml, pickle
-import os.path as osp
-import random
+from softgym.utils.misc import quatFromAxisAngle
+import pickle
 
 
 class PourWaterAmountPosControlEnv(PourWaterPosControlEnv):
@@ -124,22 +115,14 @@ class PourWaterAmountPosControlEnv(PourWaterPosControlEnv):
         else:
             self.set_state(states)
 
-    def generate_env_variation(self, config, num_variations=5, save_to_file=False, **kwargs):
+    def generate_env_variation(self, num_variations=5, **kwargs):
         """
         Just call PourWater1DPosControl's generate env variation, and then add the target amount.
         """
-
+        config = self.get_default_config()
         super_config = copy.deepcopy(config)
         super_config['target_amount'] = np.random.uniform(0.2, 1)
-        cached_configs, cached_init_states = super().generate_env_variation(config=super_config, 
-            num_variations=self.num_variations, save_to_file=False)
-
-        self.cached_configs, self.cached_init_states = cached_configs, cached_init_states
-        if save_to_file:
-            combined = [cached_configs, cached_init_states]
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
+        cached_configs, cached_init_states = super().generate_env_variation(config=super_config, num_variations=self.num_variations)
         return cached_configs, cached_init_states
 
     def _get_obs(self):

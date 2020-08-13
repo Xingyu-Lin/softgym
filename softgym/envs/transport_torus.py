@@ -40,17 +40,7 @@ class TransportTorus1D(FluidTorusEnv):
         self.reward_range = self.reward_max - self.reward_min
 
         super().__init__(**kwargs)
-
-        if not cached_states_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_states_path = osp.join(cur_dir, cached_states_path)
-        else:
-            self.cached_states_path = cached_states_path
-
-        if not self.use_cached_states or self.get_cached_configs_and_states(cached_states_path) is False:
-            if config is None:
-                config = self.get_default_config()
-            self.generate_env_variation(config, num_variations=self.num_variations, save_to_file=self.save_cache_states)
+        self.get_cached_configs_and_states(cached_states_path, self.num_variations)
 
         if observation_mode in ['point_cloud', 'key_point']:
             if observation_mode == 'key_point':
@@ -96,7 +86,7 @@ class TransportTorus1D(FluidTorusEnv):
         }
         return config
 
-    def generate_env_variation(self, config, num_variations=5, save_to_file=False, **kwargs):
+    def generate_env_variation(self, num_variations=5,  **kwargs):
         """
         TODO: add more randomly generated configs instead of using manually specified configs. 
         """
@@ -106,9 +96,9 @@ class TransportTorus1D(FluidTorusEnv):
         size_high = 0.28
         box_height_low = 0.1
         box_height_high = 0.3
-        self.cached_configs = []
-        self.cached_init_states = []
-
+        generated_configs = []
+        generated_init_states = []
+        config = self.get_default_config()
         config_variations = [copy.deepcopy(config) for _ in range(num_variations)]
         
         idx = 0
@@ -142,17 +132,13 @@ class TransportTorus1D(FluidTorusEnv):
             if self.set_scene(config_variations[idx]):
                 init_state = copy.deepcopy(self.get_state())
 
-                self.cached_configs.append(config_variations[idx])
-                self.cached_init_states.append(init_state)
+                generated_configs.append(config_variations[idx])
+                generated_init_states.append(init_state)
                 idx += 1
 
-        combined = [self.cached_configs, self.cached_init_states]
+        combined = [generated_configs, generated_init_states]
 
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        return self.cached_configs, self.cached_init_states
+        return generated_configs, generated_init_states
 
     def get_config(self):
         if self.deterministic:

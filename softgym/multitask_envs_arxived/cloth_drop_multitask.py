@@ -1,6 +1,4 @@
-from gym.spaces import Box, Dict
-import random
-import os
+from gym.spaces import Dict
 import os.path as osp
 import pyflex
 from softgym.envs.cloth_drop import ClothDropEnv
@@ -8,7 +6,7 @@ from softgym.core.multitask_env import MultitaskEnv
 import numpy as np
 import copy
 import pickle
-from utils.pyflex_utils import center_object, random_pick_and_place
+from softgym.utils.pyflex_utils import center_object, random_pick_and_place
 
 
 class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):

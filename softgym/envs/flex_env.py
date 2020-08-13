@@ -3,7 +3,7 @@ import copy
 from gym import error
 import numpy as np
 import gym
-from utils.visualization import save_numpy_as_gif
+from softgym.utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp
 import pickle
@@ -68,32 +68,37 @@ class FlexEnv(gym.Env):
         else:
             self.version = 1
 
-    def get_cached_configs_and_states(self, cached_states_path):
+    def get_cached_configs_and_states(self, cached_states_path, num_variations):
         """
         If the path exists, load from it. Should be a list of (config, states)
         :param cached_states_path:
         :return:
         """
-        if self.cached_configs is not None and self.cached_init_states is not None:
-            return True
-        if cached_states_path is None:
-            return False
+        if self.cached_configs is not None and self.cached_init_states is not None and len(self.cached_configs) == num_variations:
+            return self.cached_configs, self.cached_init_states
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
-            cached_states_path = osp.join(cur_dir, cached_states_path)
-        if not osp.exists(cached_states_path):
-            return False
-        with open(cached_states_path, "rb") as handle:
-            self.cached_configs, self.cached_init_states = pickle.load(handle)
-        print('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
+            cached_states_path = osp.join(cur_dir, '../cached_initial_states', cached_states_path)
+        if osp.exists(cached_states_path):
+            # Load from cached file
+            with open(cached_states_path, "rb") as handle:
+                self.cached_configs, self.cached_init_states = pickle.load(handle)
+            print('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
+            if len(self.cached_configs) == num_variations:
+                return self.cached_configs, self.cached_init_states
 
-        return True
+        self.cached_configs, self.cached_init_states = self.generate_env_variation(num_variations)
+        with open(cached_states_path, 'wb') as handle:
+            pickle.dump((self.cached_configs, self.cached_init_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
+        print('{} config and state pairs generated and saved to {}'.format(len(self.cached_init_states), cached_states_path))
+
+        return self.cached_configs, self.cached_init_states
 
     def get_default_config(self):
         """ Generate the default config of the environment scenes"""
         raise NotImplementedError
 
-    def generate_env_variation(self, num_variations, save_to_file=False, **kwargs):
+    def generate_env_variation(self, num_variations, **kwargs):
         """
         Generate a list of configs and states
         :return:

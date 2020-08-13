@@ -6,7 +6,7 @@ import sys
 from softgym.registered_env import  env_arg_dict
 import argparse
 import time
-from utils.visualization import save_numpy_as_gif
+from softgym.utils.visualization import save_numpy_as_gif
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--mode", type=str, default='debug')

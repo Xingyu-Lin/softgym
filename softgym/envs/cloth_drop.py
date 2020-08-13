@@ -15,20 +15,11 @@ class ClothDropEnv(ClothEnv):
         :param num_picker: Number of pickers if the aciton_mode is picker
         :param kwargs:
         """
-
         super().__init__(**kwargs)
+        self.get_cached_configs_and_states(cached_states_path, self.num_variations)
+
         assert self.action_tool.num_picker == 2  # Two drop points for this task
         self.prev_dist = None  # Should not be used until initialized
-        if not cached_states_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_states_path = osp.join(cur_dir, cached_states_path)
-        else:
-            self.cached_states_path = cached_states_path
-        success = self.get_cached_configs_and_states(cached_states_path)
-        if not success or not self.use_cached_states:
-            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
-            success = self.get_cached_configs_and_states(cached_states_path)
-            assert success
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
@@ -101,7 +92,7 @@ class ClothDropEnv(ClothEnv):
     def _sample_cloth_size(self):
         return np.random.randint(60, 100), np.random.randint(60, 100)
 
-    def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
+    def generate_env_variation(self, num_variations=1, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 500  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.1  # Cloth stable when all particles' vel are smaller than this
@@ -154,10 +145,6 @@ class ClothDropEnv(ClothEnv):
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
-
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
         return generated_configs, generated_states
 
     def _reset(self):

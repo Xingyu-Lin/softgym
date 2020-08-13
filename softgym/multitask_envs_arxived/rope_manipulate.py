@@ -1,6 +1,4 @@
-from gym.spaces import Box, Dict
-import random
-import os
+from gym.spaces import Dict
 import os.path as osp
 import pyflex
 from softgym.core.multitask_env import MultitaskEnv
@@ -8,7 +6,7 @@ from softgym.envs.rope_flatten import RopeFlattenEnv
 import numpy as np
 import copy
 import pickle
-from utils.pyflex_utils import center_object, random_pick_and_place
+from softgym.utils.pyflex_utils import center_object, random_pick_and_place
 
 class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
     def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='rope_manipulate_init_states.pkl', **kwargs):

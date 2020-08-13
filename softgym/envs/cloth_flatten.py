@@ -1,12 +1,10 @@
 import numpy as np
 import random
-import pickle
-import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
 from copy import deepcopy
-from utils.misc import vectorized_range, vectorized_meshgrid
-from utils.pyflex_utils import center_object
+from softgym.utils.misc import vectorized_range, vectorized_meshgrid
+from softgym.utils.pyflex_utils import center_object
 
 
 class ClothFlattenEnv(ClothEnv):
@@ -16,38 +14,11 @@ class ClothFlattenEnv(ClothEnv):
         :param num_picker: Number of pickers if the aciton_mode is picker
         :param kwargs:
         """
-
         super().__init__(**kwargs)
+        self.get_cached_configs_and_states(cached_states_path, self.num_variations)
         self.prev_covered_area = None  # Should not be used until initialized
-        if not cached_states_path.startswith('/'):
-            cur_dir = osp.dirname(osp.abspath(__file__))
-            self.cached_states_path = osp.join(cur_dir, cached_states_path)
-        else:
-            self.cached_states_path = cached_states_path
 
-        if self.use_cached_states:
-            success = self.get_cached_configs_and_states(cached_states_path)
-
-        if not self.use_cached_states or not success:
-            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
-            success = self.get_cached_configs_and_states(cached_states_path)
-            assert success
-
-    # def initialize_camera(self, make_multitask_happy=None):
-    #     """
-    #     set the camera width, height, position and angle.
-    #     **Note: width and height is actually the screen width and screen height of FLex.
-    #     I suggest to keep them the same as the ones used in pyflex.cpp.
-    #     """
-    #     self.camera_name = 'default_camera'
-    #     self.camera_params['default_camera'] = {
-    #         'pos': np.array([0., 4., 0.]),
-    #         'angle': np.array([0, -70 / 180. * np.pi, 0.]),
-    #         'width': self.camera_width,
-    #         'height': self.camera_height
-    #     }
-
-    def generate_env_variation(self, num_variations=1, save_to_file=False, vary_cloth_size=True):
+    def generate_env_variation(self, num_variations=1, vary_cloth_size=True):
         """ Generate initial states. Note: This will also change the current states! """
         max_wait_step = 300  # Maximum number of steps waiting for the cloth to stablize
         stable_vel_threshold = 0.01  # Cloth stable when all particles' vel are smaller than this
@@ -110,9 +81,6 @@ class ClothFlattenEnv(ClothEnv):
 
             print('config {}: camera params {}, flatten area: {}'.format(i, config['camera_params'], generated_configs[-1]['flatten_area']))
 
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
         return generated_configs, generated_states
 
     def _set_to_flatten(self):

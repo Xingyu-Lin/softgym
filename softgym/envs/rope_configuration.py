@@ -50,13 +50,13 @@ class RopeConfigurationEnv(RopeFlattenNewEnv):
             config['segment'] = 60
         return config
 
-    def generate_env_variation(self, config=None, num_variations=1, save_to_file=False, **kwargs):
+    def generate_env_variation(self, num_variations=1, **kwargs):
         """
         Just call RopeFlattenEnv's generate env variation, and then add the target character's position.
         """
         self.generate_alphabet_positions()
         self.generate_alphabet_image()
-        super_config = copy.deepcopy(config)
+        super_config = copy.deepcopy(self.get_default_config())
         del super_config["goal_character"]
         cached_configs, cached_init_states = super().generate_env_variation(config=super_config, 
             num_variations=self.num_variations, save_to_file=False)
@@ -67,12 +67,6 @@ class RopeConfigurationEnv(RopeFlattenNewEnv):
             cached_config['goal_character_pos'] = self.goal_characters_position[goal_character]
             cached_config['goal_character_img'] = self.goal_characters_image[goal_character]
             print("config {} GoalCharacter {}".format(idx, goal_character))
-
-        self.cached_configs, self.cached_init_states = cached_configs, cached_init_states
-        if save_to_file:
-            combined = [self.cached_configs, self.cached_init_states]
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump(combined, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         return cached_configs, cached_init_states
         

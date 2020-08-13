@@ -10,7 +10,7 @@ args.add_argument("--N", type=int, default=1)
 args.add_argument("--obs_mode", type=str, default='cam_rgb')
 args.add_argument("--use_cached_states", type=str, default=False)
 args = args.parse_args()
-from utils.visualization import save_numpy_as_gif
+from softgym.utils.visualization import save_numpy_as_gif
 
 def get_particle_max_y():
     import pyflex

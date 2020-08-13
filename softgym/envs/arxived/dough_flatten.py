@@ -5,7 +5,7 @@ from softgym.envs.arxived.dough_env import DoughEnv
 from copy import deepcopy
 
 from softgym.utils.misc import quatFromAxisAngle
-from utils.pyflex_utils import center_object, random_pick_and_place
+from softgym.utils.pyflex_utils import center_object, random_pick_and_place
 
 class DoughFlattenEnv(DoughEnv):
     def __init__(self, cached_states_path='dough_flatten_init_states.pkl', num_variations=2, **kwargs):
