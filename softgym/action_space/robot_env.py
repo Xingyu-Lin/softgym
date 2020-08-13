@@ -1,5 +1,5 @@
 import numpy as np
-from softgym.envs.action_space import ActionToolBase
+from softgym.action_space.action_space import ActionToolBase
 from gym.spaces import Box
 import pyflex
 

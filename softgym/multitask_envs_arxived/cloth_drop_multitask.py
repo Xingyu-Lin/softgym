@@ -8,10 +8,11 @@ from softgym.core.multitask_env import MultitaskEnv
 import numpy as np
 import copy
 import pickle
+from utils.pyflex_utils import center_object, random_pick_and_place
 
 
 class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):
-    def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='cloth_drop_multitask_init_states.pkl' ,**kwargs):
+    def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='cloth_drop_multitask_init_states.pkl', **kwargs):
         '''
         Wrap cloth flatten to be goal conditioned cloth manipulation.
         The goal is a random cloth state.
@@ -26,7 +27,7 @@ class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):
         ClothDropEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
 
         self.state_goal = None
-        
+
         # TODO: the observation space here might be a bit different from that of the underlying environment.
         self.observation_space = Dict([
             ('observation', self.observation_space),
@@ -56,7 +57,7 @@ class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):
         goal_dict = {}
         goal_num = self.goal_num
         for idx in range(len(generated_configs)):
-            if self.goal_sampling_mode == 'fixed_goal': # fpr better generate the fixed goal states
+            if self.goal_sampling_mode == 'fixed_goal':  # fpr better generate the fixed goal states
                 ClothDropEnv.set_scene(self, generated_configs[idx])
                 self.action_tool.reset([0., -1., 0.])
                 goals = self.sample_goals(goal_num)
@@ -86,9 +87,9 @@ class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):
             for _ in range(batch_size):
                 print("sample goals idx {}".format(_))
                 self.set_state(initial_state)
-                self._random_pick_and_place(pick_num=2)
+                random_pick_and_place(pick_num=2)
 
-                self._center_object()
+                center_object()
                 env_state = copy.deepcopy(self.get_state())
                 goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
 
@@ -138,7 +139,6 @@ class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):
         '''
         self.resample_goals()
         return ClothDropEnv._reset(self)
-        
 
     def resample_goals(self):
         goal_idx = np.random.randint(len(self.cached_goal_dicts[self.current_config_id]["state_desired_goal"]))
@@ -201,7 +201,7 @@ class ClothDropGoalConditionedEnv(ClothDropEnv, MultitaskEnv):
             particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
             goal[:len(particle_pos)] = particle_pos
 
-            if self.action_mode in ['sphere', 'picker']: # should just set as random shape positions
+            if self.action_mode in ['sphere', 'picker']:  # should just set as random shape positions
                 shapes = pyflex.get_shape_states()
                 shapes = np.reshape(shapes, [-1, 14])
                 shape_pos = shapes[:, :3].flatten()

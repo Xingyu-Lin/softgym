@@ -1,7 +1,7 @@
 import numpy as np
 import pyflex
 from softgym.envs.cloth_flatten import ClothFlattenEnv
-from softgym.envs.cloth_manipulate import ClothManipulateEnv
+from softgym.multitask_envs_arxived.cloth_manipulate import ClothManipulateEnv
 # from softgym.utils.visualization import save_numpy_to_gif_matplotlib
 import torch, torchvision, cv2
 from softgym.registered_env import  env_arg_dict

@@ -1,10 +1,8 @@
-import gym
 import numpy as np
 import pyflex
 from softgym.envs.rope_alphabet import RopeAlphaBetEnv
-from softgym.envs.rope_manipulate import RopeManipulateEnv
-import os, argparse, sys
-import softgym
+from softgym.multitask_envs_arxived.rope_manipulate import RopeManipulateEnv
+import sys
 from matplotlib import pyplot as plt
 import torch, torchvision, cv2
 from softgym.registered_env import  env_arg_dict

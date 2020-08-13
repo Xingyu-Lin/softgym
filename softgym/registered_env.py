@@ -14,8 +14,8 @@ from softgym.envs.rigid_cloth_fold import RigidClothFoldEnv
 
 from softgym.multitask_envs_arxived.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
 from softgym.multitask_envs_arxived.pass_water_multitask import PassWater1DGoalConditionedEnv
-from softgym.envs.cloth_manipulate import ClothManipulateEnv
-from softgym.envs.rope_manipulate import RopeManipulateEnv
+from softgym.multitask_envs_arxived.cloth_manipulate import ClothManipulateEnv
+from softgym.multitask_envs_arxived.rope_manipulate import RopeManipulateEnv
 from softgym.multitask_envs_arxived.cloth_drop_multitask import ClothDropGoalConditionedEnv
 from softgym.multitask_envs_arxived.cloth_fold_multitask import ClothFoldGoalConditionedEnv
 from collections import OrderedDict

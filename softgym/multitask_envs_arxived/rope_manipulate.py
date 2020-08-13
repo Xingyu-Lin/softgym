@@ -8,6 +8,7 @@ from softgym.envs.rope_flatten import RopeFlattenEnv
 import numpy as np
 import copy
 import pickle
+from utils.pyflex_utils import center_object, random_pick_and_place
 
 class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
     def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='rope_manipulate_init_states.pkl', **kwargs):
@@ -23,7 +24,7 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
         RopeFlattenEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
 
         self.state_goal = None
-        
+
         self.observation_space = Dict([
             ('observation', self.observation_space),
             ('state_observation', self.observation_space),
@@ -47,12 +48,12 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
         print('{} config, state and goal pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
         return True
 
-    def generate_env_variation(self,num_variations=4, save_to_file=False):
+    def generate_env_variation(self, num_variations=4, save_to_file=False):
         generated_configs, generated_init_states = RopeFlattenEnv.generate_env_variation(self, num_variations=num_variations)
         goal_dict = {}
         goal_num = self.goal_num
         for idx in range(len(generated_configs)):
-            if self.goal_sampling_mode == 'fixed_goal': # for better generating the goal states
+            if self.goal_sampling_mode == 'fixed_goal':  # for better generating the goal states
                 RopeFlattenEnv.set_scene(self, generated_configs[idx])
                 self.action_tool.reset([0., -1., 0.])
                 goals = self.sample_goals(goal_num)
@@ -82,9 +83,9 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
             for _ in range(batch_size):
                 print("sample goals idx {}".format(_))
                 self.set_state(initial_state)
-                self._random_pick_and_place(pick_num=2)
+                random_pick_and_place(pick_num=2)
 
-                self._center_object()
+                center_object()
                 env_state = copy.deepcopy(self.get_state())
                 goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
 
@@ -94,7 +95,7 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
             curr_pos[:, 1] = 0.05  # Set the rope flatten on the ground. Assume that the particle radius is 0.05
             pyflex.set_positions(curr_pos)
 
-            self._center_object()
+            center_object()
             env_state = copy.deepcopy(self.get_state())
             goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
             for _ in range(batch_size):
@@ -106,7 +107,6 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
             'desired_goal': goal_observations,
             'state_desired_goal': goal_observations,
         }
-
 
     def compute_reward(self, action, obs, set_prev_reward=False, info=None):
         """reward is the l2 distance between the goal state and the current state."""
@@ -135,7 +135,7 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
         """
         self.resample_goals()
         return RopeFlattenEnv._reset(self)
-        
+
     def resample_goals(self):
         goal_idx = np.random.randint(len(self.cached_goal_dicts[self.current_config_id]["state_desired_goal"]))
 
@@ -194,12 +194,12 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
         obs = obs.reshape((1, -1))
         if self.observation_mode == 'point_cloud':
             n = pyflex.get_n_particles()
-            goal = np.zeros(self.particle_obs_dim) # all particle positions 
-            goal_particle_pos = self.state_goal[0][:n*4].reshape([-1, 4])[:, :3]
+            goal = np.zeros(self.particle_obs_dim)  # all particle positions
+            goal_particle_pos = self.state_goal[0][:n * 4].reshape([-1, 4])[:, :3]
             goal_particle_pos = goal_particle_pos.flatten()
             goal[:len(goal_particle_pos)] = goal_particle_pos
-            
-            if self.action_mode in ['sphere', 'picker']: # should just set as random shape positions
+
+            if self.action_mode in ['sphere', 'picker']:  # should just set as random shape positions
                 shapes = pyflex.get_shape_states()
                 shapes = np.reshape(shapes, [-1, 14])
                 shape_pos = shapes[:, :3].flatten()

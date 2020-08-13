@@ -1,15 +1,12 @@
-from gym.spaces import Box, Dict
-import random
-import os
+from gym.spaces import Dict
 import os.path as osp
 import pyflex
 from softgym.envs.cloth_flatten import ClothFlattenEnv
 from softgym.core.multitask_env import MultitaskEnv
-from softgym.envs.action_space import PickerPickPlace
 import numpy as np
 import copy
 import pickle
-
+from utils.pyflex_utils import center_object, random_pick_and_place
 
 class ClothManipulateEnv(ClothFlattenEnv, MultitaskEnv):
     def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='cloth_manipulate_init_states.pkl' ,**kwargs):
@@ -82,9 +79,9 @@ class ClothManipulateEnv(ClothFlattenEnv, MultitaskEnv):
             for _ in range(batch_size):
                 print("sample goals idx {}".format(_))
                 self.set_state(initial_state)
-                self._random_pick_and_place(pick_num=2)
+                random_pick_and_place(pick_num=2)
 
-                self._center_object()
+                center_object()
                 env_state = copy.deepcopy(self.get_state())
                 goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
 
@@ -112,7 +109,7 @@ class ClothManipulateEnv(ClothFlattenEnv, MultitaskEnv):
             
             pyflex.set_positions(cloth_pos)
 
-            self._center_object()
+            center_object()
             env_state = copy.deepcopy(self.get_state())
             goal = np.concatenate([env_state['particle_pos'], env_state['particle_vel'], env_state['shape_pos']])
             for _ in range(batch_size):

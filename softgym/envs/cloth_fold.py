@@ -5,7 +5,7 @@ import os.path as osp
 import pyflex
 from copy import deepcopy
 from softgym.envs.cloth_env import ClothEnv
-
+from utils.pyflex_utils import center_object
 
 class ClothFoldEnv(ClothEnv):
     def __init__(self, cached_states_path='cloth_fold_init_states.pkl', **kwargs):
@@ -76,7 +76,7 @@ class ClothFoldEnv(ClothEnv):
                 if np.alltrue(np.abs(curr_vel) < stable_vel_threshold):
                     break
 
-            self._center_object()
+            center_object()
             angle = (np.random.random() - 0.5) * np.pi / 2
             self.rotate_particles(angle)
 

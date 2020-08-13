@@ -5,7 +5,7 @@ import os.path as osp
 import pyflex
 from copy import deepcopy
 from softgym.envs.cloth_fold import ClothFoldEnv
-
+from utils.pyflex_utils import center_object
 
 class ClothFoldCrumpledEnv(ClothFoldEnv):
     def __init__(self, **kwargs):
@@ -67,7 +67,7 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
 
-            self._center_object()
+            center_object()
 
             if self.action_mode == 'sphere' or self.action_mode.startswith('picker'):
                 curr_pos = pyflex.get_positions()

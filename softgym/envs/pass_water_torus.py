@@ -5,12 +5,9 @@ import pyflex
 from softgym.envs.fluid_rigid_env import FluidTorusEnv
 import time
 import copy
-import os
-from softgym.envs.util import quatFromAxisAngle
-from softgym.envs.robot_env import RobotBase
-from pyquaternion import Quaternion
-import random
-import yaml, pickle
+from softgym.utils.misc import quatFromAxisAngle
+from softgym.action_space.robot_env import RobotBase
+import pickle
 import os.path as osp
 
 

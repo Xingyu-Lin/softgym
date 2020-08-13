@@ -1,4 +1,4 @@
-from softgym.envs.cloth_manipulate import ClothManipulateEnv
+from softgym.multitask_envs_arxived.cloth_manipulate import ClothManipulateEnv
 import numpy as np
 from matplotlib import pyplot as plt
 

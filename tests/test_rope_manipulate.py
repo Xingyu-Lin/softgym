@@ -1,4 +1,4 @@
-from softgym.envs.rope_manipulate import RopeManipulateEnv
+from softgym.multitask_envs_arxived.rope_manipulate import RopeManipulateEnv
 import numpy as np
 from matplotlib import pyplot as plt
 

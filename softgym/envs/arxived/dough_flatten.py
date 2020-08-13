@@ -1,15 +1,11 @@
 import numpy as np
-import random
 import pickle
-import os.path as osp
 import pyflex
-from softgym.envs.dough_env import DoughEnv
-import scipy
-import copy
+from softgym.envs.arxived.dough_env import DoughEnv
 from copy import deepcopy
 
-from softgym.envs.util import quatFromAxisAngle
-
+from softgym.utils.misc import quatFromAxisAngle
+from utils.pyflex_utils import center_object, random_pick_and_place
 
 class DoughFlattenEnv(DoughEnv):
     def __init__(self, cached_states_path='dough_flatten_init_states.pkl', num_variations=2, **kwargs):
@@ -121,8 +117,8 @@ class DoughFlattenEnv(DoughEnv):
             config['camera_params'] = deepcopy(self.camera_params)
             self.action_tool.reset([0., -1., 0.])
 
-            self._random_pick_and_place(pick_num=10)
-            self._center_object()
+            random_pick_and_place(pick_num=10)
+            center_object()
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))

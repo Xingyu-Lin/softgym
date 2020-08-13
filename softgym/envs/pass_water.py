@@ -3,14 +3,11 @@ from gym.spaces import Box
 
 import pyflex
 from softgym.envs.fluid_env import FluidEnv
-import time
 import copy
-import os
-from softgym.envs.util import quatFromAxisAngle
-from softgym.envs.robot_env import RobotBase
-from pyquaternion import Quaternion
+from softgym.utils.misc import quatFromAxisAngle
+from softgym.action_space.robot_env import RobotBase
 import random
-import yaml, pickle
+import pickle
 import os.path as osp
 
 

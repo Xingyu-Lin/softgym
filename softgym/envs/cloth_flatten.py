@@ -6,6 +6,7 @@ import pyflex
 from softgym.envs.cloth_env import ClothEnv
 from copy import deepcopy
 from utils.misc import vectorized_range, vectorized_meshgrid
+from utils.pyflex_utils import center_object
 
 
 class ClothFlattenEnv(ClothEnv):
@@ -97,15 +98,15 @@ class ClothFlattenEnv(ClothEnv):
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
 
-            self._center_object()
+            center_object()
 
             if self.action_mode == 'sphere' or self.action_mode.startswith('picker'):
                 curr_pos = pyflex.get_positions()
                 self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
             generated_configs.append(deepcopy(config))
             generated_states.append(deepcopy(self.get_state()))
-            self.current_config = config # Needed in _set_to_flatten function
-            generated_configs[-1]['flatten_area'] = self._set_to_flatten() # Record the maximum flatten area
+            self.current_config = config  # Needed in _set_to_flatten function
+            generated_configs[-1]['flatten_area'] = self._set_to_flatten()  # Record the maximum flatten area
 
             print('config {}: camera params {}, flatten area: {}'.format(i, config['camera_params'], generated_configs[-1]['flatten_area']))
 

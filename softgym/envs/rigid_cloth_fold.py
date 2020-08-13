@@ -5,6 +5,7 @@ import os.path as osp
 import pyflex
 from copy import deepcopy
 from softgym.envs.rigid_cloth_env import RigidClothEnv
+from softgym.utils.pyflex_utils import center_object
 
 
 class RigidClothFoldEnv(RigidClothEnv):
@@ -70,12 +71,12 @@ class RigidClothFoldEnv(RigidClothEnv):
                 if np.alltrue(np.abs(curr_vel) < stable_vel_threshold):
                     break
 
-            self._center_object()
+            center_object()
 
             keypoints = self._get_key_point_idx()[4:]
             pos = pyflex.get_positions().reshape(-1, 4)
             pos[keypoints, 3] = 0
-            pyflex.set_positions(pos.flatten()) # Nail one of the plates on the ground
+            pyflex.set_positions(pos.flatten())  # Nail one of the plates on the ground
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
@@ -92,10 +93,10 @@ class RigidClothFoldEnv(RigidClothEnv):
         angle = (np.random.random() - 0.5) * np.pi / 2
         self.rotate_particles(angle)
         if hasattr(self, 'action_tool'):
-            x, y = np.mean(pyflex.get_positions().reshape((-1, 4))[self._get_key_point_idx()[:4]][:, (0,2)], axis=0)
+            x, y = np.mean(pyflex.get_positions().reshape((-1, 4))[self._get_key_point_idx()[:4]][:, (0, 2)], axis=0)
             x_off = np.random.random() * 0.1 - 0.05
             y_off = np.random.random() * 0.1 - 0.05
-            self.action_tool.reset([x+x_off, 0.1, y + y_off])
+            self.action_tool.reset([x + x_off, 0.1, y + y_off])
             # picker_low = self.action_tool.picker_low
             # picker_high = self.action_tool.picker_high
             # offset_x = self.action_tool._get_pos()[0][0][0] - picker_low[0] - 0.3
