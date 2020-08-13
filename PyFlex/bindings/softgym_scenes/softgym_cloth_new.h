@@ -55,7 +55,7 @@ public:
 		float shearStiffness = ptr[7]; //0.9f;
 		int phase = NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseSelfCollideFilter);
 		float mass = float(ptr[17])/(dimx*dimz);	// avg bath towel is 500-700g
-		int flip_mesh = int(ptr[18]); // Flip half
+        int flip_mesh = int(ptr[18]); // Flip half
 	    CreateSpringGrid(Vec3(initX, -initY, initZ), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness, shearStiffness, 0.0f, 1.0f/mass);
 	    // Flip the last half of the mesh for the folding task
 	    if (flip_mesh)

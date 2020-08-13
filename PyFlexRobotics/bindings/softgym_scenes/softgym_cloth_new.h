@@ -67,8 +67,33 @@ public:
 		float shearStiffness = ptr[7]; //0.9f;
 		int phase = NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseSelfCollideFilter);
 		float mass = float(ptr[17])/(dimx*dimz);	// avg bath towel is 500-700g
+        int flip_mesh = int(ptr[18]); // Flip half
 	    CreateSpringGrid(Vec3(initX, -initY, initZ), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness, shearStiffness, 0.0f, 1.0f/mass);
+	    // Flip the last half of the mesh for the folding task
+	    if (flip_mesh)
+	    {
+	        int size = g_buffers->triangles.size();
+//	        for (int j=int((dimz-1)*3/8); j<int((dimz-1)*5/8); ++j)
+//	            for (int i=int((dimx-1)*1/8); i<int((dimx-1)*3/8); ++i)
+//	            {
+//	                int idx = j *(dimx-1) + i;
+//
+//	                if ((i!=int((dimx-1)*3/8-1)) && (j!=int((dimz-1)*3/8)))
+//	                    swap(g_buffers->triangles[idx* 3 * 2], g_buffers->triangles[idx*3*2+1]);
+//	                if ((i != int((dimx-1)*1/8)) && (j!=int((dimz-1)*5/8)-1))
+//	                    swap(g_buffers->triangles[idx* 3 * 2 +3], g_buffers->triangles[idx*3*2+4]);
+//                }
+	        for (int j=0; j<int((dimz-1)); ++j)
+	            for (int i=int((dimx-1)*1/8); i<int((dimx-1)*1/8)+5; ++i)
+	            {
+	                int idx = j *(dimx-1) + i;
 
+	                if ((i!=int((dimx-1)*1/8+4)))
+	                    swap(g_buffers->triangles[idx* 3 * 2], g_buffers->triangles[idx*3*2+1]);
+	                if ((i != int((dimx-1)*1/8)))
+	                    swap(g_buffers->triangles[idx* 3 * 2 +3], g_buffers->triangles[idx*3*2+4]);
+                }
+        }
 		g_numSubsteps = 4;
 		g_params.numIterations = 30;
 
@@ -92,10 +117,10 @@ public:
         g_drawSprings = false;
 
 
-        // table
+        // Table
         NvFlexRigidShape table;
         // Half x, y, z
-        NvFlexMakeRigidBoxShape(&table, -1, 0.27f, 0.55f, 0.3f, NvFlexMakeRigidPose(Vec3(-0.04f, 0.0f, 0.0f), Quat()));
+        NvFlexMakeRigidBoxShape(&table, -1, 0.64f, 0.55f, 0.4f, NvFlexMakeRigidPose(Vec3(0.0f, 0.0f, 0.0f), Quat()));
         table.filter = 0;
         table.material.friction = 0.95f;
 		table.user = UnionCast<void*>(AddRenderMaterial(Vec3(0.35f, 0.45f, 0.65f)));
@@ -108,29 +133,29 @@ public:
         g_buffers->rigidBodies.push_back(body);
 
         // Box object
-        float scaleBox = 0.05f;
-        float densityBox = 2000000000.0f;
+//        float scaleBox = 0.05f;
+//        float densityBox = 2000000000.0f;
 
-        Mesh* boxMesh = ImportMesh(make_path(boxMeshPath, "/data/box.ply"));
-        boxMesh->Transform(ScaleMatrix(scaleBox));
+//        Mesh* boxMesh = ImportMesh(make_path(boxMeshPath, "/data/box.ply"));
+//        boxMesh->Transform(ScaleMatrix(scaleBox));
+//
+//        NvFlexTriangleMeshId boxId = CreateTriangleMesh(boxMesh, 0.00125f);
+//
+//        NvFlexRigidShape box;
+//        NvFlexMakeRigidTriangleMeshShape(&box, g_buffers->rigidBodies.size(), boxId, NvFlexMakeRigidPose(0, 0), 1.0f, 1.0f, 1.0f);
+//        box.filter = 0x0;
+//        box.material.friction = 1.0f;
+//        box.material.torsionFriction = 0.1;
+//        box.material.rollingFriction = 0.0f;
+//        box.thickness = 0.00125f;
+//
+//        NvFlexRigidBody boxBody;
+//        NvFlexMakeRigidBody(g_flexLib, &boxBody, Vec3(0.21f, 0.7f, -0.1375f), Quat(), &box, &density, 1);
+//
+//        g_buffers->rigidBodies.push_back(boxBody);
+//        g_buffers->rigidShapes.push_back(box);
 
-        NvFlexTriangleMeshId boxId = CreateTriangleMesh(boxMesh, 0.00125f);
-
-        NvFlexRigidShape box;
-        NvFlexMakeRigidTriangleMeshShape(&box, g_buffers->rigidBodies.size(), boxId, NvFlexMakeRigidPose(0, 0), 1.0f, 1.0f, 1.0f);
-        box.filter = 0x0;
-        box.material.friction = 1.0f;
-        box.material.torsionFriction = 0.1;
-        box.material.rollingFriction = 0.0f;
-        box.thickness = 0.00125f;
-
-        NvFlexRigidBody boxBody;
-        NvFlexMakeRigidBody(g_flexLib, &boxBody, Vec3(0.21f, 0.7f, -0.1375f), Quat(), &box, &density, 1);
-
-        g_buffers->rigidBodies.push_back(boxBody);
-        g_buffers->rigidShapes.push_back(box);
-
-        g_params.numPostCollisionIterations = 15;
+//        g_params.numPostCollisionIterations = 15;
 
     }
 

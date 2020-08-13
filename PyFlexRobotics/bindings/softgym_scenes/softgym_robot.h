@@ -39,4 +39,7 @@ public:
 	{
 		return false;
 	}
+	virtual void Step(py::array_t<float> control_params = py::array_t<float>()) {}
+	virtual void SetState(py::array_t<float> robot_state = py::array_t<float>()) {}
+	virtual py::array_t<float> GetState() {}
 };

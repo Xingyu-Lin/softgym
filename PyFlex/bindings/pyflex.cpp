@@ -478,6 +478,7 @@ float g_waveFrequency = 1.5f;
 float g_waveAmplitude = 1.0f;
 float g_waveFloorTilt = 0.0f;
 
+Vec3 g_shape_color=Vec3(0.9);
 Vec3 g_sceneLower;
 Vec3 g_sceneUpper;
 
@@ -1641,7 +1642,7 @@ void DrawShapes() {
         auto type = int(flags & eNvFlexShapeFlagTypeMask);
         //bool dynamic = int(flags&eNvFlexShapeFlagDynamic) > 0;
 
-        Vec3 color = Vec3(0.9f);
+        Vec3 color = g_shape_color;
 
         if (flags & eNvFlexShapeFlagTrigger) {
             // printf("there is a trigger shape! \n");
@@ -3680,6 +3681,12 @@ py::array_t<float> pyflex_get_shape_states() {
     return states;
 }
 
+void pyflex_set_shape_color(py::array_t<float> color) {
+    auto buf = color.request();
+    auto ptr = (float *) buf.ptr;
+    for (int i=0; i<3; ++i) g_shape_color[i] = ptr[i];
+}
+
 void pyflex_set_shape_states(py::array_t<float> states) {
     pyflex_MapShapeBuffers(g_buffers);
 
@@ -4092,4 +4099,5 @@ PYBIND11_MODULE(pyflex, m) {
     m.def("get_scene_lower", &pyflex_get_sceneLower);
 
     m.def("add_rigid_body", &pyflex_add_rigid_body);
+    m.def("set_shape_color", &pyflex_set_shape_color, "Set the color of the shape");
 }

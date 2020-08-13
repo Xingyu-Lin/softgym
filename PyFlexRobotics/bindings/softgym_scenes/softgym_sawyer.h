@@ -23,6 +23,8 @@ public:
     float fingerWidthMin = 0.0f;
     float fingerWidthMax = 0.05f;
     float roll, pitch, yaw;
+    std::vector<float*> ptrRotation{&roll, &pitch, &yaw};
+
     float numpadJointTraSpeed = 0.1f / 60.f; // 10cm/s under 60 fps
     float numpadJointRotSpeed = 10 / 60.f; // 10 deg/s under 60 fps
     float numpadJointRotDir = 1.f; // direction of rotation
@@ -37,6 +39,7 @@ public:
     void Initialize(py::array_t<float> robot_params = py::array_t<float>())
     {
         cout<<"InitializeRobot"<<endl;
+        auto ptr = (float *) robot_params.request().ptr;
         g_numSubsteps = 4;
 		g_params.numIterations = 30;
 		g_params.numPostCollisionIterations = 10;
@@ -50,7 +53,7 @@ public:
 
         urdf = new URDFImporter(make_path(urdfPath, "/data/sawyer"), "/sawyer_description/urdf/sawyer_with_gripper.urdf", false,  0.005f, 0.005f, true, 20, false); // sawyer_with_gripper.urdf
 
-		Transform gt(Vec3(0.0f, 0.925f, -0.7f), QuatFromAxisAngle(Vec3(0.0f, 1.0f, 0.0f), -kPi * 0.5f)
+		Transform gt(Vec3(0.0f, 0.925f, -0.7f), QuatFromAxisAngle(Vec3(0.0f, 1.0f, 0.0f), -kPi * 0.5f) // was -0.7
 					* QuatFromAxisAngle(Vec3(1.0f, 0.0f, 0.0f), -kPi * 0.5f));
 
 		// hide collision shapes
@@ -78,7 +81,6 @@ public:
         // fix base in place, todo: add a kinematic body flag?
         g_buffers->rigidBodies[0].invMass = 0.0f;
         (Matrix33&)g_buffers->rigidBodies[0].invInertia = Matrix33();
-
         fingerLeft = urdf->jointNameMap["r_gripper_l_finger_joint"];
         fingerRight = urdf->jointNameMap["r_gripper_r_finger_joint"];
 		fingerWidthMin = 0.002f;
@@ -123,8 +125,54 @@ public:
 			0.f, // minRange
 			5.f // maxRange
 		};
+        if (g_render)
+            AddSensor(g_screenWidth, g_screenHeight,  0,  Transform(Vec3(0.0f, 3.f, 3.5f), rpy2quat(2.7415926f, 0.0f, 0.0f)),  DegToRad(60.f), hasFluids, p);
+    }
 
-        AddSensor(g_screenWidth, g_screenHeight,  0,  Transform(Vec3(0.0f, 3.f, 3.5f), rpy2quat(2.7415926f, 0.0f, 0.0f)),  DegToRad(60.f), hasFluids, p);
+    virtual py::array_t<float> GetState()
+    {
+        g_buffers->rigidJoints.map();
+        auto robot_state = py::array_t<float>((size_t) (int)g_buffers->rigidJoints.size() * 7);
+        auto ptr = (float *) robot_state.request().ptr;
+        for (int i = 0; i < (int) g_buffers->rigidJoints.size(); i++)
+        {
+            NvFlexRigidJoint& joint = g_buffers->rigidJoints[i];
+            ptr[i * 7] = joint.pose0.p[0];
+            ptr[i * 7 + 1] = joint.pose0.p[1];
+            ptr[i * 7 + 2] = joint.pose0.p[2];
+            ptr[i * 7 + 3] = joint.pose0.q[0];
+            ptr[i * 7 + 4] = joint.pose0.q[1];
+            ptr[i * 7 + 5] = joint.pose0.q[2];
+            ptr[i * 7 + 6] = joint.pose0.q[3];
+        }
+        g_buffers->rigidJoints.unmap();
+
+        return robot_state;
+    }
+
+    virtual void SetState(py::array_t<float> robot_state = py::array_t<float>())
+    {
+        g_buffers->rigidJoints.map();
+        auto ptr = (float *) robot_state.request().ptr;
+        for (int i = 0; i < (int) g_buffers->rigidJoints.size(); i++)
+        {
+            NvFlexRigidJoint& joint = g_buffers->rigidJoints[i];
+            joint.pose0.p[0] = ptr[i * 7];
+            joint.pose0.p[1] = ptr[i * 7 + 1];
+            joint.pose0.p[2] = ptr[i * 7 + 2];
+            joint.pose0.q[0] = ptr[i * 7 + 3];
+            joint.pose0.q[1] = ptr[i * 7 + 4];
+            joint.pose0.q[2] = ptr[i * 7 + 5];
+            joint.pose0.q[3] = ptr[i * 7 + 6];
+        }
+
+        g_buffers->rigidJoints.unmap();
+        NvFlexSetRigidJoints(g_solver, g_buffers->rigidJoints.buffer, g_buffers->rigidJoints.size());
+
+        int resetNumSteps = 100; // TODO: XY: Right now this step does not work as expected. Not sure what is the issue.
+        for (int s = 0; s < resetNumSteps; s++) { NvFlexUpdateSolver(g_solver, g_dt, g_numSubsteps, g_profile);}
+
+        return robot_state;
     }
 
     virtual void DoGui()
@@ -150,7 +198,7 @@ public:
 		pitch = Lerp(opitch, pitch, f);
 		yaw = Lerp(oyaw, yaw, f);
 
-        const float smoothing = 0.05f;
+        const float smoothing = 1.f;
 
         // low-pass filter controls otherwise it is too jerky
         float newx = Lerp(effector0.pose0.p[0], targetx, smoothing);
@@ -232,6 +280,43 @@ public:
 //        }
 //    }
 
+
+    virtual void Step(py::array_t<float> control_params = py::array_t<float>())
+    {
+        if (control_params.size()==1) return; // The default nullptr. Not sure why.
+        // Control parameters: dx, dy, dz in cartisian space and roll, pitch, yaw, finally the open/close of the gripper
+        auto ptr = (float *) control_params.request().ptr;
+        // record force on finger joints
+        forceLeft.push_back(g_buffers->rigidJoints[fingerLeft].lambda[eNvFlexRigidJointAxisX]);
+        forceRight.push_back(g_buffers->rigidJoints[fingerRight].lambda[eNvFlexRigidJointAxisX]);
+
+		// move end-effector given the control parameters
+		NvFlexRigidJoint joint = g_buffers->rigidJoints[effectorJoint];
+		for (int i=0; i<3; ++i) joint.pose0.p[i] += ptr[i]; // dx, dy, dz
+//        std::cout<<"joint pose in Step: " <<joint.pose0.p[1]<<std::endl;
+		Quat deltaRot;
+		Quat currentRot = Quat(joint.pose0.q);
+		for (int i=0; i<3; ++i) // roll, pitch, yaw
+		{
+		    Vec3 axis(0.f);
+		    axis[i] = 1;
+		    deltaRot = QuatFromAxisAngle(axis, ptr[i + 3]);
+		    currentRot = deltaRot * currentRot;
+            *(ptrRotation[i]) += ptr[i+3];
+		}
+		joint.pose0.q[0] = currentRot.x;
+		joint.pose0.q[1] = currentRot.y;
+		joint.pose0.q[2] = currentRot.z;
+		joint.pose0.q[3] = currentRot.w;
+
+		fingerWidth += ptr[6];
+		fingerWidth = max(min(fingerWidth, fingerWidthMax), fingerWidthMin);
+		g_buffers->rigidJoints[fingerLeft].targets[eNvFlexRigidJointAxisX] = fingerWidth;
+        g_buffers->rigidJoints[fingerRight].targets[eNvFlexRigidJointAxisX] = fingerWidth;
+
+		g_buffers->rigidJoints[effectorJoint] = joint;
+//        NvFlexGetRigidJoints(g_solver, g_buffers->rigidJoints.buffer);
+    }
 
     virtual void Update()
     {

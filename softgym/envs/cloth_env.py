@@ -36,6 +36,7 @@ class ClothEnv(FlexEnv):
             assert self.action_repeat == 1
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
+            self.action_space = self.action_tool.action_space
 
         if observation_mode in ['key_point', 'point_cloud']:
             if observation_mode == 'key_point':
@@ -88,8 +89,8 @@ class ClothEnv(FlexEnv):
             'ClothStiff': [0.8, 1, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([-0.0, 0.82, 0.82]),
-                                   'angle': np.array([0, -45 / 180. * np.pi, 0.]),
+                                  {'pos': np.array([0.0, 1.62576, 1.04091]),
+                                   'angle': np.array([0.0, -0.844739, 0]),
                                    'width': self.camera_width,
                                    'height': self.camera_height}},
             'flip_mesh': 0
@@ -145,9 +146,8 @@ class ClothEnv(FlexEnv):
         scene_params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
                                  *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass,
                                  config['flip_mesh']])
-
         if self.version == 2:
-            robot_params = [0]
+            robot_params = [1.] if self.action_mode in ['sawyer', 'franka'] else []
             self.params = (scene_params, robot_params)
             pyflex.set_scene(env_idx, scene_params, 0, robot_params)
         elif self.version == 1:
