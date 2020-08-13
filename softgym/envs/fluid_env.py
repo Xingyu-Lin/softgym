@@ -49,7 +49,7 @@ class FluidEnv(FlexEnv):
         scene_params = np.concatenate((fluid_params, camera_params))
 
         if self.version == 2:
-            robot_params = [0]
+            robot_params = []
             self.params = (scene_params, robot_params)
             pyflex.set_scene(11, scene_params, 0, robot_params)
         elif self.version == 1:

@@ -127,11 +127,10 @@ inline void RegisterScene(const char* name, std::function<Scene*()> factory, boo
 	g_sceneFactories.push_back(SceneFactory(name, factory, isVR));
 }
 
-#include "softgym_scenes/softgym_flatten.h"
 #include "softgym_scenes/softgym_cloth.h"
-#include "softgym_scenes/softgym_pourwater.h"
+#include "softgym_scenes/softgym_fluid.h"
+#include "softgym_scenes/softgym_rope.h"
 #include "softgym_scenes/softgym_softbody.h"
-#include "softgym_scenes/softgym_cloth_new.h"
 
 #include "scenes/adhesion.h"
 #include "scenes/armadilloshower.h"
@@ -242,11 +241,11 @@ inline void RegisterPhysicsScenes()
     RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
     RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
     RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
-    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
-    RegisterScene("SoftGym Cloth Flatten", []() { return new SoftgymCloth(); });
-    RegisterScene("SoftGym Water", []() { return new softgym_PourWater; });
 
-    RegisterScene("Soft Rope", []() { return new SoftgymSoftRope(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Cloth", []() { return new SoftgymCloth(); });
+    RegisterScene("SoftGym Water", []() { return new SoftgymFluid(); });
+    RegisterScene("SoftGym Rope", []() { return new SoftgymRope(); });
     RegisterScene("RL Franka Reach", []() { return new RLFrankaReach(); });
     RegisterScene("SoftGym Cloth New", []() { return new SoftgymCloth(); });
     RegisterScene("Rigid Sawyer", []() { return new RigidSawyer(RigidSawyer::eCloth); });

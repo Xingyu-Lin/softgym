@@ -131,7 +131,7 @@ public:
 
 	SoftgymSawyer* ptrRobot = NULL;
 
-	SoftgymCloth(){}
+	// SoftgymSoftBody(){}
 
     SoftgymSawyer* getPtrRobot() {return ptrRobot;}
 

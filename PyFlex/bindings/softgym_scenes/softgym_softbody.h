@@ -1,8 +1,8 @@
-class softgym_SoftBody : public Scene
+class SoftgymSoftBody : public Scene
 {
 
 public:
-	softgym_SoftBody(const char* name) :
+	SoftgymSoftBody(const char* name) :
 		Scene(name),
 		mRadius(0.02f),
 		mRelaxationFactor(1.0f),
