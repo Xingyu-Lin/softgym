@@ -8,7 +8,7 @@ from softgym.core.multitask_env import MultitaskEnv
 import numpy as np
 import copy
 import pickle
-from utils.pyflex_utils import center_object, random_pick_and_place
+from softgym.utils.pyflex_utils import center_object, random_pick_and_place
 
 class ClothFoldGoalConditionedEnv(ClothFoldEnv, MultitaskEnv):
     def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='cloth_fold_multitask_init_states.pkl' ,**kwargs):

@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 from gym.spaces import Box
-from utils.misc import rotation_2d_around_center, extend_along_center
+from softgym.utils.misc import rotation_2d_around_center, extend_along_center
 import pyflex
 import scipy.spatial
 

@@ -5,7 +5,7 @@ import os.path as osp
 import pyflex
 from copy import deepcopy
 from softgym.envs.cloth_fold import ClothFoldEnv
-from utils.pyflex_utils import center_object
+from softgym.utils.pyflex_utils import center_object
 
 class ClothFoldCrumpledEnv(ClothFoldEnv):
     def __init__(self, **kwargs):

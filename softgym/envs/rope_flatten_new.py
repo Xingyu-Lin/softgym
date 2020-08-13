@@ -5,7 +5,7 @@ import os.path as osp
 import pyflex
 from softgym.envs.rope_env_new import RopeNewEnv
 from copy import deepcopy
-from utils.pyflex_utils import center_object, random_pick_and_place
+from softgym.utils.pyflex_utils import center_object, random_pick_and_place
 
 class RopeFlattenNewEnv(RopeNewEnv):
     def __init__(self, cached_states_path='rope_flatten_new_init_states.pkl', **kwargs):

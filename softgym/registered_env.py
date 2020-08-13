@@ -2,7 +2,6 @@ from softgym.envs.pour_water import PourWaterPosControlEnv
 from softgym.envs.pour_water_amount import PourWaterAmountPosControlEnv
 from softgym.envs.pass_water import PassWater1DEnv
 from softgym.envs.pass_water_torus import PassWater1DTorusEnv
-from softgym.envs.rope_flatten import RopeFlattenEnv
 from softgym.envs.rope_flatten_new import RopeFlattenNewEnv
 from softgym.envs.rope_configuration import RopeConfigurationEnv
 from softgym.envs.cloth_flatten import ClothFlattenEnv
@@ -12,12 +11,12 @@ from softgym.envs.cloth_fold_crumpled import ClothFoldCrumpledEnv
 from softgym.envs.cloth_fold_drop import ClothFoldDropEnv
 from softgym.envs.rigid_cloth_fold import RigidClothFoldEnv
 
-from softgym.multitask_envs_arxived.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
-from softgym.multitask_envs_arxived.pass_water_multitask import PassWater1DGoalConditionedEnv
-from softgym.multitask_envs_arxived.cloth_manipulate import ClothManipulateEnv
-from softgym.multitask_envs_arxived.rope_manipulate import RopeManipulateEnv
-from softgym.multitask_envs_arxived.cloth_drop_multitask import ClothDropGoalConditionedEnv
-from softgym.multitask_envs_arxived.cloth_fold_multitask import ClothFoldGoalConditionedEnv
+# from softgym.multitask_envs_arxived.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
+# from softgym.multitask_envs_arxived.pass_water_multitask import PassWater1DGoalConditionedEnv
+# from softgym.multitask_envs_arxived.cloth_manipulate import ClothManipulateEnv
+# from softgym.multitask_envs_arxived.rope_manipulate import RopeManipulateEnv
+# from softgym.multitask_envs_arxived.cloth_drop_multitask import ClothDropGoalConditionedEnv
+# from softgym.multitask_envs_arxived.cloth_fold_multitask import ClothFoldGoalConditionedEnv
 from collections import OrderedDict
 
 env_arg_dict = {
@@ -305,15 +304,14 @@ SOFTGYM_ENVS = OrderedDict({
     'ClothFoldCrumpled': ClothFoldCrumpledEnv,
     'ClothFoldDrop': ClothFoldDropEnv,
     'RigidClothFold': RigidClothFoldEnv,
-    'RopeFlatten': RopeFlattenEnv,
     'RopeFlattenNew': RopeFlattenNewEnv,
     'RopeConfiguration': RopeConfigurationEnv,
-    'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,
-    'PassWaterGoal': PassWater1DGoalConditionedEnv,
-    'ClothDropGoal': ClothDropGoalConditionedEnv,
-    'ClothManipulate': ClothManipulateEnv,
-    'RopeManipulate': RopeManipulateEnv,
-    'ClothFoldGoal': ClothFoldGoalConditionedEnv,
+    # 'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,
+    # 'PassWaterGoal': PassWater1DGoalConditionedEnv,
+    # 'ClothDropGoal': ClothDropGoalConditionedEnv,
+    # 'ClothManipulate': ClothManipulateEnv,
+    # 'RopeManipulate': RopeManipulateEnv,
+    # 'ClothFoldGoal': ClothFoldGoalConditionedEnv,
     'ClothFlattenPPP': ClothFlattenEnv,
     'ClothFoldPPP': ClothFoldEnv,
 })

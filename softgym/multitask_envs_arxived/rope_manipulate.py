@@ -4,13 +4,13 @@ import os
 import os.path as osp
 import pyflex
 from softgym.core.multitask_env import MultitaskEnv
-from softgym.envs.rope_flatten import RopeFlattenEnv
+from softgym.envs.rope_flatten_new import RopeFlattenNewEnv
 import numpy as np
 import copy
 import pickle
-from utils.pyflex_utils import center_object, random_pick_and_place
+from softgym.utils.pyflex_utils import center_object, random_pick_and_place
 
-class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
+class RopeManipulateEnv(RopeFlattenNewEnv, MultitaskEnv):
     def __init__(self, goal_sampling_mode='fixed_goal', goal_num=10, cached_states_path='rope_manipulate_init_states.pkl', **kwargs):
         """
         Wrap rope flatten to be goal conditioned rope manipulation.
@@ -21,7 +21,7 @@ class RopeManipulateEnv(RopeFlattenEnv, MultitaskEnv):
         self.goal_sampling_mode = goal_sampling_mode
         if self.goal_sampling_mode == 'fixed_goal':
             self.goal_num = 1
-        RopeFlattenEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
+        RopeFlattenNewEnv.__init__(self, cached_states_path=cached_states_path, **kwargs)
 
         self.state_goal = None
 

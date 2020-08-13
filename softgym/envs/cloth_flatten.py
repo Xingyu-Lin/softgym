@@ -5,8 +5,8 @@ import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
 from copy import deepcopy
-from utils.misc import vectorized_range, vectorized_meshgrid
-from utils.pyflex_utils import center_object
+from softgym.utils.misc import vectorized_range, vectorized_meshgrid
+from softgym.utils.pyflex_utils import center_object
 
 
 class ClothFlattenEnv(ClothEnv):
