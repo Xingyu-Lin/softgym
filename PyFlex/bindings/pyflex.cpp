@@ -1644,8 +1644,9 @@ void DrawShapes() {
         Vec3 color = Vec3(0.9f);
 
         if (flags & eNvFlexShapeFlagTrigger) {
-            color = Vec3(0.6f, 1.0, 0.6f);
-            SetFillMode(true);
+            // printf("there is a trigger shape! \n");
+            color = Vec3(1.0f, 0.0f, 0.0f);
+            // SetFillMode(true);
         }
 
         // render with prev positions to match particle update order
@@ -3217,7 +3218,7 @@ void pyflex_add_capsule(py::array_t<float> params, py::array_t<float> lower_pos,
 }
 
 
-void pyflex_add_box(py::array_t<float> halfEdge_, py::array_t<float> center_, py::array_t<float> quat_) {
+void pyflex_add_box(py::array_t<float> halfEdge_, py::array_t<float> center_, py::array_t<float> quat_, int trigger) {
     pyflex_MapShapeBuffers(g_buffers);
 
     auto ptr_halfEdge = (float *) halfEdge_.request().ptr;
@@ -3229,7 +3230,8 @@ void pyflex_add_box(py::array_t<float> halfEdge_, py::array_t<float> center_, py
     auto ptr_quat = (float *) quat_.request().ptr;
     Quat quat = Quat(ptr_quat[0], ptr_quat[1], ptr_quat[2], ptr_quat[3]);
 
-    AddBox(halfEdge, center, quat);
+    // cout << "trigger is " << trigger << endl;
+    AddBox(halfEdge, center, quat, trigger);
 
     pyflex_UnmapShapeBuffers(g_buffers);
 }
@@ -4046,7 +4048,12 @@ PYBIND11_MODULE(pyflex, m) {
     m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
     m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
 
-    m.def("add_box", &pyflex_add_box, "Add box to the scene");
+    m.def("add_box", &pyflex_add_box, 
+        py::arg("halfEdge_") = 0,
+        py::arg("center_") = 0,
+        py::arg("quat_") = 0,
+        py::arg("trigger") = 0,
+        "Add box to the scene");
     m.def("add_sphere", &pyflex_add_sphere, "Add sphere to the scene");
     m.def("add_capsule", &pyflex_add_capsule, "Add capsule to the scene");
 

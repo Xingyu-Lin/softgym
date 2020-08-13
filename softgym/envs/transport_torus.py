@@ -64,7 +64,7 @@ class TransportTorus1D(FluidTorusEnv):
                 obs_dim = max_particle_num * 3
                 self.particle_obs_dim = obs_dim
             # z and theta of the second cup (poured_box) does not change and thus are omitted.
-            obs_dim += 7  # Pos (x) and shape (w, h, l) reset of the cup, torus x, torus y, if on box.
+            obs_dim += 8      # Pos (x) and shape (w, h, l) reset of the cup, torus x, torus y, if on box.
             self.observation_space = Box(low=np.array([-np.inf] * obs_dim), high=np.array([np.inf] * obs_dim), dtype=np.float32)
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
@@ -95,7 +95,7 @@ class TransportTorus1D(FluidTorusEnv):
                 'height': 0.6, 
             },
             'static_friction': 0.5,
-            'dynamic_friction': 0.5,
+            'dynamic_friction': 1.0,
             'camera_name': 'default_camera',
         }
         return config
@@ -305,8 +305,10 @@ class TransportTorus1D(FluidTorusEnv):
             torus_center_x = np.mean(particle_state[:, 0])
 
             on_box = float(torus_center_y >= self.height)
+            within_box_bound = float(torus_center_x > self.box_x - 0.5 * self.box_dis_x and 
+                torus_center_x < self.box_x + self.box_dis_x * 0.5)
             cup_state = np.array([self.box_x, self.box_dis_x, self.box_dis_z, self.height, 
-                torus_center_x, torus_center_y, on_box])
+                torus_center_x, torus_center_y, on_box, within_box_bound])
             return np.hstack([pos, cup_state]).flatten()
         else:
             raise NotImplementedError
@@ -320,9 +322,12 @@ class TransportTorus1D(FluidTorusEnv):
         state_dic = self.get_state()
         particle_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
         torus_center_y = np.mean(particle_state[:, 1])
+        torus_center_x = np.mean(particle_state[:, 0])
 
         reward = -self.distance_coef * np.abs((self.terminal_x - self.box_x))
-        if torus_center_y < self.height:
+        box_x_low = self.box_x - self.box_dis_x / 2.
+        box_x_high = self.box_x + self.box_dis_x / 2.
+        if torus_center_y < self.height or torus_center_x < box_x_low or torus_center_x > box_x_high:
             reward -= self.torus_penalty_coef
 
         if self.delta_reward:
@@ -337,9 +342,12 @@ class TransportTorus1D(FluidTorusEnv):
         state_dic = self.get_state()
         particle_state = state_dic['particle_pos'].reshape((-1, self.dim_position))
         torus_center_y = np.mean(particle_state[:, 1])
+        torus_center_x = np.mean(particle_state[:, 0])
 
         reward = -self.distance_coef * np.abs((self.terminal_x - self.box_x))
-        if torus_center_y < self.height:
+        box_x_low = self.box_x - self.box_dis_x / 2.
+        box_x_high = self.box_x + self.box_dis_x / 2.
+        if torus_center_y < self.height or torus_center_x < box_x_low or torus_center_x > box_x_high:
             reward -= self.torus_penalty_coef
 
         performance = reward

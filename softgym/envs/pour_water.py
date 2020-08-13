@@ -99,7 +99,7 @@ class PourWaterPosControlEnv(FluidEnv):
                 'border': 0.02,
                 'height': 0.6,
                 'glass_distance': 1.0,
-                'poured_border': 0.01,
+                'poured_border': 0.02,
                 'poured_height': 0.6,
             },
             'camera_name': 'default_camera',
@@ -124,13 +124,6 @@ class PourWaterPosControlEnv(FluidEnv):
             m = min(dim_x, dim_z)
             p = np.random.rand()
             water_radius = config['fluid']['radius'] * config['fluid']['rest_dis_coef']
-            # if p < 1. / 3.:  # small water volume
-            #     print("small volume water")
-            #     dim_y = int(2.5 * m) + np.random.randint(0, 2)
-            #     v = dim_x * dim_y * dim_z
-            #     h = v / ((dim_x + 1) * (dim_z + 1)) * water_radius / 2
-            #     print("h {}".format(h))
-            #     glass_height = h + (np.random.rand() - 0.5) * 0.001
             if p < 0.5:  # midium water volumes
                 print("medium volume water")
                 dim_y = int(3.5 * m) 
@@ -270,7 +263,7 @@ class PourWaterPosControlEnv(FluidEnv):
 
         self.glass_params = params
 
-    def set_scene(self, config, states=None):
+    def set_scene(self, config, states=None, create_only=False):
         '''
         Construct the pouring water scence.
         '''
@@ -311,6 +304,11 @@ class PourWaterPosControlEnv(FluidEnv):
         self.glass_x = self.x_center
         self.glass_y = 0
         self.glass_rotation = 0
+
+        # only create the glass and water, without setting their states
+        # this is only used in the pourwater amount env.
+        if create_only:
+            return
 
         # no cached init states passed in 
         if states is None:
@@ -381,8 +379,6 @@ class PourWaterPosControlEnv(FluidEnv):
                 # pyflex.render()
         else:  # set to passed-in cached init states
             self.set_state(states)
-
-        # print("pour water inital scene constructed over...")
 
     def _get_obs(self):
         '''

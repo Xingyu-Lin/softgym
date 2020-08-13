@@ -439,7 +439,8 @@ void SkinMesh()
 	}
 }
 
-void AddBox(Vec3 halfEdge = Vec3(2.0f), Vec3 center=Vec3(0.0f), Quat quat=Quat(), bool dynamic=false, int channels=eNvFlexPhaseShapeChannelMask)
+void AddBox(Vec3 halfEdge = Vec3(2.0f), Vec3 center=Vec3(0.0f), Quat quat=Quat(), int trigger=0, bool dynamic=false, int channels=eNvFlexPhaseShapeChannelMask
+	)
 {
 	// transform
 	g_buffers->shapePositions.push_back(Vec4(center.x, center.y, center.z, 0.0f));
@@ -454,7 +455,15 @@ void AddBox(Vec3 halfEdge = Vec3(2.0f), Vec3 center=Vec3(0.0f), Quat quat=Quat()
 	geo.box.halfExtents[2] = halfEdge.z;
 
 	g_buffers->shapeGeometry.push_back(geo);
-	g_buffers->shapeFlags.push_back(NvFlexMakeShapeFlagsWithChannels(eNvFlexShapeBox, dynamic, channels));
+
+	int shapeFlag = NvFlexMakeShapeFlagsWithChannels(eNvFlexShapeBox, dynamic, channels);
+
+	printf("in AddBox, trigger is %d \n", trigger);
+	if (trigger == 1) {
+		shapeFlag |= eNvFlexShapeFlagTrigger;
+		printf("use trigger box! \n");
+	}
+	g_buffers->shapeFlags.push_back(shapeFlag);
 }
 
 void PopBox(int num){

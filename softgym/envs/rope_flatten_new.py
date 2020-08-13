@@ -18,7 +18,6 @@ class RopeFlattenNewEnv(RopeNewEnv):
         """
 
         super().__init__(**kwargs)
-        self.prev_endpoint_dist = None
         self.prev_distance_diff = None
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
@@ -61,24 +60,21 @@ class RopeFlattenNewEnv(RopeNewEnv):
 
     def _reset(self):
         config = self.current_config
-        # rope_init_pos = pyflex.get_positions().reshape(-1, 4)
         self.rope_length = config['segment'] * config['radius'] * 0.5
-        # print("rope length is: ", self.rope_length)
 
         # set reward range
         self.reward_max = 0
-        self.reward_min = -self.rope_length
-        self.reward_range = self.reward_max - self.reward_min
         rope_particle_num = config['segment'] + 1
         self.key_point_indices = self._get_key_point_idx(rope_particle_num)
 
-        self.prev_endpoint_dist = self._get_endpoint_distance()
         if hasattr(self, 'action_tool'):
             curr_pos = pyflex.get_positions().reshape([-1, 4])[4:] # a hack to remove the first 4 cloth particles
             cx, cy = self._get_center_point(curr_pos)
             self.action_tool.reset([cx, 0.1, cy])
-            # self.action_tool.init_particle_pos = rope_init_pos
-            # self.action_tool.init_particle_pos = None
+
+        self.performance_init = None
+        info = self._get_info()
+        self.performance_init = info['performance']
 
         return self._get_obs()
 
@@ -105,15 +101,17 @@ class RopeFlattenNewEnv(RopeNewEnv):
                 self.prev_distance_diff = curr_distance_diff
         else:
             r = curr_distance_diff
-            # r = (r - self.reward_min) / self.reward_range # NOTE: this only suits to non-delta reward
         return r
 
     def _get_info(self):
         curr_endpoint_dist = self._get_endpoint_distance()
         curr_distance_diff = -np.abs(curr_endpoint_dist - self.rope_length)
-        normalized_performance = (curr_distance_diff - self.reward_min) / self.reward_range
+
+        performance = curr_distance_diff
+        performance_init =  performance if self.performance_init is None else self.performance_init  # Use the original performance
+
         return {
-            'performance': curr_distance_diff,
-            'normalized_performance': normalized_performance,
+            'performance': performance,
+            'normalized_performance': (performance - performance_init) / (self.reward_max - performance_init),
             'end_point_distance': curr_endpoint_dist
             }
