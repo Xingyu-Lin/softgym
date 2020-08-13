@@ -2687,31 +2687,31 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     // g_scenes.push_back(new yz_BoxBathExt("Box Bath Extension", true));
     // g_scenes.push_back(new yz_FluidIceShake("Fluid Ice Shake"));
     // placeholder scenes
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
 
-    g_scenes.push_back(new softgym_FlagCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new softgym_FlattenCloth("Softgym Flatten Cloth"));
-    g_scenes.push_back(new softgym_PourWater("Softgym Pour Water"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
+    g_scenes.push_back(new SoftgymFluid("Softgym Pour Water"));
 
-    softgym_SoftBody::Instance rope(make_path(rope_path, "/data/rope.obj"));
+    SoftgymSoftBody::Instance rope(make_path(rope_path, "/data/rope.obj"));
 	rope.mScale = Vec3(50.0f);
 	rope.mClusterSpacing = 1.5f;
 	rope.mClusterRadius = 0.0f;
 	rope.mClusterStiffness = 0.55f;
     rope.mTranslation = Vec3(0.0f, 0.6f, 0.0f);
-	softgym_SoftBody* softRopeSceneNew = new softgym_SoftBody("Soft Rope");
+	SoftgymSoftBody* softRopeSceneNew = new SoftgymSoftBody("Soft Rope");
 	softRopeSceneNew->AddInstance(rope);
     g_scenes.push_back(softRopeSceneNew);
 
-    softgym_SoftBody::Instance stackBox(make_path(box_high_path, "/data/box_high.ply"));
+    SoftgymSoftBody::Instance stackBox(make_path(box_high_path, "/data/box_high.ply"));
     stackBox.mScale = Vec3(10.0f);
     stackBox.mClusterSpacing = 1.5f;
     stackBox.mClusterRadius = 0.0f;
@@ -2720,7 +2720,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     stackBox.mClusterPlasticThreshold = 0.005f;
     stackBox.mClusterPlasticCreep = 0.25f;
     stackBox.mTranslation.y = 0.5f;
-    softgym_SoftBody::Instance stackSphere(make_path(sphere_path, "/data/sphere.ply"));
+    SoftgymSoftBody::Instance stackSphere(make_path(sphere_path, "/data/sphere.ply"));
     stackSphere.mScale = Vec3(10.0f);
     stackSphere.mClusterSpacing = 1.5f;
     stackSphere.mClusterRadius = 0.0f;
@@ -2729,7 +2729,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     stackSphere.mClusterPlasticThreshold = 0.0015f;
     stackSphere.mClusterPlasticCreep = 0.25f;
     stackSphere.mTranslation.y = 2.0f;
-    auto *softgym_PlasticDough = new softgym_SoftBody("Plastic Stack");
+    auto *softgym_PlasticDough = new SoftgymSoftBody("Plastic Stack");
     softgym_PlasticDough->AddInstance(stackBox);
     // softgym_PlasticDough->AddInstance(stackSphere);
     // for (int i = 0; i < 3; i++) {
@@ -2740,8 +2740,8 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     // }
     g_scenes.push_back(softgym_PlasticDough);
     g_scenes.push_back(new SoftgymRigidCloth("Softgym Rigid Cloth"));
-    g_scenes.push_back(new Softgym_RigidFluid("Softgym Rigid Fluid"));
-    g_scenes.push_back(new Softgym_NewRope("Softgym New Rope"));
+    g_scenes.push_back(new SoftgymTorus("Softgym Torus"));
+    g_scenes.push_back(new SoftgymRope("Softgym Rope"));
 
 
 

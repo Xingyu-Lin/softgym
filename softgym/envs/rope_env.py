@@ -115,7 +115,7 @@ class RopeEnv(FlexEnv):
             [5, config['ClusterSpacing'], config['ClusterRadius'], config['ClusterStiffness'], config['DynamicFriction'], config['ParticleFriction']])
         
         if self.version == 2:
-            pyflex.set_scene(12, params, 0, [0])
+            pyflex.set_scene(12, params, 0, [])
         elif self.version == 1:
             pyflex.set_scene(12, params, 0)
         

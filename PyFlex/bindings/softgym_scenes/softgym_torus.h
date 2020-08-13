@@ -1,4 +1,4 @@
-class Softgym_RigidFluid : public Scene
+class SoftgymTorus : public Scene
 {
 public:
 
@@ -13,7 +13,7 @@ public:
 	char torus_path[100];
 
 	
-	Softgym_RigidFluid(const char* name) : Scene(name) {}
+	SoftgymTorus(const char* name) : Scene(name) {}
 
 	char* make_path(char* full_path, std::string path) {
 		strcpy(full_path, getenv("PYFLEXROOT"));

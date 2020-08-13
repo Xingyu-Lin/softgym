@@ -1,5 +1,5 @@
-#include "softgym_sawyer.h"
-class softgym_PourWater : public Scene
+
+class SoftgymFluid : public Scene
 {
 public:
 
@@ -12,7 +12,7 @@ public:
 	int cam_width;
 	int cam_height;
 
-	softgym_PourWater(){}
+	SoftgymFluid(const char* name) : Scene(name) {}
 
 	char* make_path(char* full_path, std::string path) {
 		strcpy(full_path, getenv("PYFLEXROOT"));
@@ -30,8 +30,7 @@ public:
 	    *b = tmp;
 	}
 
-	void Initialize(py::array_t<float> scene_params = py::array_t<float>(),
-                    py::array_t<float> robot_params = py::array_t<float>(), int thread_idx = 0)
+	void Initialize(py::array_t<float> scene_params, int thread_idx = 0)
 	{
 	    // scene_params
 
@@ -62,29 +61,6 @@ public:
 		cam_height = int(ptr[21]);
 		int render = int(ptr[22]);
 
-        auto ptrRobotParams = (float *) robot_params.request().ptr;
-        if (ptrRobotParams!=NULL &&  robot_params.size()>0) // Use robot
-        {
-            cout<<robot_params.size();
-            ptrRobot = new SoftgymSawyer();
-            ptrRobot->Initialize(robot_params); // XY: For some reason this has to be before creation of other rigid body
-
-            // For SoftGym 1.0 release, only have table when there is a robot
-            // table
-            NvFlexRigidShape table;
-            // Half x, y, z
-            NvFlexMakeRigidBoxShape(&table, -1, 0.55f, 0.55f, 0.34f, NvFlexMakeRigidPose(Vec3(-0.04f, 0.0f, 0.0f), Quat()));
-            table.filter = 0;
-            table.material.friction = 0.95f;
-            table.user = UnionCast<void*>(AddRenderMaterial(Vec3(0.35f, 0.45f, 0.65f)));
-
-            float density = 1000.0f;
-            NvFlexRigidBody body;
-            NvFlexMakeRigidBody(g_flexLib, &body, Vec3(1.0f, 1.0f, 0.0f), Quat(), &table, &density, 1);
-
-            g_buffers->rigidShapes.push_back(table);
-            g_buffers->rigidBodies.push_back(body);
-        }
 
 		/*
 		The main particle radius is set via NvFlexParams::radius, which is the “interaction radius”.
@@ -123,15 +99,24 @@ public:
 		g_params.fluidRestDistance = restDistance;
 		g_params.solidPressure = solidpressure; //0.f;
 		g_params.relaxationFactor = 0.0f;
-		g_params.cohesion = cohesion; // 0.02f;
-		g_params.collisionDistance = radius / 10;
-		// g_params.adhesion = adhesion;
-		// g_params.surfaceTension = surfaceTension;
+		g_params.collisionDistance = 0.0033f;
+		g_params.cohesion = cohesion; //0.01f*viscosity;
+		
+
+		// Vec4 milk_color = Vec4(1., 1., 1., 0.0f);
+		Vec4 nomral_water_color = Vec4(0.113f, 0.425f, 0.55f, 1.f);
+		// Vec4 diff = milk_color - nomral_water_color;
+
+		// float factor = (viscosity - 2.) / 8.;
+		g_fluidColor = nomral_water_color;
+		// for (int i =0; i< 4; i++) {
+		// 	g_fluidColor[i] += factor * diff[i];
+		// }
 
 		g_maxDiffuseParticles = 0;
 		g_diffuseScale = 0.5f;
 
-		g_fluidColor = Vec4(0.113f, 0.425f, 0.55f, 1.f);
+		// g_fluidColor = Vec4(0.113f, 0.425f, 0.55f, 1.f);
 
 		Emitter e1;
 		e1.mDir = Vec3(1.0f, 0.0f, 0.0f);

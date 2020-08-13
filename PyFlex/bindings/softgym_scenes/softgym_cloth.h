@@ -1,5 +1,11 @@
+#pragma once
+#include <iostream>
+#include <vector>
 
-class softgym_FlagCloth : public Scene {
+inline void swap(int &a, int &b) {int tmp =a ; a = b; b=tmp;}
+
+class SoftgymCloth : public Scene
+{
 public:
     float cam_x;
     float cam_y;
@@ -10,7 +16,7 @@ public:
     int cam_width;
     int cam_height;
 
-	softgym_FlagCloth(const char* name) : Scene(name) {}
+	SoftgymCloth(const char* name) : Scene(name) {}
 
     float get_param_float(py::array_t<float> scene_params, int idx)
     {
@@ -22,18 +28,15 @@ public:
     //params ordering: xpos, ypos, zpos, xsize, zsize, stretch, bend, shear
     // render_type, cam_X, cam_y, cam_z, angle_x, angle_y, angle_z, width, height
 	void Initialize(py::array_t<float> scene_params, int thread_idx=0)
-	{
-//	    cout << "initing" << endl;
+    {
         auto ptr = (float *) scene_params.request().ptr;
 	    float initX = ptr[0];
 	    float initY = ptr[1];
 	    float initZ = ptr[2];
 
-		int dimx = (int)ptr[3]; //64;
-		int dimz = (int)ptr[4]; //32;
-		float radius = 0.05f;
-
-
+		int dimx = (int)ptr[3];
+		int dimz = (int)ptr[4];
+		float radius = 0.00625f;
 
         int render_type = ptr[8]; // 0: only points, 1: only mesh, 2: points + mesh
 
@@ -46,64 +49,102 @@ public:
         cam_width = int(ptr[15]);
         cam_height = int(ptr[16]);
 
-        //float radius = 0.05f;
-
-		float stretchStiffness = ptr[5]; //0.9f;
+        // Cloth
+        float stretchStiffness = ptr[5]; //0.9f;
 		float bendStiffness = ptr[6]; //1.0f;
 		float shearStiffness = ptr[7]; //0.9f;
-		int phase = NvFlexMakePhase(0, eNvFlexPhaseSelfCollide);
+		int phase = NvFlexMakePhase(0, eNvFlexPhaseSelfCollide | eNvFlexPhaseSelfCollideFilter);
+		float mass = float(ptr[17])/(dimx*dimz);	// avg bath towel is 500-700g
+        int flip_mesh = int(ptr[18]); // Flip half
+	    CreateSpringGrid(Vec3(initX, -initY, initZ), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness, shearStiffness, 0.0f, 1.0f/mass);
+	    // Flip the last half of the mesh for the folding task
+	    if (flip_mesh)
+	    {
+	        int size = g_buffers->triangles.size();
+//	        for (int j=int((dimz-1)*3/8); j<int((dimz-1)*5/8); ++j)
+//	            for (int i=int((dimx-1)*1/8); i<int((dimx-1)*3/8); ++i)
+//	            {
+//	                int idx = j *(dimx-1) + i;
+//
+//	                if ((i!=int((dimx-1)*3/8-1)) && (j!=int((dimz-1)*3/8)))
+//	                    swap(g_buffers->triangles[idx* 3 * 2], g_buffers->triangles[idx*3*2+1]);
+//	                if ((i != int((dimx-1)*1/8)) && (j!=int((dimz-1)*5/8)-1))
+//	                    swap(g_buffers->triangles[idx* 3 * 2 +3], g_buffers->triangles[idx*3*2+4]);
+//                }
+	        for (int j=0; j<int((dimz-1)); ++j)
+	            for (int i=int((dimx-1)*1/8); i<int((dimx-1)*1/8)+5; ++i)
+	            {
+	                int idx = j *(dimx-1) + i;
 
-	    CreateSpringGrid(Vec3(initX, -initY, initZ), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness, shearStiffness, 0.0f, 1.0f);
-		//CreateSpringGrid(Vec3(0.0f, -1.0f, -3.0f), dimx, dimz, 1, radius, phase, stretchStiffness, bendStiffness, shearStiffness, 0.0f, 1.0f);
-
-        const int c1 = 0;
-        const int c2 = dimx * (dimz - 1);
-
-		//g_buffers->positions[c1].w = 0.0f;
-		//g_buffers->positions[c2].w = 0.0f;
-
-        // add tethers
-        for (int i = 0; i < int(g_buffers->positions.size()); ++i) {
-            // hack to rotate cloth
-            // swap(g_buffers->positions[i].y, g_buffers->positions[i].z);
-            g_buffers->positions[i].y *= -1.0f;
-
-            g_buffers->velocities[i] = RandomUnitVector() * 0.1f;
-
-            float minSqrDist = FLT_MAX;
-
-            //if (i!=c1 && i!=c2)
-            if (1) {
-                float stiffness = -0.8f;
-                float give = 0.1f;
-
-                float sqrDist = LengthSq(Vec3(g_buffers->positions[c1]) - Vec3(g_buffers->positions[c2]));
-
-                if (sqrDist < minSqrDist) {
-//                     CreateSpring(c1, i, stiffness, give);
-//                     CreateSpring(c2, i, stiffness, give);
-
-                    minSqrDist = sqrDist;
+	                if ((i!=int((dimx-1)*1/8+4)))
+	                    swap(g_buffers->triangles[idx* 3 * 2], g_buffers->triangles[idx*3*2+1]);
+	                if ((i != int((dimx-1)*1/8)))
+	                    swap(g_buffers->triangles[idx* 3 * 2 +3], g_buffers->triangles[idx*3*2+4]);
                 }
-            }
         }
+		g_numSubsteps = 4;
+		g_params.numIterations = 30;
 
-        g_params.radius = radius * 1.0f;
-        g_params.dynamicFriction = 0.25f;
-        g_params.dissipation = 0.0f;
-        g_params.numIterations = 4;
-        g_params.drag = 0.06f;
-        g_params.relaxationFactor = 1.0f;
+		g_params.dynamicFriction = 0.75f;
+		g_params.particleFriction = 1.0f;
+		g_params.damping = 1.0f;
+		g_params.sleepThreshold = 0.02f;
 
-        g_numSubsteps = 2;
+		g_params.relaxationFactor = 1.0f;
+		g_params.shapeCollisionMargin = 0.04f;
 
-//        cout<<"render_type: "<<  render_type<<endl;
+		g_sceneLower = Vec3(-1.0f);
+		g_sceneUpper = Vec3(1.0f);
+		g_drawPoints = false;
+
+        g_params.radius = radius*1.8f;
+        g_params.collisionDistance = 0.005f;
+
         g_drawPoints = render_type & 1;
         g_drawCloth = (render_type & 2) >>1;
         g_drawSprings = false;
-        g_windFrequency *= 2.0f;
-        g_windStrength = 10.0f;
-//        cout << "finish init" << endl;
+
+
+        // table
+//        NvFlexRigidShape table;
+        // Half x, y, z
+//        NvFlexMakeRigidBoxShape(&table, -1, 0.27f, 0.55f, 0.3f, NvFlexMakeRigidPose(Vec3(-0.04f, 0.0f, 0.0f), Quat()));
+//        table.filter = 0;
+//        table.material.friction = 0.95f;
+//		table.user = UnionCast<void*>(AddRenderMaterial(Vec3(0.35f, 0.45f, 0.65f)));
+
+//        float density = 1000.0f;
+//        NvFlexRigidBody body;
+//		NvFlexMakeRigidBody(g_flexLib, &body, Vec3(1.0f, 1.0f, 0.0f), Quat(), &table, &density, 1);
+//
+//        g_buffers->rigidShapes.push_back(table);
+//        g_buffers->rigidBodies.push_back(body);
+
+        // Box object
+//        float scaleBox = 0.05f;
+//        float densityBox = 2000000000.0f;
+
+//        Mesh* boxMesh = ImportMesh(make_path(boxMeshPath, "/data/box.ply"));
+//        boxMesh->Transform(ScaleMatrix(scaleBox));
+//
+//        NvFlexTriangleMeshId boxId = CreateTriangleMesh(boxMesh, 0.00125f);
+//
+//        NvFlexRigidShape box;
+//        NvFlexMakeRigidTriangleMeshShape(&box, g_buffers->rigidBodies.size(), boxId, NvFlexMakeRigidPose(0, 0), 1.0f, 1.0f, 1.0f);
+//        box.filter = 0x0;
+//        box.material.friction = 1.0f;
+//        box.material.torsionFriction = 0.1;
+//        box.material.rollingFriction = 0.0f;
+//        box.thickness = 0.00125f;
+//
+//        NvFlexRigidBody boxBody;
+//        NvFlexMakeRigidBody(g_flexLib, &boxBody, Vec3(0.21f, 0.7f, -0.1375f), Quat(), &box, &density, 1);
+//
+//        g_buffers->rigidBodies.push_back(boxBody);
+//        g_buffers->rigidShapes.push_back(box);
+
+//        g_params.numPostCollisionIterations = 15;
+
     }
 
     virtual void CenterCamera(void)
@@ -113,15 +154,4 @@ public:
         g_screenHeight = cam_height;
         g_screenWidth = cam_width;
     }
-
-    void Update() {
-        const Vec3 kWindDir = Vec3(3.0f, 15.0f, 0.0f);
-        const float kNoise = fabsf(Perlin1D(g_windTime * 0.05f, 2, 0.25f));
-        Vec3 wind = g_windStrength * kWindDir * Vec3(kNoise, kNoise * 0.1f, -kNoise * 0.1f);
-
-        g_params.wind[0] = wind.x;
-        g_params.wind[1] = wind.y;
-        g_params.wind[2] = wind.z;
-    }
 };
-
