@@ -1,11 +1,7 @@
-import gym
 import numpy as np
-import pyflex
 from softgym.envs.cloth_drop import ClothDropEnv
-from softgym.envs.cloth_drop_multitask import ClothDropGoalConditionedEnv
-import os, argparse, sys
-import softgym
-from matplotlib import pyplot as plt
+from softgym.multitask_envs_arxived.cloth_drop_multitask import ClothDropGoalConditionedEnv
+import sys
 import torch, torchvision, cv2
 from softgym.registered_env import  env_arg_dict
 import argparse

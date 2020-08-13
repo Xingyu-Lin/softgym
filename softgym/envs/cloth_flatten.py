@@ -4,9 +4,8 @@ import pickle
 import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
-import copy
 from copy import deepcopy
-from softgym.utils.utils import vectorized_range, vectorized_meshgrid
+from utils.misc import vectorized_range, vectorized_meshgrid
 
 
 class ClothFlattenEnv(ClothEnv):
@@ -224,12 +223,7 @@ class ClothFlattenEnv(ClothEnv):
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         particle_pos = pyflex.get_positions()
         curr_covered_area = self._get_current_covered_area(particle_pos)
-        if self.delta_reward:
-            r = curr_covered_area - self.prev_covered_area
-            if set_prev_reward:
-                self.prev_covered_area = curr_covered_area
-        else:
-            r = curr_covered_area
+        r = curr_covered_area
         return r
 
     # @property

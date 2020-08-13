@@ -210,15 +210,10 @@ class RigidClothDropEnv(RigidClothEnv):
         curr_dist = np.mean(np.linalg.norm(curr_pos - target_pos, axis=1))
         return curr_dist
 
-    def compute_reward(self, action=None, obs=None, set_prev_reward=True):
+    def compute_reward(self, action=None, obs=None):
         particle_pos = pyflex.get_positions()
         curr_dist = self._get_current_dist(particle_pos)
-        if self.delta_reward:
-            r = self.prev_dist - curr_dist
-            if set_prev_reward:
-                self.prev_dist = curr_dist
-        else:
-            r = - curr_dist
+        r = - curr_dist
         return r
 
     def _get_info(self):

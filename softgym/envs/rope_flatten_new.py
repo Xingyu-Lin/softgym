@@ -99,13 +99,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
         """ Reward is the distance between the endpoints of the rope"""
         curr_endpoint_dist = self._get_endpoint_distance()
         curr_distance_diff = -np.abs(curr_endpoint_dist - self.rope_length)
-        if self.delta_reward:
-            r = curr_distance_diff - self.prev_distance_diff
-            if set_prev_reward:
-                self.prev_distance_diff = curr_distance_diff
-        else:
-            r = curr_distance_diff
-            # r = (r - self.reward_min) / self.reward_range # NOTE: this only suits to non-delta reward
+        r = curr_distance_diff
         return r
 
     def _get_info(self):

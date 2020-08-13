@@ -426,13 +426,7 @@ class PourWaterPosControlEnv(FluidEnv):
         good_water_num = np.sum(good_water)
 
         reward = float(good_water_num) / water_num
-        if self.delta_reward:
-            delta_reward = reward - self.prev_reward
-            self.prev_reward = reward
-        else:
-            reward = reward
-
-        return delta_reward if self.delta_reward else reward
+        return  reward
 
     def _get_info(self):
         # Duplicate of the compute reward function!

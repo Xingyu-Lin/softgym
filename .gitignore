@@ -1,5 +1,5 @@
+softgym/cached_initial_states/*
 softgym/envs/corl_cached_state_backup
-softgym/envs/*.pkl
 data
 __pycache__/
 .idea

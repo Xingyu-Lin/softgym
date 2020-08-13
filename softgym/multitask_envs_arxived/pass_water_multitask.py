@@ -7,7 +7,7 @@ from softgym.envs.pass_water import PassWater1DEnv
 import time
 import copy
 import os
-from softgym.envs.util import rotate_rigid_object
+from softgym.utils.misc import rotate_rigid_object, quatFromAxisAngle
 from pyquaternion import Quaternion
 import random
 from shapely.geometry import Polygon, LineString

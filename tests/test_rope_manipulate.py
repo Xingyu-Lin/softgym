@@ -1,9 +1,6 @@
 from softgym.envs.rope_manipulate import RopeManipulateEnv
 import numpy as np
 from matplotlib import pyplot as plt
-import softgym, gym
-from softgym.utils.visualization import save_numpy_as_gif
-
 
 num_picker = 2
 script = 'random'

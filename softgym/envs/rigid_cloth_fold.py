@@ -162,7 +162,7 @@ class RigidClothFoldEnv(RigidClothEnv):
             self.action_tool.step(action)
             pyflex.step()
 
-    def compute_reward(self, action=None, obs=None, set_prev_reward=False):
+    def compute_reward(self, action=None, obs=None):
         """
         The particles are splitted into two groups. The reward will be the minus average eculidean distance between each
         particle in group a and the crresponding particle in group b
@@ -175,12 +175,7 @@ class RigidClothFoldEnv(RigidClothEnv):
         pos_group_b_init = self.init_pos[self.fold_group_b]
         curr_dist = np.minimum(np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)), 0.5) + \
                     1.2 * np.minimum(np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1)), 0.5)
-        if self.delta_reward:
-            reward = self.prev_dist - curr_dist
-            if set_prev_reward:
-                self.prev_dist = curr_dist
-        else:
-            reward = -curr_dist
+        reward = -curr_dist
         return reward
 
     def _get_info(self):

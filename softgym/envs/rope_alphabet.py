@@ -125,7 +125,7 @@ class RopeAlphaBetEnv(RopeFlattenEnv):
             goal_c_img = self.get_image(self.camera_height, self.camera_width)
             self.goal_characters_image[c] = goal_c_img.copy()
 
-    def compute_reward(self, action=None, obs=None, set_prev_reward=False):
+    def compute_reward(self, action=None, obs=None):
         """ Reward is the matching degree to the goal character"""
         goal_c_pos = self.current_config["GoalCharacterPos"][:, :3]
         current_pos = pyflex.get_positions().reshape((-1, 4))[:, :3]
@@ -147,12 +147,6 @@ class RopeAlphaBetEnv(RopeFlattenEnv):
             row_idx, col_idx = opt.linear_sum_assignment(W)
             dist = W[row_idx, col_idx].sum()
             reward = -dist / len(downsampled_goal_pos)
-
-        if self.delta_reward:
-            delta_reward = reward - self.prev_reward
-            if set_prev_reward:
-                self.prev_reward = reward
-            reward = delta_reward
         
         # print("index matching reward: ", reward1)
         # print("bigraph matching reward: ", reward2)

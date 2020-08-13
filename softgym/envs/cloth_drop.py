@@ -229,12 +229,7 @@ class ClothDropEnv(ClothEnv):
     def compute_reward(self, action=None, obs=None, set_prev_reward=True):
         particle_pos = pyflex.get_positions()
         curr_dist = self._get_current_dist(particle_pos)
-        if self.delta_reward:
-            r = self.prev_dist - curr_dist
-            if set_prev_reward:
-                self.prev_dist = curr_dist
-        else:
-            r = - curr_dist
+        r = - curr_dist
         return r
 
     # @property

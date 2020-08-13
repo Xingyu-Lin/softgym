@@ -177,12 +177,7 @@ class ClothFoldEnv(ClothEnv):
         pos_group_b_init = self.init_pos[self.fold_group_b]
         curr_dist = np.mean(np.linalg.norm(pos_group_a - pos_group_b, axis=1)) + \
                     1.2 * np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
-        if self.delta_reward:
-            reward = self.prev_dist - curr_dist
-            if set_prev_reward:
-                self.prev_dist = curr_dist
-        else:
-            reward = -curr_dist
+        reward = -curr_dist
         return reward
 
     def _get_info(self):

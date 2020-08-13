@@ -6,7 +6,7 @@ from softgym.envs.pour_water import PourWaterPosControlEnv
 import time
 import copy
 import os
-from softgym.envs.util import rotate_rigid_object, quatFromAxisAngle
+from softgym.utils.misc import rotate_rigid_object, quatFromAxisAngle
 from pyquaternion import Quaternion
 import random
 from shapely.geometry import Polygon, LineString
@@ -125,7 +125,7 @@ class PourWaterAmountPosControlEnv(PourWaterPosControlEnv):
         else:
             raise NotImplementedError
 
-    def compute_reward(self, obs=None, action=None, set_prev_reward=False):
+    def compute_reward(self, obs=None, action=None):
         """
         The reward is computed as the fraction of water in the poured glass.
         NOTE: the obs and action params are made here to be compatiable with the MultiTask env wrapper.
@@ -142,11 +142,8 @@ class PourWaterAmountPosControlEnv(PourWaterPosControlEnv):
         target_water_num = int(water_num * self.current_config['target_amount'])
         diff = np.abs(target_water_num - good_water_num) / water_num
 
-        reward = - diff 
-        if set_prev_reward:
-            delta_reward = reward - self.prev_reward
-            self.prev_reward = reward
-        return delta_reward if self.delta_reward else reward
+        reward = - diff
+        return reward
 
     def _get_info(self):
         state_dic = self.get_state()

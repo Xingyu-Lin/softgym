@@ -1,12 +1,5 @@
 from softgym.envs.pass_water_torus import PassWater1DTorusEnv
-from softgym.envs.pass_water_multitask import PassWater1DGoalConditionedEnv
 import numpy as np
-from matplotlib import pyplot as plt
-import softgym, gym
-from softgym.utils.visualization import save_numpy_as_gif
-import time
-import torchvision, torch
-import cv2
 from softgym.registered_env import  env_arg_dict
 import argparse, sys
 
@@ -17,7 +10,7 @@ args.add_argument("--N", type=int, default=1)
 args.add_argument("--obs_mode", type=str, default='cam_rgb')
 args.add_argument("--use_cached_states", type=str, default=False)
 args = args.parse_args()
-from softgym.utils.visualization import save_numpy_as_gif
+
 
 def get_particle_max_y():
     import pyflex

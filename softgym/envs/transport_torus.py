@@ -324,14 +324,7 @@ class TransportTorus1D(FluidTorusEnv):
         reward = -self.distance_coef * np.abs((self.terminal_x - self.box_x))
         if torus_center_y < self.height:
             reward -= self.torus_penalty_coef
-
-        if self.delta_reward:
-            delta_reward = reward - self.prev_reward
-            self.prev_reward = reward
-        else:
-            reward = reward
-
-        return delta_reward if self.delta_reward else reward
+        return reward
 
     def _get_info(self):
         state_dic = self.get_state()

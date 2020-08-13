@@ -1,10 +1,7 @@
-import gym
 import numpy as np
-import pyflex
-from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
+from softgym.multitask_envs_arxived.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
 import os, argparse, sys
 import softgym
-from matplotlib import pyplot as plt
 from softgym.core.image_env import ImageEnv
 from rlkit.envs.vae_wrapper import VAEWrappedEnv
 
@@ -30,7 +27,7 @@ if args.policy == 'heuristic':
             normalize=True,
         )
 
-    from rlkit.torch.vae.conv_vae import imsize48_default_architecture, imsize84_default_architecture, imsize128_default_architecture
+    from rlkit.torch.vae.conv_vae import imsize128_default_architecture
     vae_kwargs=dict(
                 input_channels=3,
                 architecture=imsize128_default_architecture,

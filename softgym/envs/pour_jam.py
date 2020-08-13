@@ -6,7 +6,7 @@ from softgym.envs.fluid_env import FluidEnv
 import time
 import copy
 import os
-from softgym.envs.util import rotate_rigid_object, quatFromAxisAngle
+from softgym.utils.misc import rotate_rigid_object, quatFromAxisAngle
 from pyquaternion import Quaternion
 import random
 

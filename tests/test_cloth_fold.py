@@ -1,11 +1,8 @@
-import gym
 import numpy as np
 import pyflex
 from softgym.envs.cloth_fold import ClothFoldEnv
-from softgym.envs.cloth_fold_multitask import ClothFoldGoalConditionedEnv
-from softgym.utils.visualization import save_numpy_as_gif
-from softgym.utils.normalized_env import normalize
-import torch, torchvision, cv2, time
+from softgym.multitask_envs_arxived.cloth_fold_multitask import ClothFoldGoalConditionedEnv
+import torch, torchvision, cv2
 from softgym.registered_env import env_arg_dict
 import argparse, sys
 

@@ -12,12 +12,12 @@ from softgym.envs.cloth_fold_crumpled import ClothFoldCrumpledEnv
 from softgym.envs.cloth_fold_drop import ClothFoldDropEnv
 from softgym.envs.rigid_cloth_fold import RigidClothFoldEnv
 
-from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
-from softgym.envs.pass_water_multitask import PassWater1DGoalConditionedEnv
+from softgym.multitask_envs_arxived.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
+from softgym.multitask_envs_arxived.pass_water_multitask import PassWater1DGoalConditionedEnv
 from softgym.envs.cloth_manipulate import ClothManipulateEnv
 from softgym.envs.rope_manipulate import RopeManipulateEnv
-from softgym.envs.cloth_drop_multitask import ClothDropGoalConditionedEnv
-from softgym.envs.cloth_fold_multitask import ClothFoldGoalConditionedEnv
+from softgym.multitask_envs_arxived.cloth_drop_multitask import ClothDropGoalConditionedEnv
+from softgym.multitask_envs_arxived.cloth_fold_multitask import ClothFoldGoalConditionedEnv
 from collections import OrderedDict
 
 env_arg_dict = {
@@ -31,7 +31,6 @@ env_arg_dict = {
                   'num_variations': 1000,
                   'horizon': 100,
                   'use_cached_states': True,
-                  'delta_reward': False,
                   'camera_name': 'default_camera'},
     'PourWaterAmount': {'observation_mode': 'cam_rgb',
                         'action_mode': 'direct',
@@ -43,7 +42,6 @@ env_arg_dict = {
                         'num_variations': 1000,
                         'use_cached_states': True,
                         'horizon': 100,
-                        'delta_reward': False,
                         'camera_name': 'default_camera'},
 
     'RopeClothStraighten': {
@@ -57,7 +55,6 @@ env_arg_dict = {
         'render_mode': 'cloth',
         'num_variations': 1000,
         'use_cached_states': True,
-        'delta_reward': False,
         'deterministic': False
     },
 
@@ -72,7 +69,6 @@ env_arg_dict = {
         'render_mode': 'cloth',
         'num_variations': 1000,
         'use_cached_states': True,
-        'delta_reward': False,
         'deterministic': False
     },
 
@@ -86,7 +82,6 @@ env_arg_dict = {
                     'render_mode': 'cloth',
                     'num_variations': 1000,
                     'use_cached_states': True,
-                    'delta_reward': False,
                     'deterministic': False},
     'RopeAlphaBet': {'observation_mode': 'cam_rgb',
                      'action_mode': 'picker',
@@ -98,7 +93,6 @@ env_arg_dict = {
                      'render_mode': 'cloth',
                      'num_variations': 1000,
                      'use_cached_states': True,
-                     'delta_reward': False,
                      'deterministic': False},
 
     'RigidClothFold': {'observation_mode': 'cam_rgb',
@@ -111,7 +105,6 @@ env_arg_dict = {
                        'num_pieces': 2,
                        'num_variations': 1000,
                        'use_cached_states': True,
-                       'delta_reward': False,
                        'deterministic': False},
     'RigidClothDrop': dict(observation_mode='cam_rgb',
                            action_mode='picker',
@@ -123,7 +116,6 @@ env_arg_dict = {
                            action_repeat=16,
                            num_variations=1000,
                            use_cached_states=True,
-                           delta_reward=False,
                            deterministic=False),
     'ClothFlatten': {'observation_mode': 'cam_rgb',
                      'action_mode': 'picker',
@@ -135,7 +127,6 @@ env_arg_dict = {
                      'render_mode': 'cloth',
                      'num_variations': 1000,
                      'use_cached_states': True,
-                     'delta_reward': False,
                      'deterministic': False},
     'ClothFlattenPPP': {'observation_mode': 'cam_rgb',
                         'action_mode': 'pickerpickplace',
@@ -147,7 +138,6 @@ env_arg_dict = {
                         'render_mode': 'cloth',
                         'num_variations': 1000,
                         'use_cached_states': True,
-                        'delta_reward': False,
                         'deterministic': False},
     'ClothFoldPPP': {'observation_mode': 'cam_rgb',
                      'action_mode': 'pickerpickplace',
@@ -159,7 +149,6 @@ env_arg_dict = {
                      'render_mode': 'cloth',
                      'num_variations': 1000,
                      'use_cached_states': True,
-                     'delta_reward': False,
                      'deterministic': False},
     'ClothFold': {'observation_mode': 'cam_rgb',
                   'action_mode': 'picker',
@@ -171,7 +160,6 @@ env_arg_dict = {
                   'render_mode': 'cloth',
                   'num_variations': 1000,
                   'use_cached_states': True,
-                  'delta_reward': False,
                   'deterministic': False},
     'ClothFoldCrumpled': {'observation_mode': 'cam_rgb',
                           'action_mode': 'picker',
@@ -183,7 +171,6 @@ env_arg_dict = {
                           'render_mode': 'cloth',
                           'num_variations': 1000,
                           'use_cached_states': True,
-                          'delta_reward': False,
                           'deterministic': False},
     'ClothFoldDrop': {'observation_mode': 'cam_rgb',
                       'action_mode': 'picker',
@@ -195,7 +182,6 @@ env_arg_dict = {
                       'render_mode': 'cloth',
                       'num_variations': 1000,
                       'use_cached_states': True,
-                      'delta_reward': False,
                       'deterministic': False},
     'ClothDrop': dict(observation_mode='cam_rgb',
                       action_mode='picker',
@@ -207,7 +193,6 @@ env_arg_dict = {
                       render_mode='cloth',
                       num_variations=1000,
                       use_cached_states=True,
-                      delta_reward=False,
                       deterministic=False),
     'PassWater': dict(observation_mode='cam_rgb',
                       action_mode='direct',
@@ -216,7 +201,6 @@ env_arg_dict = {
                       horizon=75,
                       action_repeat=8,
                       render_mode='fluid',
-                      delta_reward=False,
                       deterministic=False,
                       num_variations=1000),
     'PassWaterTorus': dict(observation_mode='cam_rgb',
@@ -226,7 +210,6 @@ env_arg_dict = {
                            horizon=75,
                            action_repeat=8,
                            render_mode='torus',
-                           delta_reward=False,
                            deterministic=False,
                            num_variations=1000),
     'TransportTorus': dict(observation_mode='cam_rgb',
@@ -236,7 +219,6 @@ env_arg_dict = {
                            horizon=75,
                            action_repeat=8,
                            render_mode='torus',
-                           delta_reward=False,
                            deterministic=False,
                            num_variations=1000),
 
@@ -249,7 +231,6 @@ env_arg_dict = {
         "render": True,
         "headless": True,
         "action_repeat": 8,
-        "delta_reward": False,
         "num_variations": 1000,
     },
     "PourWaterGoal": {
@@ -261,7 +242,6 @@ env_arg_dict = {
         'headless': True,
         'num_variations': 1000,
         'horizon': 100,
-        'delta_reward': False,
         'camera_name': 'default_camera'
     },
     "ClothManipulate": dict(
@@ -274,7 +254,6 @@ env_arg_dict = {
         action_repeat=8,
         render_mode='cloth',
         num_variations=1000,
-        delta_reward=False,
         deterministic=False
     ),
     "ClothDropGoal": dict(
@@ -287,7 +266,6 @@ env_arg_dict = {
         action_repeat=32,
         render_mode='cloth',
         num_variations=1000,
-        delta_reward=False,
         deterministic=False
     ),
     "RopeManipulate": dict(
@@ -300,7 +278,6 @@ env_arg_dict = {
         action_repeat=8,
         render_mode='rope',
         num_variations=1000,
-        delta_reward=False,
         deterministic=False
     ),
     "ClothFoldGoal": dict(
@@ -314,7 +291,6 @@ env_arg_dict = {
         render_mode='cloth',
         num_variations=1000,
         deterministic=False,
-        delta_reward=False,
     )
 }
 

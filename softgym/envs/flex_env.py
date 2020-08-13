@@ -1,10 +1,9 @@
 import os
 import copy
-from gym import error, spaces
-from gym.utils import seeding
+from gym import error
 import numpy as np
 import gym
-from softgym.utils.visualization import save_numpy_as_gif
+from utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp
 import pickle
@@ -16,12 +15,21 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, num_variations=1,
-                 action_repeat=8, camera_name='default_camera', delta_reward=False, deterministic=True, use_cached_states=True,
+    def __init__(self,
+                 device_id=-1,
+                 headless=False,
+                 render=True,
+                 horizon=100,
+                 camera_width=720,
+                 camera_height=720,
+                 num_variations=1,
+                 action_repeat=8,
+                 camera_name='default_camera',
+                 deterministic=True,
+                 use_cached_states=True,
                  save_cache_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
-
 
         self.record_video, self.video_path, self.video_name = False, None, None
 
@@ -39,7 +47,6 @@ class FlexEnv(gym.Env):
         self.action_repeat = action_repeat
         self.recording = False
         self.prev_reward = None
-        self.delta_reward = delta_reward
         self.deterministic = deterministic
         self.use_cached_states = use_cached_states
         self.save_cache_states = save_cache_states
