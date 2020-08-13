@@ -51,7 +51,7 @@ class RopeNewEnv(FlexEnv):
             'stretchstiffness': 0.9,
             'bendingstiffness': 0.8,
             'radius': 0.025,
-            'segment': 50.,
+            'segment': 40,
             'mass': 0.5,
             'scale': 0.5,
             'camera_name': 'default_camera',

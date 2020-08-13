@@ -4,7 +4,7 @@ from softgym.envs.pass_water import PassWater1DEnv
 from softgym.envs.pass_water_torus import PassWater1DTorusEnv
 from softgym.envs.rope_flatten import RopeFlattenEnv
 from softgym.envs.rope_flatten_new import RopeFlattenNewEnv
-from softgym.envs.rope_alphabet import RopeAlphaBetEnv
+from softgym.envs.rope_configuration import RopeConfigurationEnv
 from softgym.envs.cloth_flatten import ClothFlattenEnv
 from softgym.envs.cloth_fold import ClothFoldEnv
 from softgym.envs.cloth_drop import ClothDropEnv
@@ -83,7 +83,7 @@ env_arg_dict = {
                     'num_variations': 1000,
                     'use_cached_states': True,
                     'deterministic': False},
-    'RopeAlphaBet': {'observation_mode': 'cam_rgb',
+    'RopeConfiguration': {'observation_mode': 'cam_rgb',
                      'action_mode': 'picker',
                      'num_picker': 2,
                      'render': True,
@@ -307,7 +307,7 @@ SOFTGYM_ENVS = OrderedDict({
     'RigidClothFold': RigidClothFoldEnv,
     'RopeFlatten': RopeFlattenEnv,
     'RopeFlattenNew': RopeFlattenNewEnv,
-    'RopeAlphaBet': RopeAlphaBetEnv,
+    'RopeConfiguration': RopeConfigurationEnv,
     'PourWaterGoal': PourWaterPosControlGoalConditionedEnv,
     'PassWaterGoal': PassWater1DGoalConditionedEnv,
     'ClothDropGoal': ClothDropGoalConditionedEnv,
