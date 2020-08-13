@@ -23,7 +23,7 @@ def run_heuristic(args):
 
     if mode == 'debug':
         # dic['use_cached_states'] = False
-        # dic['save_cache_states'] = False
+        # dic['save_cached_states'] = False
         dic['num_variations'] = 20
 
     action_repeat = dic.get('action_repeat', 8)
