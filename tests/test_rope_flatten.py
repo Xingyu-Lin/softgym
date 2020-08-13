@@ -1,16 +1,12 @@
-import gym
 import numpy as np
 import pyflex
 from softgym.envs.rope_flatten_new import RopeFlattenNewEnv
-from softgym.envs.rope_manipulate import RopeManipulateEnv
-import os, argparse, sys
-import softgym
-from matplotlib import pyplot as plt
-import torch, torchvision, cv2
+from softgym.multitask_envs_arxived.rope_manipulate import RopeManipulateEnv
+import sys
 from softgym.registered_env import  env_arg_dict
 import argparse
 import time
-from softgym.utils.visualization import save_numpy_as_gif
+from utils.visualization import save_numpy_as_gif
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--mode", type=str, default='debug')

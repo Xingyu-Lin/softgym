@@ -1,10 +1,9 @@
 import os
 import copy
-from gym import error, spaces
-from gym.utils import seeding
+from gym import error
 import numpy as np
 import gym
-from softgym.utils.visualization import save_numpy_as_gif
+from utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp
 import pickle
@@ -16,12 +15,21 @@ except ImportError as e:
 
 
 class FlexEnv(gym.Env):
-    def __init__(self, device_id=-1, headless=False, render=True, horizon=100, camera_width=720, camera_height=720, num_variations=1,
-                 action_repeat=8, camera_name='default_camera', delta_reward=False, deterministic=True, use_cached_states=True,
+    def __init__(self,
+                 device_id=-1,
+                 headless=False,
+                 render=True,
+                 horizon=100,
+                 camera_width=720,
+                 camera_height=720,
+                 num_variations=1,
+                 action_repeat=8,
+                 camera_name='default_camera',
+                 deterministic=True,
+                 use_cached_states=True,
                  save_cache_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
-
 
         self.record_video, self.video_path, self.video_name = False, None, None
 
@@ -39,7 +47,6 @@ class FlexEnv(gym.Env):
         self.action_repeat = action_repeat
         self.recording = False
         self.prev_reward = None
-        self.delta_reward = delta_reward
         self.deterministic = deterministic
         self.use_cached_states = use_cached_states
         self.save_cache_states = save_cache_states
@@ -60,54 +67,6 @@ class FlexEnv(gym.Env):
             self.version = 2
         else:
             self.version = 1
-
-    @staticmethod
-    def _random_pick_and_place(pick_num=10, pick_scale=0.01):
-        """ Random pick a particle up and the drop it for pick_num times"""
-        curr_pos = pyflex.get_positions().reshape(-1, 4)
-        num_particles = curr_pos.shape[0]
-        for i in range(pick_num):
-            pick_id = np.random.randint(num_particles)
-            pick_dir = np.random.random(3) * 2 - 1
-            pick_dir[1] = (pick_dir[1] + 1)
-            pick_dir *= pick_scale
-            original_inv_mass = curr_pos[pick_id, 3]
-            for _ in range(60):
-                curr_pos = pyflex.get_positions().reshape(-1, 4)
-                curr_pos[pick_id, :3] += pick_dir
-                curr_pos[pick_id, 3] = 0
-                pyflex.set_positions(curr_pos.flatten())
-                pyflex.step()
-
-            # Revert mass
-            curr_pos = pyflex.get_positions().reshape(-1, 4)
-            curr_pos[pick_id, 3] = original_inv_mass
-            pyflex.set_positions(curr_pos.flatten())
-            pyflex.step()
-
-            # Wait to stabalize
-            for _ in range(100):
-                pyflex.step()
-                curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < 0.01):
-                    break
-        for _ in range(500):
-            pyflex.step()
-            curr_vel = pyflex.get_velocities()
-            if np.alltrue(curr_vel < 0.01):
-                break
-
-    def _center_object(self):
-        """ 
-        Center the object to be at the origin
-        NOTE: call a pyflex.set_positions and then pyflex.step
-        """
-        pos = pyflex.get_positions().reshape(-1, self.dim_position)
-        # print(np.mean(pos[:, [0, 2]], axis=0, keepdims=True))
-        # print(pos)
-        pos[:, [0, 2]] -= np.mean(pos[:, [0, 2]], axis=0, keepdims=True)
-        pyflex.set_positions(pos.flatten())
-        pyflex.step()
 
     def get_cached_configs_and_states(self, cached_states_path):
         """

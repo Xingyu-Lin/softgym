@@ -1,18 +1,8 @@
-import gym
 import numpy as np
-import pyflex
 from softgym.envs.pour_water import PourWaterPosControlEnv
-import os, argparse, sys
-import softgym
-from matplotlib import pyplot as plt
-from softgym.utils.visualization import save_numpy_as_gif
-import torchvision
-import torch
+import argparse, sys
 import cv2
-from matplotlib import pyplot as plt
 from softgym.registered_env import  env_arg_dict
-import os.path as osp
-
 
 args = argparse.ArgumentParser(sys.argv[0])
 args.add_argument("--mode", type=str, default='heuristic', help='visual: generate env images; otherwise, \

@@ -3,8 +3,8 @@ import argparse
 import numpy as np
 
 from softgym.registered_env import env_arg_dict, SOFTGYM_ENVS
-from softgym.utils.normalized_env import normalize
-from softgym.utils.visualization import save_numpy_as_gif
+from utils.normalized_env import normalize
+from utils.visualization import save_numpy_as_gif
 
 
 def main():

@@ -5,12 +5,9 @@ import pyflex
 from softgym.envs.fluid_rigid_env import FluidTorusEnv
 import time
 import copy
-import os
-from softgym.envs.util import quatFromAxisAngle
-from softgym.envs.robot_env import RobotBase
-from pyquaternion import Quaternion
-import random
-import yaml, pickle
+from softgym.utils.misc import quatFromAxisAngle
+from softgym.action_space.robot_env import RobotBase
+import pickle
 import os.path as osp
 
 
@@ -338,13 +335,7 @@ class PassWater1DTorusEnv(FluidTorusEnv):
         reward = -self.torus_penalty_coef * (float(out_glass_sum) / torus_particle_num)
         reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
 
-        if self.delta_reward:
-            delta_reward = reward - self.prev_reward
-            self.prev_reward = reward
-        else:
-            reward = reward
-
-        return delta_reward if self.delta_reward else reward
+        return reward
 
     def _get_info(self):
         state_dic = self.get_state()

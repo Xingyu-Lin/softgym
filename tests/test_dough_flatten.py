@@ -1,10 +1,5 @@
-import gym
 import numpy as np
-import pyflex
-from softgym.envs.dough_flatten import DoughFlattenEnv
-import os, argparse, sys
-import softgym
-from matplotlib import pyplot as plt
+from softgym.envs.arxived.dough_flatten import DoughFlattenEnv
 import time
 
 def test_random(env):

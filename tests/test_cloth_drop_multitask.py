@@ -1,9 +1,6 @@
-from softgym.envs.cloth_drop_multitask import ClothDropGoalConditionedEnv
+from softgym.multitask_envs_arxived.cloth_drop_multitask import ClothDropGoalConditionedEnv
 import numpy as np
 from matplotlib import pyplot as plt
-import softgym, gym
-from softgym.utils.visualization import save_numpy_as_gif
-
 
 num_picker = 2
 script = 'random'

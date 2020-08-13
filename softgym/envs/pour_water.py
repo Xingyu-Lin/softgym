@@ -6,7 +6,7 @@ from softgym.envs.fluid_env import FluidEnv
 import time
 import copy
 import os
-from softgym.envs.util import rotate_rigid_object, quatFromAxisAngle
+from softgym.utils.misc import rotate_rigid_object, quatFromAxisAngle
 from pyquaternion import Quaternion
 import random
 from shapely.geometry import Polygon, LineString
@@ -422,13 +422,7 @@ class PourWaterPosControlEnv(FluidEnv):
         good_water_num = np.sum(good_water)
 
         reward = float(good_water_num) / water_num
-        if self.delta_reward:
-            delta_reward = reward - self.prev_reward
-            self.prev_reward = reward
-        else:
-            reward = reward
-
-        return delta_reward if self.delta_reward else reward
+        return  reward
 
     def _get_info(self):
         # Duplicate of the compute reward function!

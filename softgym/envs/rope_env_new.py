@@ -2,10 +2,10 @@ import numpy as np
 from gym.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
-from softgym.envs.action_space import ParallelGripper, Picker
-from softgym.envs.robot_env import RobotBase
+from softgym.action_space.action_space import Picker
+from softgym.action_space.robot_env import RobotBase
 from copy import deepcopy
-import os.path as osp
+
 
 class RopeNewEnv(FlexEnv):
     def __init__(self, observation_mode, action_mode, num_picker=2, horizon=75, render_mode='particle', picker_radius=0.02, **kwargs):

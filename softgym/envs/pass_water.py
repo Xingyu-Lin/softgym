@@ -3,14 +3,11 @@ from gym.spaces import Box
 
 import pyflex
 from softgym.envs.fluid_env import FluidEnv
-import time
 import copy
-import os
-from softgym.envs.util import quatFromAxisAngle
-from softgym.envs.robot_env import RobotBase
-from pyquaternion import Quaternion
+from softgym.utils.misc import quatFromAxisAngle
+from softgym.action_space.robot_env import RobotBase
 import random
-import yaml, pickle
+import pickle
 import os.path as osp
 
 
@@ -428,14 +425,7 @@ class PassWater1DEnv(FluidEnv):
         reward = -self.water_penalty_coef * (float(out_glass) / water_num)
         reward += -self.distance_coef * np.abs((self.terminal_x - self.glass_x))
 
-        if self.delta_reward:
-            delta_reward = reward - self.prev_reward
-            self.prev_reward = reward
-        else:
-            # normalized_reward = (reward - self.reward_min) / self.reward_range
-            reward = reward
-
-        return delta_reward if self.delta_reward else reward
+        return reward
 
     def _get_info(self):
         state_dic = self.get_state()

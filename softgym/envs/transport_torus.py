@@ -3,14 +3,10 @@ from gym.spaces import Box
 
 import pyflex
 from softgym.envs.fluid_rigid_env import FluidTorusEnv
-import time
 import copy
-import os
-from softgym.envs.util import quatFromAxisAngle
-from softgym.envs.robot_env import RobotBase
-from pyquaternion import Quaternion
-import random
-import yaml, pickle
+from softgym.utils.misc import quatFromAxisAngle
+from softgym.action_space.robot_env import RobotBase
+import pickle
 import os.path as osp
 
 
@@ -329,14 +325,7 @@ class TransportTorus1D(FluidTorusEnv):
         box_x_high = self.box_x + self.box_dis_x / 2.
         if torus_center_y < self.height or torus_center_x < box_x_low or torus_center_x > box_x_high:
             reward -= self.torus_penalty_coef
-
-        if self.delta_reward:
-            delta_reward = reward - self.prev_reward
-            self.prev_reward = reward
-        else:
-            reward = reward
-
-        return delta_reward if self.delta_reward else reward
+        return reward
 
     def _get_info(self):
         state_dic = self.get_state()

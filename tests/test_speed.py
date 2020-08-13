@@ -1,13 +1,5 @@
-import gym
-import numpy as np
-import pyflex
-from softgym.envs.cloth_flatten import ClothFlattenEnv
 from softgym.envs.pour_water import PourWaterPosControlEnv
-from softgym.envs.rope_manipulate import RopeManipulateEnv
-import os, argparse, sys
-import softgym
-from matplotlib import pyplot as plt
-import torch, torchvision, cv2
+import sys
 from softgym.registered_env import  env_arg_dict
 import argparse, time
 

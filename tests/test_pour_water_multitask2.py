@@ -1,9 +1,6 @@
-from softgym.envs.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
+from softgym.multitask_envs_arxived.pour_water_multitask import PourWaterPosControlGoalConditionedEnv
 import numpy as np
 from matplotlib import pyplot as plt
-import softgym, gym
-from softgym.utils.visualization import save_numpy_as_gif
-
 
 script = 'random'
 

@@ -4,10 +4,8 @@ import pickle
 import os.path as osp
 import pyflex
 from softgym.envs.rope_env_new import RopeNewEnv
-import scipy
-import copy
 from copy import deepcopy
-
+from utils.pyflex_utils import center_object, random_pick_and_place
 
 class RopeFlattenNewEnv(RopeNewEnv):
     def __init__(self, cached_states_path='rope_flatten_new_init_states.pkl', **kwargs):
@@ -44,8 +42,8 @@ class RopeFlattenNewEnv(RopeNewEnv):
             config['camera_params'] = deepcopy(self.camera_params)
             self.action_tool.reset([0., -1., 0.])
 
-            self._random_pick_and_place(pick_num=4, pick_scale=0.005)
-            self._center_object()
+            random_pick_and_place(pick_num=4, pick_scale=0.005)
+            center_object()
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
@@ -95,12 +93,7 @@ class RopeFlattenNewEnv(RopeNewEnv):
         """ Reward is the distance between the endpoints of the rope"""
         curr_endpoint_dist = self._get_endpoint_distance()
         curr_distance_diff = -np.abs(curr_endpoint_dist - self.rope_length)
-        if self.delta_reward:
-            r = curr_distance_diff - self.prev_distance_diff
-            if set_prev_reward:
-                self.prev_distance_diff = curr_distance_diff
-        else:
-            r = curr_distance_diff
+        r = curr_distance_diff
         return r
 
     def _get_info(self):

@@ -4,9 +4,9 @@ import pickle
 import os.path as osp
 import pyflex
 from softgym.envs.cloth_env import ClothEnv
-import copy
 from copy import deepcopy
-from softgym.utils.utils import vectorized_range, vectorized_meshgrid
+from utils.misc import vectorized_range, vectorized_meshgrid
+from utils.pyflex_utils import center_object
 
 
 class ClothFlattenEnv(ClothEnv):
@@ -98,15 +98,15 @@ class ClothFlattenEnv(ClothEnv):
                 if np.alltrue(curr_vel < stable_vel_threshold):
                     break
 
-            self._center_object()
+            center_object()
 
             if self.action_mode == 'sphere' or self.action_mode.startswith('picker'):
                 curr_pos = pyflex.get_positions()
                 self.action_tool.reset(curr_pos[pickpoint * 4:pickpoint * 4 + 3] + [0., 0.2, 0.])
             generated_configs.append(deepcopy(config))
             generated_states.append(deepcopy(self.get_state()))
-            self.current_config = config # Needed in _set_to_flatten function
-            generated_configs[-1]['flatten_area'] = self._set_to_flatten() # Record the maximum flatten area
+            self.current_config = config  # Needed in _set_to_flatten function
+            generated_configs[-1]['flatten_area'] = self._set_to_flatten()  # Record the maximum flatten area
 
             print('config {}: camera params {}, flatten area: {}'.format(i, config['camera_params'], generated_configs[-1]['flatten_area']))
 
@@ -224,12 +224,7 @@ class ClothFlattenEnv(ClothEnv):
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         particle_pos = pyflex.get_positions()
         curr_covered_area = self._get_current_covered_area(particle_pos)
-        if self.delta_reward:
-            r = curr_covered_area - self.prev_covered_area
-            if set_prev_reward:
-                self.prev_covered_area = curr_covered_area
-        else:
-            r = curr_covered_area
+        r = curr_covered_area
         return r
 
     # @property
