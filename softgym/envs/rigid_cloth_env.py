@@ -138,7 +138,7 @@ class RigidClothEnv(FlexEnv):
 
     def set_scene(self, config, state=None):
         camera_params = config['camera_params'][config['camera_name']]
-        env_idx = 14
+        env_idx = 3
         scene_params = np.array(
             [config['ClothSize'][0], 1, config['ClothSize'][1], config['num_pieces'], config['inv_mass'], config['rigid_stiffness'],
              *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height']])

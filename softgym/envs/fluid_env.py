@@ -48,12 +48,13 @@ class FluidEnv(FlexEnv):
         # create fluid
         scene_params = np.concatenate((fluid_params, camera_params))
 
+        env_idx = 1
         if self.version == 2:
             robot_params = []
             self.params = (scene_params, robot_params)
-            pyflex.set_scene(11, scene_params, 0, robot_params)
+            pyflex.set_scene(env_idx, scene_params, 0, robot_params)
         elif self.version == 1:
-            pyflex.set_scene(11, scene_params, 0)
+            pyflex.set_scene(env_idx, scene_params, 0)
         
         self.particle_num = pyflex.get_n_particles()
 
