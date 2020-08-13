@@ -156,7 +156,7 @@ if __name__ == '__main__':
                   action_repeat=8,
                   num_variations=10,
                   use_cached_states=False,
-                  save_cache_states=False,
+                  save_cached_states=False,
                   deterministic=False)
     env.reset(config=env.get_default_config())
     for i in range(1000):

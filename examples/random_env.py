@@ -10,7 +10,7 @@ from softgym.utils.visualization import save_numpy_as_gif
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     # ['PassWater', 'PourWater', 'PourWaterAmount', 'RopeFlattenNew', 'ClothFold', 'ClothFlatten', 'ClothDrop', 'ClothFoldCrumpled', 'ClothFoldDrop']
-    parser.add_argument('--env_name', type=str, default='ClothFlatten')
+    parser.add_argument('--env_name', type=str, default='ClothDrop')
     parser.add_argument('--headless', type=int, default=0, help='Whether to run the environment with headless rendering')
     parser.add_argument('--num_variations', type=int, default=1, help='Number of environment variations to be generated')
     parser.add_argument('--save_video_dir', type=str, default='./data/', help='Path to the saved video')

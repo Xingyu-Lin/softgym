@@ -85,7 +85,7 @@ class PourWaterPosControlEnv(FluidEnv):
         }
         return config
 
-    def generate_env_variation(self, num_variations=5, config=None **kwargs):
+    def generate_env_variation(self, num_variations=5, config=None, **kwargs):
         """
         TODO: add more randomly generated configs instead of using manually specified configs. 
         """

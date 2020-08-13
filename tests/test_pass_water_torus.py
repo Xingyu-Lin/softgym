@@ -30,7 +30,7 @@ def run_heuristic(args):
 
     if not args.use_cached_states:
         dic['use_cached_states'] = False
-        dic['save_cache_states'] = True
+        dic['save_cached_states'] = True
         dic['num_variations'] = 10
 
     env = PassWater1DTorusEnv(**dic)

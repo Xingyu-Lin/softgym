@@ -29,7 +29,7 @@ def run_heuristic(args):
     action_repeat = dic.get('action_repeat', 8)
     horizon = dic['horizon']
     if args.mode == 'debug':
-    #     dic['save_cache_states'] = False
+    #     dic['save_cached_states'] = False
     #     dic['use_cached_states'] = False
         dic['num_variations'] = 5
 

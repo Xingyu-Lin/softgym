@@ -27,7 +27,7 @@ class FlexEnv(gym.Env):
                  camera_name='default_camera',
                  deterministic=True,
                  use_cached_states=True,
-                 save_cache_states=True, **kwargs):
+                 save_cached_states=True, **kwargs):
         self.camera_params, self.camera_width, self.camera_height, self.camera_name = {}, camera_width, camera_height, camera_name
         pyflex.init(headless, render, camera_width, camera_height)
 
@@ -49,7 +49,7 @@ class FlexEnv(gym.Env):
         self.prev_reward = None
         self.deterministic = deterministic
         self.use_cached_states = use_cached_states
-        self.save_cache_states = save_cache_states
+        self.save_cached_states = save_cached_states
         self.current_config = self.get_default_config()
         self.current_config_id = None
         self.cached_configs, self.cached_init_states = None, None
@@ -79,7 +79,7 @@ class FlexEnv(gym.Env):
         if not cached_states_path.startswith('/'):
             cur_dir = osp.dirname(osp.abspath(__file__))
             cached_states_path = osp.join(cur_dir, '../cached_initial_states', cached_states_path)
-        if osp.exists(cached_states_path):
+        if self.use_cached_states and osp.exists(cached_states_path):
             # Load from cached file
             with open(cached_states_path, "rb") as handle:
                 self.cached_configs, self.cached_init_states = pickle.load(handle)
@@ -88,9 +88,10 @@ class FlexEnv(gym.Env):
                 return self.cached_configs, self.cached_init_states
 
         self.cached_configs, self.cached_init_states = self.generate_env_variation(num_variations)
-        with open(cached_states_path, 'wb') as handle:
-            pickle.dump((self.cached_configs, self.cached_init_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print('{} config and state pairs generated and saved to {}'.format(len(self.cached_init_states), cached_states_path))
+        if self.save_cached_states:
+            with open(cached_states_path, 'wb') as handle:
+                pickle.dump((self.cached_configs, self.cached_init_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
+            print('{} config and state pairs generated and saved to {}'.format(len(self.cached_init_states), cached_states_path))
 
         return self.cached_configs, self.cached_init_states
 

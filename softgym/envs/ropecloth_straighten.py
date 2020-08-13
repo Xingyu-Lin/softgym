@@ -23,14 +23,14 @@ class RopeClothStraightenEnv(ClothEnv):
             success = self.get_cached_configs_and_states(cached_states_path)
 
         if not self.use_cached_states or not success:
-            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations, save_to_file=self.save_cache_states)
+            self.cached_configs, self.cached_init_states = self.generate_env_variation(self.num_variations)
             success = self.get_cached_configs_and_states(cached_states_path)
             assert success
 
     def _sample_cloth_size(self):
         return np.random.randint(60, 120), 2
 
-    def generate_env_variation(self, num_variations=2, save_to_file=False, vary_cloth_size=True, config=None):
+    def generate_env_variation(self, num_variations=2, vary_cloth_size=True, config=None):
         """ Generate initial states. Note: This will also change the current states! """
         generated_configs, generated_states = [], []
         if config is None:
@@ -60,10 +60,6 @@ class RopeClothStraightenEnv(ClothEnv):
             generated_configs.append(deepcopy(config))
             print('config {}: {}'.format(i, config['camera_params']))
             generated_states.append(deepcopy(self.get_state()))
-
-        if save_to_file:
-            with open(self.cached_states_path, 'wb') as handle:
-                pickle.dump((generated_configs, generated_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         return generated_configs, generated_states
 

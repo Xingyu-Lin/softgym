@@ -23,7 +23,7 @@ def run_heuristic(args):
     horizon = dic['horizon']
     
     # if not args.use_cached_states:
-    #     dic['save_cache_states'] = True
+    #     dic['save_cached_states'] = True
     #     dic['use_cached_states'] = False
     #     dic['num_variations'] = 5
 
