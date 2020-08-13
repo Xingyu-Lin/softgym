@@ -24,12 +24,6 @@
 // NVIDIA Corporation.
 //
 // Copyright (c) 2013-2017 NVIDIA Corporation. All rights reserved.
-
-#include <iostream>
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
@@ -70,7 +64,6 @@ extern DemoContext* CreateDemoContextD3D12();
 extern DemoContext* CreateDemoContextD3D11();
 #endif // FLEX_DX
 
-#include "bindings/utils/utils.h"
 
 using json = nlohmann::json;
 using namespace std;
@@ -173,11 +166,11 @@ inline float joyAxisFilter(int value, int stick)
 
 SDL_GameController* g_gamecontroller = NULL;
 
-int g_windowWidth = 720;
+int g_windowWidth = 1280;
 int g_windowHeight = 720;
 int g_screenWidth = g_windowWidth;
 int g_screenHeight = g_windowHeight;
-int g_msaaSamples = 4; // Xingyu: Different from 1.0
+int g_msaaSamples = 4;
 int g_upscaling = 3;
 
 int g_numSubsteps;
@@ -196,7 +189,6 @@ bool g_interop = false;
 bool g_d3d12 = false;
 bool g_headless = false;
 bool g_render = true;
-bool g_sensor_segment = true;
 bool g_useAsyncCompute = true;
 bool g_increaseGfxLoadForAsyncComputeTesting = false;
 
@@ -268,17 +260,17 @@ bool g_shapesChanged = false;
 /* Note that this array of colors is altered by demo code, and is also read from global by graphics API impls */
 Colour g_colors[] =
 {
-        Colour(0.000f, 0.500f, 1.000f),
-        Colour(0.875f, 0.782f, 0.051f),
-        Colour(0.800f, 0.100f, 0.100f),
-        Colour(0.673f, 0.111f, 0.000f),
-        Colour(0.612f, 0.194f, 0.394f),
-        Colour(0.0f, 1.f, 0.0f),
-        Colour(0.797f, 0.354f, 0.000f),
-        Colour(0.092f, 0.465f, 0.820f),
-        Colour(1.0f, 1.0f, 1.0f),
-        Colour(0.0f, 0.0f, 0.0f),
-        Colour(0.0f, 0.0f, 0.0f)
+    Colour(0.0f, 0.5f, 1.0f),
+    Colour(0.797f, 0.354f, 0.000f),
+    Colour(0.092f, 0.465f, 0.820f),
+    Colour(0.000f, 0.349f, 0.173f),
+    Colour(0.875f, 0.782f, 0.051f),
+    Colour(0.000f, 0.170f, 0.453f),
+    Colour(0.673f, 0.111f, 0.000f),
+    Colour(0.612f, 0.194f, 0.394f),
+    Colour(1.0f, 1.0f, 1.0f),
+    Colour(0.0f, 0.0f, 0.0f),
+    Colour(0.0f, 0.0f, 0.0f)
 };
 
 struct SimBuffers
@@ -607,7 +599,7 @@ struct RenderSensor
 
 DepthRenderProfile defaultDepthProfile = {
 	0.f, // minRange
-	5.f, // maxRange
+	0.f, // maxRange
 };
 
 std::vector<RenderSensor> g_renderSensors;
@@ -648,6 +640,16 @@ size_t AddSensor(int width, int height, int parent, Transform origin, float fov,
 	return g_renderSensors.size() - 1;
 }
 
+size_t AddPrimesenseSensor(int parent, Transform origin, float scale = 1.f, bool renderFluids = false)
+{
+	// TODO(jaliang): Color sensor should have higher res
+	DepthRenderProfile primesenseDepthProfile = {
+		0.35f, // minRange
+		3.f, // maxRange
+	};
+	return AddSensor(int(640.f * scale), int(480.f * scale), parent, origin, DegToRad(45.f), renderFluids, primesenseDepthProfile);
+}
+
 float* ReadSensor(int sensorId)
 {
 	// TODO(jaliang): Need different modes
@@ -686,8 +688,8 @@ bool g_doLearning = false;
 bool g_pause = false;
 bool g_step = false;
 bool g_capture = false;
-bool g_showHelp = false; // Open Help here
-bool g_tweakPanel = true; // Open tweak here
+bool g_showHelp = true;
+bool g_tweakPanel = true;
 bool g_fullscreen = false;
 bool g_wireframe = false;
 bool g_debug = false;
@@ -742,7 +744,7 @@ bool g_diffuseShadow;
 float g_diffuseInscatter;
 float g_diffuseOutscatter;
 
-float g_dt = 1.0f / 100.0f;	// the time delta used for simulation
+float g_dt = 1.0f / 60.0f;	// the time delta used for simulation
 float g_realdt;				// the real world time delta between updates
 
 float g_waitTime;		// the CPU time spent waiting for the GPU
@@ -836,7 +838,7 @@ inline float sqr(float x)
 }
 
 class Scene;
-Scene* g_scene = NULL;
+Scene* g_scene;
 
 #ifdef NV_FLEX_GYM
 class RLFlexEnv;
@@ -864,8 +866,7 @@ inline Matrix44 GetCameraRotationMatrix(bool getInversed = false)
 	return RotationMatrix(camAngleX, Vec3(0.0f, 1.0f, 0.0f)) * RotationMatrix(camAngleY, Vec3(cosf(camAngleX), 0.0f, sinf(camAngleX)));
 }
 
-
-void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, int thread_idx, py::array_t<float> robot_params = py::array_t<float>())
+void InitScene(int scene, bool centerCamera = true)
 {
     if (g_sceneFactories[scene].mIsVR && !g_vrSystem)
     {
@@ -879,27 +880,32 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
         MapBuffers(g_buffers);
         UnmapBuffers(g_buffers);
     }
+
     if (g_scene)
     {
         delete g_scene;
         g_scene = NULL;
     }
+
     if (g_solver)
     {
         if (g_buffers)
         {
             DestroyBuffers(g_buffers);
         }
+
 		if (g_render)
 		{
 			DestroyFluidRenderBuffers(g_fluidRenderBuffers);
 			DestroyDiffuseRenderBuffers(g_diffuseRenderBuffers);
 		}
+
         for (auto& iter : g_meshes)
         {
             NvFlexDestroyTriangleMesh(g_flexLib, iter.first);
             DestroyRenderMesh(iter.second);
         }
+
         for (auto& iter : g_fields)
         {
             NvFlexDestroyDistanceField(g_flexLib, iter.first);
@@ -924,6 +930,7 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
         NvFlexDestroySolver(g_solver);
         g_solver = NULL;
 	}
+
 	if (g_render == true)
 	{
         // destroy old sensors
@@ -958,6 +965,7 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
             g_renderMaterials.push_back(defaultMat);
         }
     }
+
     memset(&g_timersAvg, 0, sizeof(g_timersAvg));
     memset(&g_timersVar, 0, sizeof(g_timersVar));
     g_timersCount = 0;
@@ -1020,7 +1028,7 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
     g_frame = 0;
     g_pause = false;
 
-    g_dt = 1.0f / 100.0f;
+    g_dt = 1.0f / 60.0f;
     g_waveTime = 0.0f;
     g_windTime = 0.0f;
     g_windStrength = 1.0f;
@@ -1097,7 +1105,6 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
     // create scene
     StartGpuWork();
     g_scene = g_sceneFactories[scene].mFactory();
-    g_scene->Initialize(scene_params, robot_params, thread_idx);
     g_scene->PrepareScene();
     EndGpuWork();
 
@@ -1423,16 +1430,9 @@ void InitScene(int scene, py::array_t<float> scene_params, bool centerCamera, in
     }
 }
 
-void InitScene(int scene, bool centerCamera = true)
-{
-    py::array_t<float> scene_params;
-    InitScene(scene, scene_params, centerCamera, 0);
-}
-
 void Reset()
 {
-    assert(0); // xingyu: Modify the arguments below
-//    InitScene(g_sceneIndex, false);
+    InitScene(g_sceneIndex, false);
 }
 
 void Shutdown()
@@ -1584,8 +1584,6 @@ void UpdateCamera()
     {
         g_camPos += camDelta;
     }
-//    cout<<"g_camPos"<<g_camPos[0] << " " << g_camPos[1] << " " << g_camPos[2]<<endl;
-//    cout<<"g_camAngle"<<g_camAngle[0] << " "<< g_camAngle[1]<<" "<<g_camAngle[2]<<endl;
 }
 
 void UpdateMouse()
@@ -1740,18 +1738,23 @@ void SyncScene()
     g_scene->Sync();
 }
 
-void UpdateScene(py::array_t<float> control_params = py::array_t<float>())
+void UpdateScene()
 {
     // give scene a chance to make changes to particle buffers
     if (!g_experiment)
     {
         g_scene->Update();
-        g_scene->Step(control_params); // For robot control
     }
 }
 
 void RenderScene(int eye = 2, Matrix44* usedProj = nullptr, Matrix44* usedView = nullptr)
 {
+	for (auto& sensor : g_renderSensors)
+	{
+		// read back sensor data from previous frame to avoid stall, todo: multi-view / tiled sensor rendering / etc
+		ReadRenderTarget(sensor.target, sensor.rgbd, 0, 0, sensor.width, sensor.height);
+	}
+
     const int numParticles = NvFlexGetActiveCount(g_solver);
     const int numDiffuse = g_buffers->diffuseCount[0];
 
@@ -2034,20 +2037,12 @@ void RenderScene(int eye = 2, Matrix44* usedProj = nullptr, Matrix44* usedView =
 	// sensors pass
 
 	DrawSensors(numParticles, numDiffuse, radius, lightTransform);
-	for (auto& sensor : g_renderSensors)
-	{
-		// read back sensor data from previous frame to avoid stall, todo: multi-view / tiled sensor rendering / etc
-		// XY: Move this such that the data is the current frame
-		ReadRenderTarget(sensor.target, sensor.rgbd, 0, 0, sensor.width, sensor.height);
-	}
 
 	// need to reset the view for picking
     SetView(view, proj);
 
 	// end timing
     GraphicsTimerEnd();
-
-
 }
 
 void RenderDebug()
@@ -2799,36 +2794,20 @@ void DrawSensors(const int numParticles, const int numDiffuse, float radius, Mat
 			cameraToWorld = sensor.origin;
 		}
 
-        Matrix44 conversion, view, proj;
-        if (false) // For now, do not use the
-        {
-            // convert from URDF (positive z-forward) to OpenGL (negative z-forward)
-            conversion = RotationMatrix(kPi, Vec3(1.0f, 0.0f, 0.0f));
+		// convert from URDF (positive z-forward) to OpenGL (negative z-forward)
+		Matrix44 conversion = RotationMatrix(kPi, Vec3(1.0f, 0.0f, 0.0f));
 
-            view = AffineInverse(TransformMatrix(cameraToWorld) * conversion);
-            proj = ProjectionMatrix(RadToDeg(sensor.fov), 1.0f, g_camNear, g_camFar);
-        }
-        else
-        {
-            float fov = kPi / 4.0f;
-            float aspect = float(sensor.width) / sensor.height;
-
-            view = GetCameraRotationMatrix(true) * TranslationMatrix(-Point3(g_camPos));
-            proj = ProjectionMatrix(RadToDeg(fov), aspect, g_camNear, g_camFar);
-        }
+		Matrix44 view = AffineInverse(TransformMatrix(cameraToWorld) * conversion);
+		Matrix44 proj = ProjectionMatrix(RadToDeg(sensor.fov), 1.0f, g_camNear, g_camFar);
 
 		SetRenderTarget(sensor.target, 0, 0, sensor.width, sensor.height);	
 		SetView(view, proj);	
 
-        if (!g_sensor_segment)
-        {
-            // draw all rigid attachments, todo: call into the main scene render or just render what we need selectively?
-            DrawRigidAttachments();
-            DrawRigidShapes();
-            DrawStaticShapes();
-            DrawPlanes((Vec4*)g_params.planes, g_params.numPlanes, g_drawPlaneBias);
-        }
-
+		// draw all rigid attachments, todo: call into the main scene render or just render what we need selectively?		
+		DrawRigidAttachments();
+		DrawRigidShapes();
+		DrawStaticShapes();
+		DrawPlanes((Vec4*)g_params.planes, g_params.numPlanes, g_drawPlaneBias);
 
 		if (g_drawMesh)
 		{
@@ -3607,7 +3586,7 @@ void UpdateControllerInput()
 }
 
 
-void UpdateFrame(py::array_t<float> update_params)
+void UpdateFrame()
 {
 	if (!g_headless)
 		UpdateControllerInput();
@@ -3638,7 +3617,7 @@ void UpdateFrame(py::array_t<float> update_params)
 			UpdateEmitters();
 			UpdateMouse();
 			UpdateWind();
-			UpdateScene(update_params);
+			UpdateScene();
 		}
 		
 	}
@@ -3649,7 +3628,7 @@ void UpdateFrame(py::array_t<float> update_params)
 
 		UpdateEmitters();
 		UpdateWind();
-		UpdateScene(update_params);
+		UpdateScene();
 	}
 
     //-------------------------------------------------------------------
@@ -3782,7 +3761,6 @@ void UpdateFrame(py::array_t<float> update_params)
     // if user requested a scene reset process it now
     if (g_resetScene)
     {
-        assert(0); // xingyu: Reset need to have scene_params
         Reset();
         g_resetScene = false;
     }
@@ -3964,11 +3942,7 @@ void UpdateFrame(py::array_t<float> update_params)
     }
 }
 
-void UpdateFrame()
-{
-    py::array_t<float> update_params;
-    UpdateFrame(update_params);
-}
+
 
 void ReshapeWindow(int width, int height)
 {
@@ -4496,60 +4470,6 @@ void SDLInit(const char* title, bool resizableWindow = true)
     g_windowId = SDL_GetWindowID(g_window);
 }
 
-void SDL_EventFunc() {
-    SDL_Event e;
-    while (SDL_PollEvent(&e)) {
-        switch (e.type) {
-            case SDL_QUIT:
-                break;
-
-            case SDL_KEYDOWN:
-                InputArrowKeysDown(e.key.keysym.sym, 0, 0);
-                InputKeyboardDown(e.key.keysym.sym, 0, 0);
-                break;
-
-            case SDL_KEYUP:
-                if (e.key.keysym.sym < 256 && (e.key.keysym.mod == 0 || (e.key.keysym.mod & KMOD_NUM)))
-                    InputKeyboardUp(e.key.keysym.sym, 0, 0);
-                InputArrowKeysUp(e.key.keysym.sym, 0, 0);
-                break;
-
-            case SDL_MOUSEMOTION:
-                if (e.motion.state)
-                    MouseMotionFunc(e.motion.state, e.motion.x, e.motion.y);
-                else
-                    MousePassiveMotionFunc(e.motion.x, e.motion.y);
-                break;
-
-            case SDL_MOUSEBUTTONDOWN:
-            case SDL_MOUSEBUTTONUP:
-                MouseFunc(e.button.button, e.button.state, e.motion.x, e.motion.y);
-                break;
-
-            case SDL_WINDOWEVENT:
-                if (e.window.windowID == g_windowId) {
-                    if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-                        ReshapeWindow(e.window.data1, e.window.data2);
-                }
-                break;
-
-            case SDL_WINDOWEVENT_LEAVE:
-                g_camVel = Vec3(0.0f, 0.0f, 0.0f);
-                break;
-
-            case SDL_CONTROLLERBUTTONUP:
-            case SDL_CONTROLLERBUTTONDOWN:
-                ControllerButtonEvent(e.cbutton);
-                break;
-
-            case SDL_JOYDEVICEADDED:
-            case SDL_JOYDEVICEREMOVED:
-                ControllerDeviceUpdate();
-                break;
-        }
-    }
-}
-
 void SDLMainLoop()
 {
     bool quit = false;
@@ -4743,4 +4663,433 @@ static json JsonFromString(const std::string& source) noexcept
         printf("Error pasing JSON from command line.\n");
         exit(-1);
     }
+}
+
+int main()
+{
+    RandInit();
+//	g_argc = argc;
+//	g_argv = argv;
+    RegisterPhysicsScenes();
+	RegisterExperimentScenes();
+    //RegisterLearningScenes();
+
+
+    // process command line args
+//    json cmdJson;
+//
+//    for (int i = 1; i < argc; ++i)
+//    {
+//        int d;
+//        if (sscanf(argv[i], "-device=%d", &d))
+//        {
+//            g_device = d;
+//        }
+//
+//        char sceneTmpString[1024];
+//        bool usedSceneOption = false;
+//        if (sscanf(argv[i], "-scene=%[^\n]", sceneTmpString) == 1)
+//        {
+//            usedSceneOption = true;
+//            SetSceneIndexByName(sceneTmpString);
+//        }
+//
+//        // Loading json for the scene
+//        if (sscanf(argv[i], "-config=%[^\n]", sceneTmpString) == 1)
+//        {
+//            if (usedSceneOption)
+//            {
+//                printf("Warning! Used \"-config\" option overwrites \"-scene\" option\n");
+//            }
+//
+//            g_sceneJson = LoadJson(sceneTmpString, RL_JSON_PARENT_RELATIVE_PATH);
+//        }
+//
+//        if (sscanf(argv[i], "-json=%[^\n]", sceneTmpString) == 1)
+//        {
+//            cmdJson = JsonFromString(sceneTmpString);
+//        }
+//
+//        if (sscanf(argv[i], "-extensions=%d", &d))
+//        {
+//            g_extensions = d != 0;
+//        }
+//
+//        if (strcmp(argv[i], "-benchmark") == 0)
+//        {
+//            g_benchmark = true;
+//            g_profile = true;
+//            g_outputAllFrameTimes = false;
+//            g_vsync = false;
+//            g_fullscreen = true;
+//        }
+//
+//        if (strcmp(argv[i], "-d3d12") == 0)
+//        {
+//            g_d3d12 = true;
+//            // Currently interop doesn't work on d3d12
+//            g_interop = false;
+//        }
+//
+//		if (strcmp(argv[i], "-headless") == 0)
+//		{
+//			g_headless = true;
+//			// No graphics so interop doesn't make sense
+//			g_interop = false;
+//			g_pause = false;
+//		}
+//
+//		if (strcmp(argv[i], "-norender") == 0)
+//		{
+//			g_headless = true;
+//			g_render = false;
+//			g_interop = false;
+//			g_pause = false;
+//		}
+//
+//        if (strcmp(argv[i], "-benchmarkAllFrameTimes") == 0)
+//        {
+//            g_benchmark = true;
+//            g_outputAllFrameTimes = true;
+//        }
+//
+//        if (strcmp(argv[i], "-tc") == 0)
+//        {
+//            g_teamCity = true;
+//        }
+//
+//        if (sscanf(argv[i], "-msaa=%d", &d))
+//        {
+//            g_msaaSamples = d;
+//        }
+//
+//        int w = 1280;
+//        int h = 720;
+//        if (sscanf(argv[i], "-fullscreen=%dx%d", &w, &h) == 2)
+//        {
+//            g_windowWidth = w;
+//            g_windowHeight = h;
+//            g_fullscreen = true;
+//        }
+//        else if (strcmp(argv[i], "-fullscreen") == 0)
+//        {
+//            g_windowWidth = w;
+//            g_windowHeight = h;
+//            g_fullscreen = true;
+//        }
+//
+//        if (sscanf(argv[i], "-windowed=%dx%d", &w, &h) == 2)
+//        {
+//            g_windowWidth = w;
+//            g_windowHeight = h;
+//            g_fullscreen = false;
+//        }
+//        else if (strstr(argv[i], "-windowed"))
+//        {
+//            g_windowWidth = w;
+//            g_windowHeight = h;
+//            g_fullscreen = false;
+//        }
+//
+//        if (sscanf(argv[i], "-vsync=%d", &d))
+//        {
+//            g_vsync = d != 0;
+//        }
+//
+//        if (sscanf(argv[i], "-multiplier=%d", &d) == 1)
+//        {
+//            g_numExtraMultiplier = d;
+//        }
+//
+//        if (strcmp(argv[i], "-disabletweak") == 0)
+//        {
+//            g_tweakPanel = false;
+//        }
+//
+//        if (strcmp(argv[i], "-disableinterop") == 0)
+//        {
+//            g_interop = false;
+//        }
+//        if (sscanf(argv[i], "-asynccompute=%d", &d) == 1)
+//        {
+//            g_useAsyncCompute = (d != 0);
+//        }
+//		if (sscanf(argv[i], "-experiment=%s", &g_experimentFilter) == 1)
+//		{
+//			g_experiment = true;
+//		}
+//    }
+//
+//    if (!cmdJson.is_null())
+//    {
+//        MergeJson(g_sceneJson, cmdJson);
+//    }
+
+    if (!g_sceneJson.is_null())
+    {
+        const string& sceneName = JsonGetOrExit<const string>(g_sceneJson, RL_JSON_SCENE_NAME, "Error while parsing specified config file.");
+
+        if (!SetSceneIndexByName(sceneName.c_str()))
+        {
+            printf("Unknown scene name: \"%s\"", sceneName.c_str());
+            exit(-1);
+        }
+    }
+
+    // init gl
+#ifndef ANDROID
+
+#if FLEX_DX
+    const char* title = "Flex Gym (Direct Compute)";
+#else
+    const char* title = "Flex Gym (CUDA)";
+#endif
+
+#if FLEX_VR
+    if (g_sceneFactories[g_sceneIndex].mIsVR)
+    {
+        g_vrSystem = VrSystem::Create(g_camPos, GetCameraRotationMatrix(), g_vrMoveScale);
+        if (!g_vrSystem)
+        {
+            printf("Error during VR initialization, terminating process");
+            exit(1);
+        }
+    }
+
+    if (g_vrSystem)
+    {
+        // Setting the same aspect for the window as for VR (not really necessary)
+        g_screenWidth = g_vrSystem->GetRecommendedRtWidth();
+        g_screenHeight = g_vrSystem->GetRecommendedRtHeight();
+
+        float vrAspect = static_cast<float>(g_screenWidth) / g_screenHeight;
+        g_windowWidth = static_cast<int>(vrAspect * g_windowHeight);
+    }
+    else
+#endif // #if FLEX_VR
+    {
+        g_screenWidth = g_windowWidth;
+        g_screenHeight = g_windowHeight;
+    }
+
+    if (!g_headless)
+    {
+        SDLInit(title);
+    }
+
+    RenderInitOptions options;
+    options.window = g_window;
+    options.numMsaaSamples = g_msaaSamples;
+    options.asyncComputeBenchmark = g_asyncComputeBenchmark;
+    options.defaultFontHeight = -1;
+    options.fullscreen = g_fullscreen;
+
+#if FLEX_DX
+    {
+        DemoContext* demoContext = nullptr;
+
+        if (g_d3d12)
+        {
+            // workaround for a driver issue with D3D12 with msaa, force it to off
+            options.numMsaaSamples = 1;
+
+            demoContext = CreateDemoContextD3D12();
+        }
+        else
+        {
+            demoContext = CreateDemoContextD3D11();
+        }
+        // Set the demo context
+        SetDemoContext(demoContext);
+    }
+#endif
+	if (!g_headless)
+	{
+		InitRender(options);
+
+		if (g_vrSystem)
+		{
+			g_vrSystem->InitGraphicalResources();
+		}
+
+		if (g_fullscreen)
+		{
+			SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		}
+
+		ReshapeWindow(g_windowWidth, g_windowHeight);
+	}
+#endif // ifndef ANDROID
+
+#if !FLEX_DX
+
+#if 0
+
+    // use the PhysX GPU selected from the NVIDIA control panel
+    if (g_device == -1)
+    {
+        g_device = NvFlexDeviceGetSuggestedOrdinal();
+    }
+
+    // Create an optimized CUDA context for Flex and set it on the
+    // calling thread. This is an optional call, it is fine to use
+    // a regular CUDA context, although creating one through this API
+    // is recommended for best performance.
+    bool success = NvFlexDeviceCreateCudaContext(g_device);
+
+    if (!success)
+    {
+        printf("Error creating CUDA context.\n");
+        exit(-1);
+    }
+
+#endif // _WIN32
+
+#endif
+
+    NvFlexInitDesc desc;
+    desc.deviceIndex = g_device;
+    desc.enableExtensions = g_extensions;
+    desc.renderDevice = 0;
+    desc.renderContext = 0;
+    desc.computeContext = 0;
+    desc.computeType = eNvFlexCUDA;
+
+#if FLEX_DX
+
+    if (g_d3d12)
+    {
+        desc.computeType = eNvFlexD3D12;
+    }
+    else
+    {
+        desc.computeType = eNvFlexD3D11;
+    }
+
+    bool userSpecifiedGpuToUseForFlex = (g_device != -1);
+
+    if (userSpecifiedGpuToUseForFlex)
+    {
+        // Flex doesn't currently support interop between different D3DDevices.
+        // If the user specifies which physical device to use, then Flex always
+        // creates its own D3DDevice, even if graphics is on the same physical device.
+        // So specified physical device always means no interop.
+        g_interop = false;
+    }
+    else
+    {
+        // Ask Flex to run on the same GPU as rendering
+        GetRenderDevice(&desc.renderDevice,
+                        &desc.renderContext);
+    }
+
+    // Shared resources are unimplemented on D3D12,
+    // so disable it for now.
+    if (g_d3d12)
+    {
+        g_interop = false;
+    }
+
+    // Setting runOnRenderContext = true doesn't prevent async compute, it just
+    // makes Flex send compute and graphics to the GPU on the same queue.
+    //
+    // So to allow the user to toggle async compute, we set runOnRenderContext = false
+    // and provide a toggleable sync between compute and graphics in the app.
+    //
+    // Search for g_useAsyncCompute for details
+    desc.runOnRenderContext = false;
+#endif
+
+    // Init Flex library, note that no CUDA methods should be called before this
+    // point to ensure we get the device context we want
+    g_flexLib = NvFlexInit(NV_FLEX_VERSION, ErrorCallback, &desc);
+
+    if (g_error || g_flexLib == NULL)
+    {
+        printf("Could not initialize Flex, exiting.\n");
+        exit(-1);
+    }
+
+    // store device name
+    strcpy(g_deviceName, NvFlexGetDeviceName(g_flexLib));
+    printf("Compute Device: %s\n\n", g_deviceName);
+
+    if (g_benchmark)
+    {
+        g_sceneIndex = BenchmarkInit();
+    }
+
+	if (g_render == true)
+	{
+		// create shadow maps
+		g_shadowMap = ShadowCreate();
+
+		// create default render meshes
+		Mesh* sphere = CreateSphere(12, 24, 1.0f);
+		Mesh* cylinder = CreateCylinder(24, 1.0f, 1.0f);
+		Mesh* box = CreateCubeMesh();
+
+		g_sphereMesh = CreateRenderMesh(sphere);
+		g_cylinderMesh = CreateRenderMesh(cylinder);
+		g_boxMesh = CreateRenderMesh(box);
+
+		delete sphere;
+		delete cylinder;
+		delete box;
+	}
+
+	if (!g_experiment)
+	{
+		// to ensure D3D context is active
+		StartGpuWork();
+
+		// init default scene
+		InitScene(g_sceneIndex);
+
+		// release context
+		EndGpuWork();
+		if (g_headless == true)
+		{
+			HeadlessMainLoop();
+		}
+		else
+		{
+			SDLMainLoop();
+		}
+	}
+	else
+	{
+		RunExperiments(g_experimentFilter);
+		exit(0);
+	}
+
+	if (g_render == true)
+	{
+		DestroyFluidRenderer(g_fluidRenderer);
+		DestroyFluidRenderBuffers(g_fluidRenderBuffers);
+		DestroyDiffuseRenderBuffers(g_diffuseRenderBuffers);
+
+		ShadowDestroy(g_shadowMap);
+	}
+
+    Shutdown();
+	
+	if (g_headless == false)
+	{
+		DestroyRender();
+
+		SDL_DestroyWindow(g_window);
+		SDL_Quit();
+	}
+    return 0;
+}
+
+// Flex Gym
+#ifdef NV_FLEX_GYM
+#include "../include/NvFlexGym.h"
+#include "gym.h"
+#endif
+
+PYBIND11_MODULE(pyflex, m) {
+    m.def("main", &main);
 }
