@@ -118,19 +118,19 @@ public:
 
 
         // Table
-//        NvFlexRigidShape table;
+        NvFlexRigidShape table;
         // Half x, y, z
-//        NvFlexMakeRigidBoxShape(&table, -1, 0.27f, 0.55f, 0.3f, NvFlexMakeRigidPose(Vec3(-0.04f, 0.0f, 0.0f), Quat()));
-//        table.filter = 0;
-//        table.material.friction = 0.95f;
-//		table.user = UnionCast<void*>(AddRenderMaterial(Vec3(0.35f, 0.45f, 0.65f)));
+        NvFlexMakeRigidBoxShape(&table, -1, 0.64f, 0.55f, 0.4f, NvFlexMakeRigidPose(Vec3(0.0f, 0.0f, 0.0f), Quat()));
+        table.filter = 0;
+        table.material.friction = 0.95f;
+		table.user = UnionCast<void*>(AddRenderMaterial(Vec3(0.35f, 0.45f, 0.65f)));
 
-//        float density = 1000.0f;
-//        NvFlexRigidBody body;
-//		NvFlexMakeRigidBody(g_flexLib, &body, Vec3(1.0f, 1.0f, 0.0f), Quat(), &table, &density, 1);
-//
-//        g_buffers->rigidShapes.push_back(table);
-//        g_buffers->rigidBodies.push_back(body);
+        float density = 1000.0f;
+        NvFlexRigidBody body;
+		NvFlexMakeRigidBody(g_flexLib, &body, Vec3(1.0f, 1.0f, 0.0f), Quat(), &table, &density, 1);
+
+        g_buffers->rigidShapes.push_back(table);
+        g_buffers->rigidBodies.push_back(body);
 
         // Box object
 //        float scaleBox = 0.05f;

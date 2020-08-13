@@ -56,9 +56,17 @@ class ClothFoldEnv(ClothEnv):
                 config['ClothSize'] = [cloth_dimx, cloth_dimy]
             else:
                 cloth_dimx, cloth_dimy = config['ClothSize']
-            self.set_scene(config)
-            self.action_tool.reset([0., -1., 0.])
 
+            self.set_scene(config)
+            print('before reset')
+            self.action_tool.reset([0., -1., 0.])
+            print('after reset')
+            pos = pyflex.get_positions().reshape(-1, 4)
+            pos[:, :3] -= np.mean(pos, axis=0)[:3]
+            pos[:, 1] = 0.57
+            pos[:, 3] = 1
+            pyflex.set_positions(pos.flatten())
+            pyflex.set_velocities(np.zeros_like(pos))
             for _ in range(5):  # In case if the cloth starts in the air
                 pyflex.step()
 

@@ -17,7 +17,7 @@ class RobotBase(ActionToolBase):
         self.next_action = np.zeros(4, )
 
     def reset(self, state):
-        for i in range(50):
+        for i in range(100):
             pyflex.step()
 
     def step(self, action):

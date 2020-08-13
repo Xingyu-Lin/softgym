@@ -84,10 +84,6 @@ public:
     {
         ptrRobot = getPtrRobot();
         if (ptrRobot != NULL) ptrRobot->Step(control_params);
-        else
-        {
-            std::cout<<"WARNING: Calling step function in scenes without a robot."<<std::endl;
-        }
     }
 
     py::array_t<float>  GetRobotState()

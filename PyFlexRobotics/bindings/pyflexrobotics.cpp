@@ -1584,6 +1584,8 @@ void UpdateCamera()
     {
         g_camPos += camDelta;
     }
+//    cout<<"g_camPos"<<g_camPos[0] << " " << g_camPos[1] << " " << g_camPos[2]<<endl;
+//    cout<<"g_camAngle"<<g_camAngle[0] << " "<< g_camAngle[1]<<" "<<g_camAngle[2]<<endl;
 }
 
 void UpdateMouse()

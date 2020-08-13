@@ -53,7 +53,7 @@ public:
 
         urdf = new URDFImporter(make_path(urdfPath, "/data/sawyer"), "/sawyer_description/urdf/sawyer_with_gripper.urdf", false,  0.005f, 0.005f, true, 20, false); // sawyer_with_gripper.urdf
 
-		Transform gt(Vec3(0.0f, 0.925f, -2.7f), QuatFromAxisAngle(Vec3(0.0f, 1.0f, 0.0f), -kPi * 0.5f) // was -0.7
+		Transform gt(Vec3(0.0f, 0.925f, -0.7f), QuatFromAxisAngle(Vec3(0.0f, 1.0f, 0.0f), -kPi * 0.5f) // was -0.7
 					* QuatFromAxisAngle(Vec3(1.0f, 0.0f, 0.0f), -kPi * 0.5f));
 
 		// hide collision shapes
@@ -125,8 +125,8 @@ public:
 			0.f, // minRange
 			5.f // maxRange
 		};
-
-        AddSensor(g_screenWidth, g_screenHeight,  0,  Transform(Vec3(0.0f, 3.f, 3.5f), rpy2quat(2.7415926f, 0.0f, 0.0f)),  DegToRad(60.f), hasFluids, p);
+        if (g_render)
+            AddSensor(g_screenWidth, g_screenHeight,  0,  Transform(Vec3(0.0f, 3.f, 3.5f), rpy2quat(2.7415926f, 0.0f, 0.0f)),  DegToRad(60.f), hasFluids, p);
     }
 
     virtual py::array_t<float> GetState()
