@@ -22,10 +22,10 @@ def run_heuristic(args):
     action_repeat = dic.get('action_repeat', 8)
     horizon = dic['horizon']
     
-    # if not args.use_cached_states:
-    #     dic['save_cache_states'] = True
-    #     dic['use_cached_states'] = False
-    #     dic['num_variations'] = 5
+    if not args.use_cached_states:
+        dic['save_cache_states'] = True
+        dic['use_cached_states'] = False
+        dic['num_variations'] = 5
 
     dic['render_mode'] = 'fluid'
 
