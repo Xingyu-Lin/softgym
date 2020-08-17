@@ -95,22 +95,8 @@ class FlexEnv(gym.Env):
 
         return self.cached_configs, self.cached_init_states
 
-    def get_default_config(self):
-        """ Generate the default config of the environment scenes"""
-        raise NotImplementedError
-
-    def generate_env_variation(self, num_variations, **kwargs):
-        """
-        Generate a list of configs and states
-        :return:
-        """
-        raise NotImplementedError
-
     def get_current_config(self):
         return self.current_config
-
-    def get_camera_size(self, camera_name='default_camera'):
-        return self.camera_params[camera_name]['width'], self.camera_params[camera_name]['height']
 
     def update_camera(self, camera_name, camera_param=None):
         """
@@ -125,41 +111,10 @@ class FlexEnv(gym.Env):
         pyflex.set_camera_params(
             np.array([*camera_param['pos'], *camera_param['angle'], camera_param['width'], camera_param['height']]))
 
-    def set_scene(self, config, state=None):
-        """ Set up the flex scene """
-        raise NotImplementedError
-
     @property
     def dt(self):
         # TODO get actual dt from the environment
         return 1 / 50.
-
-    def render(self, mode='human'):
-        if mode == 'rgb_array':
-            img = pyflex.render()
-            width, height = self.get_camera_size(camera_name='default_camera')
-            img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
-            return img
-        elif mode == 'human':
-            raise NotImplementedError
-
-    def initialize_camera(self):
-        """
-        This function sets the postion and angel of the camera
-        camera_pos: np.ndarray (3x1). (x,y,z) coordinate of the camera
-        camera_angle: np.ndarray (3x1). (x,y,z) angle of the camera (in degree).
-
-        Note: to set camera, you need 
-        1) implement this function in your environement, set value of self.camera_pos and self.camera_angle.
-        2) add the self.camera_pos and self.camera_angle to your scene parameters,
-            and pass it when initializing your scene.
-        3) implement the CenterCamera function in your scene.h file.
-        Pls see a sample usage in pour_water.py and softgym_PourWater.h
-
-        if you do not want to set the camera, you can just not implement CenterCamera in your scene.h file, 
-        and pass no camera params to your scene.
-        """
-        raise NotImplementedError
 
     def get_state(self):
         pos = pyflex.get_positions()
@@ -249,6 +204,56 @@ class FlexEnv(gym.Env):
             info['flex_env_recorded_frames'] = frames
         return obs, reward, done, info
 
+    def initialize_camera(self):
+        """
+        This function sets the postion and orientation of the camera
+        camera_pos: np.ndarray (3x1). (x,y,z) coordinate of the camera
+        camera_angle: np.ndarray (3x1). (x,y,z) angle of the camera (in degree).
+
+        Note: to set camera, you need
+        1) implement this function in your environement, set value of self.camera_pos and self.camera_angle.
+        2) add the self.camera_pos and self.camera_angle to your scene parameters,
+            and pass it when initializing your scene.
+        3) implement the CenterCamera function in your scene.h file.
+        Pls see a sample usage in pour_water.py and softgym_PourWater.h
+
+        if you do not want to set the camera, you can just not implement CenterCamera in your scene.h file,
+        and pass no camera params to your scene.
+        """
+        raise NotImplementedError
+
+    def render(self, mode='human'):
+        if mode == 'rgb_array':
+            img = pyflex.render()
+            width, height = self.camera_params['default_camera']['width'], self.camera_params['default_camera']['height']
+            img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
+            return img
+        elif mode == 'human':
+            raise NotImplementedError
+
+    def get_image(self, width=720, height=720):
+        """ use pyflex.render to get a rendered image. """
+        img = self.render(mode='rgb_array')
+        img = img.astype(np.uint8)
+        if width != img.shape[0] or height != img.shape[1]:
+            img = cv2.resize(img, (width, height))
+        return img
+
+    def set_scene(self, config, state=None):
+        """ Set up the flex scene """
+        raise NotImplementedError
+
+    def get_default_config(self):
+        """ Generate the default config of the environment scenes"""
+        raise NotImplementedError
+
+    def generate_env_variation(self, num_variations, **kwargs):
+        """
+        Generate a list of configs and states
+        :return:
+        """
+        raise NotImplementedError
+
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ set_prev_reward is used for calculate delta rewards"""
         raise NotImplementedError
@@ -268,10 +273,3 @@ class FlexEnv(gym.Env):
     def _seed(self):
         pass
 
-    def get_image(self, width=720, height=720):
-        """ use pyflex.render to get a rendered image. """
-        img = self.render(mode='rgb_array')
-        img = img.astype(np.uint8)
-        if width != img.shape[0] or height != img.shape[1]:
-            img = cv2.resize(img, (width, height))
-        return img
