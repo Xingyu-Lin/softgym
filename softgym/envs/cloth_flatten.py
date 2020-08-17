@@ -34,8 +34,16 @@ class ClothFlattenEnv(ClothEnv):
             else:
                 cloth_dimx, cloth_dimy = config['ClothSize']
             self.set_scene(config)
-
             self.action_tool.reset([0., -1., 0.])
+            pos = pyflex.get_positions().reshape(-1, 4)
+            pos[:, :3] -= np.mean(pos, axis=0)[:3]
+            if self.action_mode in ['sawyer', 'franka']:  # Take care of the table in robot case
+                pos[:, 1] = 0.57
+            else:
+                pos[:, 1] = 0.005
+            pos[:, 3] = 1
+            pyflex.set_positions(pos.flatten())
+            pyflex.set_velocities(np.zeros_like(pos))
             pyflex.step()
 
             num_particle = cloth_dimx * cloth_dimy
@@ -52,7 +60,7 @@ class ClothFlattenEnv(ClothEnv):
                 pyflex.step()
                 curr_pos = pyflex.get_positions()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < stable_vel_threshold):
+                if np.alltrue(np.abs(curr_vel) < stable_vel_threshold):
                     break
                 curr_pos[pickpoint * 4: pickpoint * 4 + 3] = pickpoint_pos
                 curr_vel[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
@@ -132,8 +140,6 @@ class ClothFlattenEnv(ClothEnv):
             if self.action_mode == 'key_point_pos':
                 cur_pos[valid_idxs[idxs.astype(int)], :3] = last_pos[valid_idxs[idxs.astype(int)]][:, :3] + updates
                 cur_pos[valid_idxs[idxs.astype(int)], 3] = 0
-
-
             else:
                 vels = np.array(vels).reshape([-1, 3])
                 vels[idxs.astype(int), :] = updates
@@ -141,7 +147,10 @@ class ClothFlattenEnv(ClothEnv):
             pyflex.set_velocities(vels.flatten())
         else:
             self.action_tool.step(action)
-            pyflex.step()
+            if self.action_mode in ['sawyer', 'franka']:
+                pyflex.step(self.action_tool.next_action)
+            else:
+                pyflex.step()
         return
 
     def _get_current_covered_area(self, pos):

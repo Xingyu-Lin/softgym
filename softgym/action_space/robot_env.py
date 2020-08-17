@@ -14,7 +14,7 @@ class RobotBase(ActionToolBase):
         space_low = np.array([-0.01, -0.01, -0.01, -0.01])  # [dx, dy, dz, open/close gripper]
         space_high = np.array([0.01, 0.01, 0.01, 0.01])
         self.action_space = Box(space_low, space_high, dtype=np.float32)
-        self.next_action = np.zeros(4, )
+        self.next_action = np.zeros(7,)
 
     def reset(self, state):
         for i in range(100):

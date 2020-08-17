@@ -10,13 +10,13 @@ from copy import deepcopy
 class ClothEnv(FlexEnv):
     def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.05, particle_radius=0.00625, **kwargs):
         self.render_mode = render_mode
+        self.action_mode = action_mode
         self.cloth_particle_radius = particle_radius
         super().__init__(**kwargs)
 
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
         assert action_mode in ['sphere', 'picker', 'pickerpickplace', 'sawyer', 'franka']
         self.observation_mode = observation_mode
-        self.action_mode = action_mode
 
         if action_mode.startswith('key_point'):
             space_low = np.array([0, -0.1, -0.1, -0.1] * 2)
@@ -83,18 +83,23 @@ class ClothEnv(FlexEnv):
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
         particle_radius = self.cloth_particle_radius
+        if self.action_mode in ['sawyer', 'franka']:
+            cam_pos, cam_angle = np.array([0.0, 1.62576, 1.04091]), np.array([0.0, -0.844739, 0])
+        else:
+            cam_pos, cam_angle = np.array([-0.0, 0.82, 0.82]), np.array([0, -45 / 180. * np.pi, 0.])
         config = {
             'ClothPos': [-1.6, 2.0, -0.8],
             'ClothSize': [int(0.6 / particle_radius), int(0.368 / particle_radius)],
             'ClothStiff': [0.8, 1, 0.9],  # Stretch, Bend and Shear
             'camera_name': 'default_camera',
             'camera_params': {'default_camera':
-                                  {'pos': np.array([0.0, 1.62576, 1.04091]),
-                                   'angle': np.array([0.0, -0.844739, 0]),
+                                  {'pos': cam_pos,
+                                   'angle': cam_angle,
                                    'width': self.camera_width,
                                    'height': self.camera_height}},
             'flip_mesh': 0
         }
+
         return config
 
     def _get_obs(self):

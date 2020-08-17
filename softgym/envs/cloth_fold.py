@@ -4,6 +4,7 @@ from copy import deepcopy
 from softgym.envs.cloth_env import ClothEnv
 from softgym.utils.pyflex_utils import center_object
 
+
 class ClothFoldEnv(ClothEnv):
     def __init__(self, cached_states_path='cloth_fold_init_states.pkl', **kwargs):
         self.fold_group_a = self.fold_group_b = None
@@ -42,7 +43,10 @@ class ClothFoldEnv(ClothEnv):
             self.action_tool.reset([0., -1., 0.])
             pos = pyflex.get_positions().reshape(-1, 4)
             pos[:, :3] -= np.mean(pos, axis=0)[:3]
-            pos[:, 1] = 0.57
+            if self.action_mode in ['sawyer', 'franka']: # Take care of the table in robot case
+                pos[:, 1] = 0.57
+            else:
+                pos[:, 1] = 0.005
             pos[:, 3] = 1
             pyflex.set_positions(pos.flatten())
             pyflex.set_velocities(np.zeros_like(pos))
@@ -135,6 +139,7 @@ class ClothFoldEnv(ClothEnv):
         else:
             self.action_tool.step(action)
             if self.action_mode in ['sawyer', 'franka']:
+                print(self.action_tool.next_action)
                 pyflex.step(self.action_tool.next_action)
             else:
                 pyflex.step()

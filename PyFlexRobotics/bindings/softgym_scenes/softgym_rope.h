@@ -14,6 +14,9 @@ public:
 	int cam_width;
 	int cam_height;
 
+    SoftgymSawyer* ptrRobot = NULL;
+    SoftgymSawyer* getPtrRobot() {return ptrRobot;}
+
 	void Initialize(py::array_t<float> scene_params = py::array_t<float>(),
                     py::array_t<float> robot_params = py::array_t<float>(), int thread_idx = 0)
 	{
@@ -52,7 +55,7 @@ public:
             // table
             NvFlexRigidShape table;
             // Half x, y, z
-            NvFlexMakeRigidBoxShape(&table, -1, 0.55f, 0.55f, 0.34f, NvFlexMakeRigidPose(Vec3(-0.04f, 0.0f, 0.0f), Quat()));
+            NvFlexMakeRigidBoxShape(&table, -1, 0.64f, 0.55f, 0.4f, NvFlexMakeRigidPose(Vec3(0.0f, 0.0f, 0.0f), Quat()));
             table.filter = 0;
             table.material.friction = 0.95f;
             table.user = UnionCast<void*>(AddRenderMaterial(Vec3(0.35f, 0.45f, 0.65f)));
