@@ -106,13 +106,15 @@ class RopeNewEnv(FlexEnv):
                 *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], render_mode]
             )
 
-        # print("right before pyflex set_scene!")
         env_idx = 2
+
         if self.version == 2:
-            pyflex.set_scene(env_idx, params, 0, [0])
+            robot_params = [1.] if self.action_mode in ['sawyer', 'franka'] else []
+            self.params = (params, robot_params)
+            pyflex.set_scene(env_idx, params, 0, robot_params)
         elif self.version == 1:
             pyflex.set_scene(env_idx, params, 0)
-        
+
         num_particles = pyflex.get_n_particles()
         # print("with {} segments, the number of particles are {}".format(config['segment'], num_particles))
         # exit()
