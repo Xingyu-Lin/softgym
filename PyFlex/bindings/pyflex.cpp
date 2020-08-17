@@ -22,20 +22,11 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
         g_pause = false;
     }
 
-    // placeholder scenes
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
-
-    g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
     g_scenes.push_back(new SoftgymCloth("Softgym Flag Cloth"));
     g_scenes.push_back(new SoftgymFluid("Softgym Pour Water"));
+    g_scenes.push_back(new SoftgymRope("Softgym Rope"));
+    g_scenes.push_back(new SoftgymRigidCloth("Softgym Rigid Cloth"));
+    g_scenes.push_back(new SoftgymTorus("Softgym Torus"));
 
     SoftgymSoftBody::Instance rope(make_path(rope_path, "/data/rope.obj"));
 	rope.mScale = Vec3(50.0f);
@@ -75,9 +66,6 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
     //     softgym_PlasticDough->AddInstance(stackSphere);
     // }
     g_scenes.push_back(softgym_PlasticDough);
-    g_scenes.push_back(new SoftgymRigidCloth("Softgym Rigid Cloth"));
-    g_scenes.push_back(new SoftgymTorus("Softgym Torus"));
-    g_scenes.push_back(new SoftgymRope("Softgym Rope"));
 
 
     switch (g_graphics) {

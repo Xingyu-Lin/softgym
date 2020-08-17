@@ -67,11 +67,11 @@ class RopeNewEnv(FlexEnv):
         if self.observation_mode == 'cam_rgb':
             return self.get_image(self.camera_height, self.camera_width)
         if self.observation_mode == 'point_cloud':
-            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[4:, :3].flatten()
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
             pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
             pos[:len(particle_pos)] = particle_pos
         elif self.observation_mode == 'key_point':
-            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[4:, :3]
+            particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
             keypoint_pos = particle_pos[self.key_point_indices, :3]
             pos = keypoint_pos.flatten()
             # more_info = np.array([self.rope_length, self._get_endpoint_distance()])
@@ -107,10 +107,11 @@ class RopeNewEnv(FlexEnv):
             )
 
         # print("right before pyflex set_scene!")
+        env_idx = 2
         if self.version == 2:
-            pyflex.set_scene(16, params, 0, [0])
+            pyflex.set_scene(env_idx, params, 0, [0])
         elif self.version == 1:
-            pyflex.set_scene(16, params, 0)
+            pyflex.set_scene(env_idx, params, 0)
         
         num_particles = pyflex.get_n_particles()
         # print("with {} segments, the number of particles are {}".format(config['segment'], num_particles))
@@ -131,18 +132,6 @@ class RopeNewEnv(FlexEnv):
         max_x = np.max(pos[:, 0])
         max_y = np.max(pos[:, 2])
         return 0.5 * (min_x + max_x), 0.5 * (min_y + max_y)
-
-    def _center_object(self):
-        """ 
-        Center the object to be at the origin
-        NOTE: call a pyflex.set_positions and then pyflex.step
-        """
-        pos = pyflex.get_positions().reshape(-1, self.dim_position)
-        pos[4:, [0, 2]] -= np.mean(pos[4:, [0, 2]], axis=0, keepdims=True)
-        
-        pyflex.set_positions(pos.flatten())
-        pyflex.step()
-        pyflex.render()
 
 
 

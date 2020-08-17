@@ -31,12 +31,13 @@ class FluidTorusEnv(FlexEnv):
         # create fluid
         scene_params = np.concatenate((torus_params, camera_params))
 
+        env_idx = 4
         if self.version == 2:
             robot_params = [0]
             self.params = (scene_params, robot_params)
-            pyflex.set_scene(15, scene_params, 0, robot_params)
+            pyflex.set_scene(env_idx, scene_params, 0, robot_params)
         elif self.version == 1:
-            pyflex.set_scene(15, scene_params, 0)
+            pyflex.set_scene(env_idx, scene_params, 0)
         
         self.particle_num = pyflex.get_n_particles()
         # print("particle num: ", self.particle_num)

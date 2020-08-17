@@ -23,10 +23,10 @@ def run_heuristic(args):
     dic['headless'] = args.headless
     dic['observation_mode'] = args.obs_mode
 
-    # if not args.use_cached_states:
-    #     dic['use_cached_states'] = False
-    #     dic['save_cached_states'] = True
-    #     dic['num_variations'] = 5
+    if not args.use_cached_states:
+        dic['use_cached_states'] = False
+        dic['save_cache_states'] = True
+        dic['num_variations'] = 5
 
     action_repeat = 1
     dic['action_repeat'] = action_repeat
@@ -53,7 +53,7 @@ def run_heuristic(args):
         total_reward = 0
         
         pos = pyflex.get_positions().reshape((-1, 4))
-        corner1 = pos[4][:3]
+        corner1 = pos[0][:3]
         corner2 = pos[-1][:3]
 
         print("moving up picker!")

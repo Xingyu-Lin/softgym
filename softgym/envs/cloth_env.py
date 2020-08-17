@@ -141,7 +141,7 @@ class ClothEnv(FlexEnv):
         elif self.render_mode == 'both':
             render_mode = 3
         camera_params = config['camera_params'][config['camera_name']]
-        env_idx = 9 if 'env_idx' not in config else config['env_idx']
+        env_idx = 0 if 'env_idx' not in config else config['env_idx']
         mass = config['mass'] if 'mass' in config else 0.5
         scene_params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
                                  *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass,
