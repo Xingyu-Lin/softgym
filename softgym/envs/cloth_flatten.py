@@ -56,16 +56,16 @@ class ClothFlattenEnv(ClothEnv):
             pyflex.set_positions(curr_pos)
 
             # Pick up the cloth and wait to stablize
-            for _ in range(0, max_wait_step):
-                pyflex.step()
+            for j in range(0, max_wait_step):
                 curr_pos = pyflex.get_positions()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(np.abs(curr_vel) < stable_vel_threshold):
-                    break
                 curr_pos[pickpoint * 4: pickpoint * 4 + 3] = pickpoint_pos
                 curr_vel[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
                 pyflex.set_positions(curr_pos)
                 pyflex.set_velocities(curr_vel)
+                pyflex.step()
+                if np.alltrue(np.abs(curr_vel) < stable_vel_threshold) and j>5:
+                    break
 
             # Drop the cloth and wait to stablize
             curr_pos = pyflex.get_positions()
