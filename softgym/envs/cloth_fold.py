@@ -87,7 +87,7 @@ class ClothFoldEnv(ClothEnv):
         if hasattr(self, 'action_tool'):
             particle_pos = pyflex.get_positions().reshape(-1, 4)
             p1, p2, p3, p4 = self._get_key_point_idx()
-            key_point_pos = particle_pos[(p1, p4), :3]
+            key_point_pos = particle_pos[(p1, p2), :3] # Was changed from from p1, p4.
             middle_point = np.mean(key_point_pos, axis=0)
             self.action_tool.reset([middle_point[0], 0.1, middle_point[2]])
 
