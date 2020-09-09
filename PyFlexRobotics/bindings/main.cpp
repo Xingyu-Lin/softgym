@@ -616,6 +616,7 @@ int g_visSensorId = 0; // id of the one sensor to be visualized
 					   // uses the convention from URDF that z-forward, x-right and y-down (opposite to OpenGL which has -z forward)
 size_t AddSensor(int width, int height, int parent, Transform origin, float fov, bool renderFluids = false, DepthRenderProfile depthProfile = defaultDepthProfile)
 {
+    // NOTE yufei: fov is only used for drawing the fluids. For others the default fov value pi/4 is used, and this fov parameters seems useless.
 	RenderSensor s;
 	s.parent = parent;
 	s.width = width;
@@ -2820,12 +2821,13 @@ void DrawSensors(const int numParticles, const int numDiffuse, float radius, Mat
 		SetRenderTarget(sensor.target, 0, 0, sensor.width, sensor.height);	
 		SetView(view, proj);	
 
+        DrawRigidShapes();
+        DrawStaticShapes();
+
         if (!g_sensor_segment)
         {
             // draw all rigid attachments, todo: call into the main scene render or just render what we need selectively?
             DrawRigidAttachments();
-            DrawRigidShapes();
-            DrawStaticShapes();
             DrawPlanes((Vec4*)g_params.planes, g_params.numPlanes, g_drawPlaneBias);
         }
 
