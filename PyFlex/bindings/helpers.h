@@ -458,10 +458,10 @@ void AddBox(Vec3 halfEdge = Vec3(2.0f), Vec3 center=Vec3(0.0f), Quat quat=Quat()
 
 	int shapeFlag = NvFlexMakeShapeFlagsWithChannels(eNvFlexShapeBox, dynamic, channels);
 
-	printf("in AddBox, trigger is %d \n", trigger);
+	// printf("in AddBox, trigger is %d \n", trigger);
 	if (trigger == 1) {
 		shapeFlag |= eNvFlexShapeFlagTrigger;
-		printf("use trigger box! \n");
+		// printf("use trigger box! \n");
 	}
 	g_buffers->shapeFlags.push_back(shapeFlag);
 }

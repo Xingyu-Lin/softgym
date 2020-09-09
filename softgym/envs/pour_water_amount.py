@@ -151,7 +151,7 @@ class PourWaterAmountPosControlEnv(PourWaterPosControlEnv):
         else:
             raise NotImplementedError
 
-    def compute_reward(self, obs=None, action=None):
+    def compute_reward(self, obs=None, action=None, **kwargs):
         """
         The reward is computed as the fraction of water in the poured glass.
         NOTE: the obs and action params are made here to be compatiable with the MultiTask env wrapper.
