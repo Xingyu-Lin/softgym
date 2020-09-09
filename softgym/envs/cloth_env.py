@@ -29,6 +29,7 @@ class ClothEnv(FlexEnv):
             self.action_tool = Picker(num_picker, picker_radius=picker_radius, particle_radius=particle_radius,
                                       picker_low=(-0.4, 0., -0.4), picker_high=(1.0, 0.5, 0.4))
             self.action_space = self.action_tool.action_space
+            self.picker_radius = picker_radius
         elif action_mode == 'pickerpickplace':
             self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self,
                                                picker_low=(-0.3, 0., -0.3), picker_high=(0.3, 0.3, 0.3))
