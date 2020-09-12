@@ -6,7 +6,7 @@ from softgym.envs.fluid_env import FluidEnv
 import copy
 from softgym.utils.misc import rotate_rigid_object, quatFromAxisAngle
 from shapely.geometry import Polygon
-import random
+import random, math
 
 
 class PourWaterPosControlEnv(FluidEnv):
@@ -20,7 +20,7 @@ class PourWaterPosControlEnv(FluidEnv):
         
         TODO: add more description of the task.
         '''
-        assert observation_mode in ['cam_rgb', 'point_cloud', 'key_point']
+        assert observation_mode in ['cam_rgb', 'point_cloud', 'key_point', 'rim_interpolation']
         assert action_mode in ['direct']
 
         self.observation_mode = observation_mode
@@ -42,6 +42,10 @@ class PourWaterPosControlEnv(FluidEnv):
         elif observation_mode == 'cam_rgb':
             self.observation_space = Box(low=-np.inf, high=np.inf, shape=(self.camera_height, self.camera_width, 3),
                                          dtype=np.float32)
+        elif observation_mode == 'rim_interpolation':
+            # a random observation space, as KPConv do not need to use this.
+            self.observation_space = Box(low=-np.inf, high=np.inf, shape=(1000,  3),
+                                         dtype=np.float32) 
 
         default_config = self.get_default_config()
         border = default_config['glass']['border']
@@ -379,6 +383,96 @@ class PourWaterPosControlEnv(FluidEnv):
                                   self.glass_distance + self.glass_x, self.poured_height, self.poured_glass_dis_x, self.poured_glass_dis_z,
                                   self._get_current_water_height(), in_poured_glass, in_control_glass])
             return np.hstack([pos, cup_state]).flatten()
+        elif self.observation_mode == 'rim_interpolation':
+            shape_states = pyflex.get_shape_states().reshape((-1, 14))
+
+            pouring_right_wall_center = shape_states[2][:3]
+            pouring_left_wall_center = shape_states[1][:3]
+            rotation = self.glass_rotation
+
+            # build the corner of the front wall of the control glass
+            c_corner1_relative_cord = np.array([-self.border / 2., self.height / 2., self.glass_dis_z / 2])
+            c_corner1_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
+                                                relative=c_corner1_relative_cord)
+
+            c_corner2_relative_cord = np.array([-self.border / 2., self.height / 2., -self.glass_dis_z / 2])
+            c_corner2_real = rotate_rigid_object(center=pouring_right_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
+                                                relative=c_corner2_relative_cord)
+
+            c_corner3_relative_cord = np.array([self.border / 2., self.height / 2., -self.glass_dis_z / 2])
+            c_corner3_real = rotate_rigid_object(center=pouring_left_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
+                                                relative=c_corner3_relative_cord)
+
+            c_corner4_relative_cord = np.array([self.border / 2., self.height / 2., self.glass_dis_z / 2])
+            c_corner4_real = rotate_rigid_object(center=pouring_left_wall_center, axis=np.array([0, 0, -1]), angle=rotation,
+                                             relative=c_corner4_relative_cord)
+
+            target_right_wall_center = shape_states[2 + 5][:3]
+            target_left_wall_center = shape_states[1 + 5][:3]
+            # target cup does not need rotation
+            t_corner_1 = target_right_wall_center + np.array([-self.poured_border / 2., self.poured_height / 2., self.poured_glass_dis_z / 2])
+            t_corner_2 = target_right_wall_center + np.array([-self.poured_border / 2., self.poured_height / 2., -self.poured_glass_dis_z / 2])
+            t_corner_3 = target_left_wall_center + np.array([self.poured_border / 2., self.poured_height / 2., -self.poured_glass_dis_z / 2])
+            t_corner_4 = target_left_wall_center + np.array([self.poured_border / 2., self.poured_height / 2., self.poured_glass_dis_z / 2])
+
+
+            '''
+            corner3 -x- corner 2
+              |             |
+              z             z
+              |             |
+            corner4 -x- corner 1 
+            '''
+            cornerss = [
+                [c_corner1_real, c_corner2_real, c_corner3_real, c_corner4_real],
+                [t_corner_1, t_corner_2, t_corner_3, t_corner_4]
+            ]
+            z_segments = [
+                math.floor(self.glass_dis_z / self.current_config['fluid']['radius']),
+                math.floor(self.poured_glass_dis_z / self.current_config['fluid']['radius'])
+            ]
+            x_segments = [
+                math.floor(self.glass_dis_x / self.current_config['fluid']['radius']),
+                math.floor(self.poured_glass_dis_x / self.current_config['fluid']['radius']),
+            ]
+
+            all_points = []
+            for glass_idx in range(2):
+                corners = cornerss[glass_idx]
+                z_segment, x_segment = z_segments[glass_idx], x_segments[glass_idx]
+                for idx in range(4):
+                    # print(idx)
+                    start_corner = corners[idx]
+                    end_corner = corners[(idx+1)%4]
+                    segment_num = z_segment if idx % 2 == 0 else x_segment
+                    distance = (end_corner - start_corner) / segment_num
+                    # print(start_corner)
+                    add_points = np.array([distance * i for i in range(1, segment_num)])
+                    interpolated_points = start_corner + add_points
+                    all_points.append(start_corner)
+                    all_points += list(interpolated_points)
+
+            all_points = np.vstack(all_points)
+            if True:
+                print("all_points shape: ", all_points.shape)
+                import matplotlib.pyplot as plt
+                from mpl_toolkits.mplot3d import Axes3D 
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+                for p in all_points:
+                    ax.scatter(p[0], p[2], p[1])
+
+                ax.set_xlim(-0.3, 0.5)
+                ax.set_ylim(-0.3, 0.5)
+                ax.set_zlim(0, 0.5)
+
+                ax.set_xlabel('X Label')
+                ax.set_ylabel('Y Label')
+                ax.set_zlabel('Z Label')
+                plt.show()
+
+            return all_points
+        
         else:
             raise NotImplementedError
 

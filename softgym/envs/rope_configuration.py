@@ -74,7 +74,7 @@ class RopeConfigurationEnv(RopeFlattenNewEnv):
     def generate_alphabet_positions(self):
         self.goal_characters_position = {}
         cur_dir = osp.dirname(osp.abspath(__file__))
-        character_loc_path = osp.join(cur_dir, 'rope_configuration.pkl')
+        character_loc_path = osp.join(cur_dir, '../cached_initial_states', 'rope_configuration.pkl')
         character_locs = pickle.load(open(character_loc_path, 'rb'))
 
         for c in character_locs:
