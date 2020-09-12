@@ -157,7 +157,6 @@ class Picker(ActionToolBase):
         quat = np.array([1., 0., 0., 0.])
         pyflex.add_box(halfEdge, center, quat)
 
-
     def _apply_picker_boundary(self, picker_pos):
         clipped_picker_pos = picker_pos.copy()
         for i in range(3):
@@ -304,7 +303,6 @@ class PickerPickPlace(Picker):
         """
         action = action.reshape(-1, 4)
         curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
-
         end_pos = np.vstack(self._apply_picker_boundary(picker_pos) for picker_pos in action[:, :3])
         dist = np.linalg.norm(curr_pos - end_pos, axis=1)
         num_step = np.max(np.ceil(dist / self.delta_move))
@@ -312,7 +310,7 @@ class PickerPickPlace(Picker):
             return
         delta = (end_pos - curr_pos) / num_step
         norm_delta = np.linalg.norm(delta)
-        for i in range(int(min(num_step, 30))):  # The maximum number of steps allowed for one pick and place
+        for i in range(int(min(num_step, 300))):  # The maximum number of steps allowed for one pick and place
             curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
             dist = np.linalg.norm(end_pos - curr_pos, axis=1)
             if np.alltrue(dist < norm_delta):
@@ -323,3 +321,100 @@ class PickerPickPlace(Picker):
                 self.env.video_frames.append(self.env.render(mode='rgb_array'))
             if np.alltrue(dist < self.delta_move):
                 break
+
+
+from cloth_manipulation.gemo_utils import intrinsic_from_fov, get_rotation_matrix
+
+
+class PickerQPG(PickerPickPlace):
+    def __init__(self, image_size, cam_pos, cam_angle, **kwargs):
+        super().__init__(**kwargs)
+        self.image_size = image_size
+        self.cam_pos = cam_pos
+        self.cam_angle = cam_angle
+        self.action_space = Box(np.array([-1., -1, *self.picker_low]),
+                                np.array([1., 1., *self.picker_high]), dtype=np.float32)
+        assert self.num_picker==1
+    def _get_world_coor_from_image(self, u, v):
+        height, width = self.image_size
+        K = intrinsic_from_fov(height, width, 45)  # the fov is 90 degrees
+
+        # Apply back-projection: K_inv @ pixels * depth
+
+        # debug: print camera coordinates
+        # print(cam_coords.shape)
+        # cnt = 0
+        # for v in range(height):
+        #     for u in range(width):
+        #         if depth[v][u] > 0:
+        #             print("v: {} u: {} cnt: {} cam_coord: {} approximate particle pos: {}".format(
+        #                     v, u, cnt, cam_coords[v][u], particle_pos[cnt]))
+        #             rgb = rgbd[:, :, :3].copy()
+        #             rgb[v][u][0] = 255
+        #             rgb[v][u][1] = 0
+        #             rgb[v][u][2] = 0
+        #             cv2.imshow('rgb', rgb[:, :, ::-1])
+        #             cv2.waitKey()
+        #             cnt += 1
+
+        # from cam coord to world coord
+        # cam_x, cam_y, cam_z = env.camera_params['default_camera']['pos'][0], env.camera_params['default_camera']['pos'][1], \
+        #                       env.camera_params['default_camera']['pos'][2]
+        # cam_x_angle, cam_y_angle, cam_z_angle = env.camera_params['default_camera']['angle'][0], env.camera_params['default_camera']['angle'][1], \
+        #                                         env.camera_params['default_camera']['angle'][2]
+        cam_x, cam_y, cam_z = self.cam_pos
+        cam_x_angle, cam_y_angle, cam_z_angle = self.cam_angle
+
+        # get rotation matrix: from world to camera
+        matrix1 = get_rotation_matrix(- cam_x_angle, [0, 1, 0])
+        # matrix2 = get_rotation_matrix(- cam_y_angle - np.pi, [np.cos(cam_x_angle), 0, np.sin(cam_x_angle)])
+        matrix2 = get_rotation_matrix(- cam_y_angle - np.pi, [1, 0, 0])
+        rotation_matrix = matrix2 @ matrix1
+
+        # get translation matrix: from world to camera
+        translation_matrix = np.zeros((4, 4))
+        translation_matrix[0][0] = 1
+        translation_matrix[1][1] = 1
+        translation_matrix[2][2] = 1
+        translation_matrix[3][3] = 1
+        translation_matrix[0][3] = - cam_x
+        translation_matrix[1][3] = - cam_y
+        translation_matrix[2][3] = - cam_z
+        matrix = np.linalg.inv(rotation_matrix @ translation_matrix)
+
+        u0 = K[0, 2]
+        v0 = K[1, 2]
+        fx = K[0, 0]
+        fy = K[1, 1]
+        vec = ((u - u0) / fx, (v - v0) / fy)
+        depth = self._get_depth(matrix, vec, self.picker_radius)  # Height to be the particle radius
+
+        # Loop through each pixel in the image
+        # Apply equation in fig 3
+        x = (u - u0) * depth / fx
+        y = (v - v0) * depth / fy
+        z = depth
+        cam_coords = np.array([x, y, z, 1])
+        cam_coords = cam_coords.reshape((-1, 4)).transpose()  # 4 x (height x width)
+
+        world_coord = matrix @ cam_coords  # 4 x (height x width)
+        world_coord = world_coord.reshape(4)
+        return world_coord[:3]
+
+    def _get_depth(self, matrix, vec, height):
+        """ Get the depth such that the back-projected point has a fixed height"""
+        return (height - matrix[1, 3]) / (vec[0] * matrix[1, 0] + vec[1] * matrix[1, 1] + matrix[1, 2])
+
+    def step(self, action):
+        """ Action is in 5D: (u,v) the start of the pick in image coordinate; (dx, dy, dz): the relative position of the place w.r.t. the pick"""
+        u, v = action[:2]
+        u = ((u + 1.) * 0.5) * self.image_size[0]
+        v *= ((v + 1.) * 0.5) * self.image_size[1]
+        x, y, z = self._get_world_coor_from_image(u, v)
+        dx, dy, dz = action[2:]
+        st = np.array([x, y, z, 0])
+        en = st + np.array([dx, dy, dz, 1])
+        super().step(st)
+        super().step(en)
+        en[3] = 0  # Drop cloth
+        super().step(en)

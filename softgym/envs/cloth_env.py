@@ -2,7 +2,7 @@ import numpy as np
 from gym.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
-from softgym.action_space.action_space import ParallelGripper, Picker, PickerPickPlace
+from softgym.action_space.action_space import ParallelGripper, Picker, PickerPickPlace, PickerQPG
 from softgym.action_space.robot_env import RobotBase
 from copy import deepcopy
 
@@ -15,7 +15,7 @@ class ClothEnv(FlexEnv):
         super().__init__(**kwargs)
 
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['sphere', 'picker', 'pickerpickplace', 'sawyer', 'franka']
+        assert action_mode in ['sphere', 'picker', 'pickerpickplace', 'sawyer', 'franka', 'picker_qpg']
         self.observation_mode = observation_mode
 
         if action_mode.startswith('key_point'):
@@ -37,6 +37,13 @@ class ClothEnv(FlexEnv):
             assert self.action_repeat == 1
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)
+            self.action_space = self.action_tool.action_space
+        elif action_mode == 'picker_qpg':
+            cam_pos, cam_angle = self.get_camera_params()
+            self.action_tool = PickerQPG((self.camera_height, self.camera_height), cam_pos, cam_angle,
+                                         num_picker=num_picker, particle_radius=particle_radius, env=self,
+                                         picker_low=(-0.3, 0., -0.3), picker_high=(0.3, 0.3, 0.3)
+                                         )
             self.action_space = self.action_tool.action_space
 
         if observation_mode in ['key_point', 'point_cloud']:
@@ -80,6 +87,13 @@ class ClothEnv(FlexEnv):
         curr_pos[:, :3] = flat_pos
         pyflex.set_positions(curr_pos)
         pyflex.step()
+
+    def get_camera_params(self):
+        config = self.get_current_config()
+        camera_name = config['camera_name']
+        cam_pos = config['camera_params'][camera_name]['pos']
+        cam_angle = config['camera_params'][camera_name]['angle']
+        return cam_pos, cam_angle
 
     def get_default_config(self):
         """ Set the default config of the environment and load it to self.config """
