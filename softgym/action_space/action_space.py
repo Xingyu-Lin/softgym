@@ -332,9 +332,10 @@ class PickerQPG(PickerPickPlace):
         self.image_size = image_size
         self.cam_pos = cam_pos
         self.cam_angle = cam_angle
-        self.action_space = Box(np.array([-1., -1, *self.picker_low]),
-                                np.array([1., 1., *self.picker_high]), dtype=np.float32)
-        assert self.num_picker==1
+        self.action_space = Box(np.array([-1., -1, *([-0.3] * 3)]),
+                                np.array([1., 1., *([0.3] * 3)]), dtype=np.float32)
+        assert self.num_picker == 1
+
     def _get_world_coor_from_image(self, u, v):
         height, width = self.image_size
         K = intrinsic_from_fov(height, width, 45)  # the fov is 90 degrees
@@ -387,7 +388,7 @@ class PickerQPG(PickerPickPlace):
         fx = K[0, 0]
         fy = K[1, 1]
         vec = ((u - u0) / fx, (v - v0) / fy)
-        depth = self._get_depth(matrix, vec, self.picker_radius)  # Height to be the particle radius
+        depth = self._get_depth(matrix, vec, self.picker_radius-0.02)  # Height to be the particle radius
 
         # Loop through each pixel in the image
         # Apply equation in fig 3
@@ -409,12 +410,17 @@ class PickerQPG(PickerPickPlace):
         """ Action is in 5D: (u,v) the start of the pick in image coordinate; (dx, dy, dz): the relative position of the place w.r.t. the pick"""
         u, v = action[:2]
         u = ((u + 1.) * 0.5) * self.image_size[0]
-        v *= ((v + 1.) * 0.5) * self.image_size[1]
+        v = ((v + 1.) * 0.5) * self.image_size[1]
         x, y, z = self._get_world_coor_from_image(u, v)
+
         dx, dy, dz = action[2:]
+        st_high = np.array([x, 0.3, z, 0])
         st = np.array([x, y, z, 0])
         en = st + np.array([dx, dy, dz, 1])
+        super().step(st_high)
         super().step(st)
         super().step(en)
         en[3] = 0  # Drop cloth
         super().step(en)
+        for i in range(20):
+            pyflex.step()
