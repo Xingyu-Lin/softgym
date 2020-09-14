@@ -222,7 +222,7 @@ class FlexEnv(gym.Env):
         """
         raise NotImplementedError
 
-    def render(self, mode='human'):
+    def render(self, mode='rgb_array'):
         if mode == 'rgb_array':
             img = pyflex.render()
             width, height = self.camera_params['default_camera']['width'], self.camera_params['default_camera']['height']

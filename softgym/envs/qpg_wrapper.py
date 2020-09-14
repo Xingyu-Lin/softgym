@@ -37,10 +37,13 @@ class QpgWrapper(object):
         location_range = np.vstack([location_orange, location_pink])
 
         num_loc = np.shape(location_range)[0]
-        index = np.random.randint(num_loc)
-        location = location_range[index]
-        location = location / (obs.shape[0] - 1) * 2. - 1.
-        location = np.array([location[1], location[0]])  # Revert location into uv coordinate
+        if num_loc ==0:
+            location = np.array([0., 0.])
+        else:
+            index = np.random.randint(num_loc)
+            location = location_range[index]
+            location = location / (obs.shape[0] - 1) * 2. - 1.
+            location = np.array([location[1], location[0]])  # Revert location into uv coordinate
         return location
 
     def reset(self, **kwargs):

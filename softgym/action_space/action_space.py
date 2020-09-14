@@ -193,6 +193,7 @@ class Picker(ActionToolBase):
         pyflex.set_shape_states(shape_state)
         # pyflex.step() # Remove this as having an additional step here may affect the cloth drop env
         self.particle_inv_mass = pyflex.get_positions().reshape(-1, 4)[:, 3]
+        # print('inv_mass_shape after reset:', self.particle_inv_mass.shape)
 
     @staticmethod
     def _get_pos():
@@ -230,6 +231,7 @@ class Picker(ActionToolBase):
         new_picker_pos, new_particle_pos = picker_pos.copy(), particle_pos.copy()
 
         # Un-pick the particles
+        # print('check pick id:', self.picked_particles, new_particle_pos.shape, self.particle_inv_mass.shape)
         for i in range(self.num_picker):
             if not pick_flag[i] and self.picked_particles[i] is not None:
                 new_particle_pos[self.picked_particles[i], 3] = self.particle_inv_mass[self.picked_particles[i]]  # Revert the mass
@@ -293,7 +295,7 @@ class PickerPickPlace(Picker):
         picker_low, picker_high = list(picker_low), list(picker_high)
         self.action_space = Box(np.array([*picker_low, 0.] * self.num_picker),
                                 np.array([*picker_high, 1.] * self.num_picker), dtype=np.float32)
-        self.delta_move = 0.01
+        self.delta_move = 0.02
         self.env = env
 
     def step(self, action):
@@ -303,7 +305,7 @@ class PickerPickPlace(Picker):
         """
         action = action.reshape(-1, 4)
         curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
-        end_pos = np.vstack(self._apply_picker_boundary(picker_pos) for picker_pos in action[:, :3])
+        end_pos = np.vstack([self._apply_picker_boundary(picker_pos) for picker_pos in action[:, :3]])
         dist = np.linalg.norm(curr_pos - end_pos, axis=1)
         num_step = np.max(np.ceil(dist / self.delta_move))
         if num_step < 0.1:
@@ -322,12 +324,11 @@ class PickerPickPlace(Picker):
             if np.alltrue(dist < self.delta_move):
                 break
 
-
 from cloth_manipulation.gemo_utils import intrinsic_from_fov, get_rotation_matrix
 
 
 class PickerQPG(PickerPickPlace):
-    def __init__(self, image_size, cam_pos, cam_angle, **kwargs):
+    def __init__(self, image_size, cam_pos, cam_angle, full=False, **kwargs):
         super().__init__(**kwargs)
         self.image_size = image_size
         self.cam_pos = cam_pos
@@ -335,6 +336,7 @@ class PickerQPG(PickerPickPlace):
         self.action_space = Box(np.array([-1., -1, *([-0.3] * 3)]),
                                 np.array([1., 1., *([0.3] * 3)]), dtype=np.float32)
         assert self.num_picker == 1
+        self.full = full
 
     def _get_world_coor_from_image(self, u, v):
         height, width = self.image_size
@@ -417,10 +419,26 @@ class PickerQPG(PickerPickPlace):
         st_high = np.array([x, 0.3, z, 0])
         st = np.array([x, y, z, 0])
         en = st + np.array([dx, dy, dz, 1])
-        super().step(st_high)
-        super().step(st)
-        super().step(en)
-        en[3] = 0  # Drop cloth
-        super().step(en)
-        for i in range(20):
-            pyflex.step()
+
+        if self.full:
+            super().step(st_high)
+            super().step(st)
+            super().step(en)
+            en[3] = 0  # Drop cloth
+            super().step(en)
+            for i in range(20):
+                pyflex.step()
+        else:
+            self.set_picker_pos(st[:3])
+            super().step(en)
+            en[3] = 0  # Drop cloth
+            # Unpick all particles
+            _, particle_pos = self._get_pos()
+            new_particle_pos = particle_pos.copy()
+            for i in range(self.num_picker):
+                if self.picked_particles[i] is not None:
+                    new_particle_pos[self.picked_particles[i], 3] = self.particle_inv_mass[self.picked_particles[i]]  # Revert the mass
+                    self.picked_particles[i] = None
+            pyflex.set_positions(new_particle_pos)
+            for i in range(5):
+                pyflex.step()
