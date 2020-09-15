@@ -328,7 +328,7 @@ from cloth_manipulation.gemo_utils import intrinsic_from_fov, get_rotation_matri
 
 
 class PickerQPG(PickerPickPlace):
-    def __init__(self, image_size, cam_pos, cam_angle, full=False, **kwargs):
+    def __init__(self, image_size, cam_pos, cam_angle, full=True, **kwargs):
         super().__init__(**kwargs)
         self.image_size = image_size
         self.cam_pos = cam_pos
@@ -390,7 +390,7 @@ class PickerQPG(PickerPickPlace):
         fx = K[0, 0]
         fy = K[1, 1]
         vec = ((u - u0) / fx, (v - v0) / fy)
-        depth = self._get_depth(matrix, vec, self.picker_radius-0.02)  # Height to be the particle radius
+        depth = self._get_depth(matrix, vec, self.particle_radius)  # Height to be the particle radius
 
         # Loop through each pixel in the image
         # Apply equation in fig 3
@@ -408,28 +408,26 @@ class PickerQPG(PickerPickPlace):
         """ Get the depth such that the back-projected point has a fixed height"""
         return (height - matrix[1, 3]) / (vec[0] * matrix[1, 0] + vec[1] * matrix[1, 1] + matrix[1, 2])
 
+    # def reset(self, *args, **kwargs):
+    #     super().reset(*args, **kwargs)
+    #     self.update_picker_boundary(picker_low=[-np.inf] * 3, picker_high=[np.inf] * 3)
+
     def step(self, action):
         """ Action is in 5D: (u,v) the start of the pick in image coordinate; (dx, dy, dz): the relative position of the place w.r.t. the pick"""
         u, v = action[:2]
         u = ((u + 1.) * 0.5) * self.image_size[0]
         v = ((v + 1.) * 0.5) * self.image_size[1]
         x, y, z = self._get_world_coor_from_image(u, v)
-
+        y += 0.01
         dx, dy, dz = action[2:]
-        st_high = np.array([x, 0.3, z, 0])
+
+        st_high = np.array([x, 0.2, z, 0])
         st = np.array([x, y, z, 0])
         en = st + np.array([dx, dy, dz, 1])
-
+        # print('st:', st)
         if self.full:
             super().step(st_high)
             super().step(st)
-            super().step(en)
-            en[3] = 0  # Drop cloth
-            super().step(en)
-            for i in range(20):
-                pyflex.step()
-        else:
-            self.set_picker_pos(st[:3])
             super().step(en)
             en[3] = 0  # Drop cloth
             # Unpick all particles
@@ -440,5 +438,25 @@ class PickerQPG(PickerPickPlace):
                     new_particle_pos[self.picked_particles[i], 3] = self.particle_inv_mass[self.picked_particles[i]]  # Revert the mass
                     self.picked_particles[i] = None
             pyflex.set_positions(new_particle_pos)
-            for i in range(5):
+            for i in range(20):
                 pyflex.step()
+                if self.env is not None and self.env.recording:
+                    self.env.video_frames.append(self.env.render(mode='rgb_array'))
+                    image = self.env.render(mode='rgb_array')
+        else:
+            raise NotImplementedError
+        # else:
+        #     self.set_picker_pos(st_high[:3])
+        #     super().step(st)
+        #     super().step(en)
+        #     en[3] = 0  # Drop cloth
+        #     # Unpick all particles
+        #     _, particle_pos = self._get_pos()
+        #     new_particle_pos = particle_pos.copy()
+        #     for i in range(self.num_picker):
+        #         if self.picked_particles[i] is not None:
+        #             new_particle_pos[self.picked_particles[i], 3] = self.particle_inv_mass[self.picked_particles[i]]  # Revert the mass
+        #             self.picked_particles[i] = None
+        #     pyflex.set_positions(new_particle_pos)
+        #     # for i in range(5):
+        #     #     pyflex.step()

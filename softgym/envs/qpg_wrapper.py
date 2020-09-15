@@ -10,7 +10,7 @@ from rlpyt.envs.base import EnvSpaces, EnvStep
 import cv2 as cv
 import collections
 from rlpyt.utils.collections import is_namedtuple_class
-
+import gym
 OBS = namedtuple('OBS', ['pixels', 'location'])
 
 INFO = namedtuple('INFO', ['performance', 'normalized_performance'])
@@ -20,7 +20,7 @@ class QpgWrapper(object):
     def __init__(self, wrapped_env, act_null_value=0, force_float32=True):
         self._wrapped_env = wrapped_env
         self.action_space = GymSpaceWrapper(
-            space=self._wrapped_env.action_space,
+            space=gym.spaces.Box(low=-1, high=1, shape=(3,), dtype=np.float32),
             name="act",
             null_value=act_null_value,
             force_float32=force_float32,
@@ -30,6 +30,7 @@ class QpgWrapper(object):
                                            OBS)
         self.spaces = EnvSpaces(observation=self.observation_space, action=self.action_space)
         self._dtype = None
+        self.current_location = None
 
     def sample_location(self, obs):
         location_orange = np.transpose(np.where(np.any(obs < 50, axis=-1)))
@@ -50,16 +51,18 @@ class QpgWrapper(object):
         image = self._wrapped_env.reset(**kwargs)
         image = np.array(cv.resize(image, (64, 64))).astype('float32')
         location = self.sample_location(image)
+        self.current_location = location
         # obs = collections.OrderedDict()
         # obs['pixels'] = image
         # obs['location'] = np.tile(location, 50).reshape(-1).astype('float32')
         obs = OBS(pixels=image, location=np.tile(location, 50).reshape(-1).astype('float32'))
         return obs
 
-    def step(self, *args, **kwargs):
-        image, reward, done, info = self._wrapped_env.step(*args, **kwargs)
+    def step(self, action, **kwargs):
+        image, reward, done, info = self._wrapped_env.step([*self.current_location, *action], **kwargs)
         image = np.array(cv.resize(image, (64, 64))).astype('float32')
         location = self.sample_location(image)
+        self.current_location = location
         # obs = collections.OrderedDict()
         # obs['pixels'] = image
         # obs['location'] = np.tile(location, 50).reshape(-1).astype('float32')
