@@ -303,6 +303,7 @@ class PickerPickPlace(Picker):
         action: Array of pick_num x 4. For each picker, the action should be [x, y, z, pick/drop]. The picker will then first pick/drop, and keep
         the pick/drop state while moving towards x, y, x.
         """
+        total_steps =0
         action = action.reshape(-1, 4)
         curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
         end_pos = np.vstack([self._apply_picker_boundary(picker_pos) for picker_pos in action[:, :3]])
@@ -319,10 +320,12 @@ class PickerPickPlace(Picker):
                 delta = end_pos - curr_pos
             super().step(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
             pyflex.step()
+            total_steps += 1
             if self.env is not None and self.env.recording:
                 self.env.video_frames.append(self.env.render(mode='rgb_array'))
             if np.alltrue(dist < self.delta_move):
                 break
+        return total_steps
 
 from cloth_manipulation.gemo_utils import intrinsic_from_fov, get_rotation_matrix
 
@@ -337,6 +340,7 @@ class PickerQPG(PickerPickPlace):
                                 np.array([1., 1., *([0.3] * 3)]), dtype=np.float32)
         assert self.num_picker == 1
         self.full = full
+        self.total_steps = None
 
     def _get_world_coor_from_image(self, u, v):
         height, width = self.image_size
@@ -408,9 +412,9 @@ class PickerQPG(PickerPickPlace):
         """ Get the depth such that the back-projected point has a fixed height"""
         return (height - matrix[1, 3]) / (vec[0] * matrix[1, 0] + vec[1] * matrix[1, 1] + matrix[1, 2])
 
-    # def reset(self, *args, **kwargs):
-    #     super().reset(*args, **kwargs)
-    #     self.update_picker_boundary(picker_low=[-np.inf] * 3, picker_high=[np.inf] * 3)
+    def reset(self, *args, **kwargs):
+        self.total_steps = 0
+        super().reset(*args, **kwargs)
 
     def step(self, action):
         """ Action is in 5D: (u,v) the start of the pick in image coordinate; (dx, dy, dz): the relative position of the place w.r.t. the pick"""
@@ -426,9 +430,9 @@ class PickerQPG(PickerPickPlace):
         en = st + np.array([dx, dy, dz, 1])
         # print('st:', st)
         if self.full:
-            super().step(st_high)
-            super().step(st)
-            super().step(en)
+            self.total_steps += super().step(st_high)
+            self.total_steps += super().step(st)
+            self.total_steps += super().step(en)
             en[3] = 0  # Drop cloth
             # Unpick all particles
             _, particle_pos = self._get_pos()
@@ -443,8 +447,10 @@ class PickerQPG(PickerPickPlace):
                 if self.env is not None and self.env.recording:
                     self.env.video_frames.append(self.env.render(mode='rgb_array'))
                     image = self.env.render(mode='rgb_array')
+            self.total_steps += 20
         else:
             raise NotImplementedError
+        return self.total_steps
         # else:
         #     self.set_picker_pos(st_high[:3])
         #     super().step(st)

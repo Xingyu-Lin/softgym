@@ -218,7 +218,10 @@ class ClothFlattenEnv(ClothEnv):
         curr_covered_area = self._get_current_covered_area(particle_pos)
         init_covered_area = curr_covered_area if self.init_covered_area is None else self.init_covered_area
         max_covered_area = self.get_current_config()['flatten_area']
-        return {
+        info = {
             'performance': curr_covered_area,
             'normalized_performance': (curr_covered_area - init_covered_area) / (max_covered_area - init_covered_area),
         }
+        if 'qpg' or 'pickplace' in self.action_mode:
+            info['total_steps'] = self.action_tool.total_steps
+        return info
