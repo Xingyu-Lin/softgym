@@ -446,7 +446,6 @@ class PickerQPG(PickerPickPlace):
                 pyflex.step()
                 if self.env is not None and self.env.recording:
                     self.env.video_frames.append(self.env.render(mode='rgb_array'))
-                    image = self.env.render(mode='rgb_array')
             self.total_steps += 20
         else:
             raise NotImplementedError

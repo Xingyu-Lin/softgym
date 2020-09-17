@@ -150,11 +150,12 @@ class FlexEnv(gym.Env):
         self.video_frames = []
         self.recording = True
 
-    def end_record(self, video_path, **kwargs):
+    def end_record(self, video_path=None, **kwargs):
         if not self.recording:
             print('function end_record: Error! Not recording video')
         self.recording = False
-        save_numpy_as_gif(np.array(self.video_frames), video_path, **kwargs)
+        if video_path is not None:
+            save_numpy_as_gif(np.array(self.video_frames), video_path, **kwargs)
         del self.video_frames
 
     def reset(self, config=None, initial_state=None, config_id=None):

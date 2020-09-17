@@ -64,7 +64,7 @@ class ClothFlattenEnv(ClothEnv):
                 pyflex.set_positions(curr_pos)
                 pyflex.set_velocities(curr_vel)
                 pyflex.step()
-                if np.alltrue(np.abs(curr_vel) < stable_vel_threshold) and j>5:
+                if np.alltrue(np.abs(curr_vel) < stable_vel_threshold) and j > 5:
                     break
 
             # Drop the cloth and wait to stablize
@@ -222,6 +222,6 @@ class ClothFlattenEnv(ClothEnv):
             'performance': curr_covered_area,
             'normalized_performance': (curr_covered_area - init_covered_area) / (max_covered_area - init_covered_area),
         }
-        if 'qpg' or 'pickplace' in self.action_mode:
+        if 'qpg' in self.action_mode:
             info['total_steps'] = self.action_tool.total_steps
         return info

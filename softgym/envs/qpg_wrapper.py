@@ -13,14 +13,16 @@ from rlpyt.utils.collections import is_namedtuple_class
 import gym
 OBS = namedtuple('OBS', ['pixels', 'location'])
 
-INFO = namedtuple('INFO', ['performance', 'normalized_performance'])
+INFO = namedtuple('INFO', ['performance', 'normalized_performance', 'total_steps'])
 
 
 class QpgWrapper(object):
-    def __init__(self, wrapped_env, act_null_value=0, force_float32=True):
+    def __init__(self, wrapped_env, act_null_value=0, force_float32=True, maxq=False):
+        self.maxq = maxq
         self._wrapped_env = wrapped_env
+        action_dim = 3
         self.action_space = GymSpaceWrapper(
-            space=gym.spaces.Box(low=-1, high=1, shape=(3,), dtype=np.float32),
+            space=gym.spaces.Box(low=-1, high=1, shape=(action_dim,), dtype=np.float32),
             name="act",
             null_value=act_null_value,
             force_float32=force_float32,
@@ -31,6 +33,7 @@ class QpgWrapper(object):
         self.spaces = EnvSpaces(observation=self.observation_space, action=self.action_space)
         self._dtype = None
         self.current_location = None
+
 
     def sample_location(self, obs):
         location_orange = np.transpose(np.where(np.any(obs < 50, axis=-1)))
@@ -59,7 +62,10 @@ class QpgWrapper(object):
         return obs
 
     def step(self, action, **kwargs):
-        image, reward, done, info = self._wrapped_env.step([*self.current_location, *action], **kwargs)
+        if len(action) == 5:
+            image, reward, done, info = self._wrapped_env.step(action, **kwargs)
+        else:
+            image, reward, done, info = self._wrapped_env.step([*self.current_location, *action], **kwargs)
         image = np.array(cv.resize(image, (64, 64))).astype('float32')
         location = self.sample_location(image)
         self.current_location = location
