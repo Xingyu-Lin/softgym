@@ -171,12 +171,15 @@ class ClothFoldEnv(ClothEnv):
         fixation_dist = np.mean(np.linalg.norm(pos_group_b - pos_group_b_init, axis=1))
         performance = -group_dist - 1.2 * fixation_dist
         performance_init = performance if self.performance_init is None else self.performance_init  # Use the original performance
-        return {
+        info = {
             'performance': performance,
             'normalized_performance': (performance - performance_init) / (0. - performance_init),
             'neg_group_dist': -group_dist,
             'neg_fixation_dist': -fixation_dist
         }
+        if 'qpg' in self.action_mode:
+            info['total_steps'] = self.action_tool.total_steps
+        return info
 
     def _set_to_folded(self):
         config = self.get_current_config()
