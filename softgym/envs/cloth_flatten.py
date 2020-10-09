@@ -225,3 +225,10 @@ class ClothFlattenEnv(ClothEnv):
         if 'qpg' in self.action_mode:
             info['total_steps'] = self.action_tool.total_steps
         return info
+
+    def get_picked_particle(self):
+        pps = np.ones(shape=self.action_tool.num_picker)  * -1 # -1 means no particles picked
+        for i, pp in enumerate(self.action_tool.picked_particles):
+            if pp is not None:
+                pps[i] = pp
+        return pps

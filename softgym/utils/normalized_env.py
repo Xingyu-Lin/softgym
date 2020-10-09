@@ -64,6 +64,11 @@ class NormalizedEnv(object):
             return gym.spaces.Box(-1 * ub, ub)
         return self._wrapped_env.action_space
 
+    def denormalize(self, action):
+        lb, ub = self._wrapped_env.action_space.low, self._wrapped_env.action_space.high
+        scaled_action = lb + (action + 1.) * 0.5 * (ub - lb)
+        return scaled_action
+
     @overrides
     def step(self, action, **kwargs):
         if isinstance(self._wrapped_env.action_space, Box):
