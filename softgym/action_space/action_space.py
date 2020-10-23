@@ -303,7 +303,7 @@ class PickerPickPlace(Picker):
         action: Array of pick_num x 4. For each picker, the action should be [x, y, z, pick/drop]. The picker will then first pick/drop, and keep
         the pick/drop state while moving towards x, y, x.
         """
-        total_steps =0
+        total_steps = 0
         action = action.reshape(-1, 4)
         curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
         end_pos = np.vstack([self._apply_picker_boundary(picker_pos) for picker_pos in action[:, :3]])
@@ -326,6 +326,30 @@ class PickerPickPlace(Picker):
             if np.alltrue(dist < self.delta_move):
                 break
         return total_steps
+
+    def get_model_action(self, action, picker_pos):
+        """Input the action and return the action used for GNN model prediction"""
+        action = action.reshape(-1, 4)
+        curr_pos = picker_pos
+        end_pos = np.vstack([self._apply_picker_boundary(picker_pos) for picker_pos in action[:, :3]])
+        dist = np.linalg.norm(curr_pos - end_pos, axis=1)
+        num_step = np.max(np.ceil(dist / self.delta_move))
+        if num_step < 0.1:
+            return [], curr_pos
+        delta = (end_pos - curr_pos) / num_step
+        norm_delta = np.linalg.norm(delta)
+        model_actions = []
+        for i in range(int(min(num_step, 300))):  # The maximum number of steps allowed for one pick and place
+            dist = np.linalg.norm(end_pos - curr_pos, axis=1)
+            if np.alltrue(dist < norm_delta):
+                delta = end_pos - curr_pos
+            super().step(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
+            model_actions.append(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
+            curr_pos += delta
+            if np.alltrue(dist < self.delta_move):
+                break
+        return model_actions, curr_pos
+
 
 from cloth_manipulation.gemo_utils import intrinsic_from_fov, get_rotation_matrix
 
@@ -450,18 +474,98 @@ class PickerQPG(PickerPickPlace):
         else:
             raise NotImplementedError
         return self.total_steps
-        # else:
-        #     self.set_picker_pos(st_high[:3])
-        #     super().step(st)
-        #     super().step(en)
-        #     en[3] = 0  # Drop cloth
-        #     # Unpick all particles
-        #     _, particle_pos = self._get_pos()
-        #     new_particle_pos = particle_pos.copy()
-        #     for i in range(self.num_picker):
-        #         if self.picked_particles[i] is not None:
-        #             new_particle_pos[self.picked_particles[i], 3] = self.particle_inv_mass[self.picked_particles[i]]  # Revert the mass
-        #             self.picked_particles[i] = None
-        #     pyflex.set_positions(new_particle_pos)
-        #     # for i in range(5):
-        #     #     pyflex.step()
+
+    def get_model_action(self, action, curr_pos):
+        u, v = action[:2]
+        u = ((u + 1.) * 0.5) * self.image_size[0]
+        v = ((v + 1.) * 0.5) * self.image_size[1]
+        x, y, z = self._get_world_coor_from_image(u, v)
+        y += 0.01
+        dx, dy, dz = action[2:]
+
+        st_high = np.array([x, 0.2, z, 0])
+        st = np.array([x, y, z, 0])
+        en = st + np.array([dx, dy, dz, 1])
+
+        model_actions = []
+        model_action, curr_pos = super().get_model_action(st_high, curr_pos)
+        model_actions.extend(model_action)
+        model_action, curr_pos = super().get_model_action(st, curr_pos)
+        model_actions.extend(model_action)
+        model_action, curr_pos = super().get_model_action(en, curr_pos)
+        model_actions.extend(model_action)
+        return model_actions, curr_pos
+
+
+class PickerRandParticle(PickerPickPlace):
+    def __init__(self, full=True, **kwargs):
+        super().__init__(**kwargs)
+        # self.action_space = Box(np.array([0., *([-0.5] * 3)]),
+        #                         np.array([1., *([0.5] * 3)]), dtype=np.float32)
+        self.action_space = Box(np.array([0., -0.5, 0.2, -0.5]),
+                                np.array([1., 0.5, 0.5, 0.5]), dtype=np.float32)
+        assert self.num_picker == 1
+        self.full = full
+        self.total_steps = None
+
+    def reset(self, *args, **kwargs):
+        self.total_steps = 0
+        super().reset(*args, **kwargs)
+
+    def step(self, action):
+        """ Action is in 4D: k \in [0, 1], normalized index of the pick points; (dx, dy, dz): the relative position of the place w.r.t. the pick"""
+        particle_pos = np.array(pyflex.get_positions()).reshape(-1, 4)[:, :3]
+        n_particles = particle_pos.shape[0]
+        pick_point = int(round(action[0] * (n_particles - 1)))
+        x, y, z = particle_pos[pick_point]
+        y += self.picker_radius
+        dx, dy, dz = action[1:]
+
+        st_high = np.array([x, 0.2, z, 0])
+        st = np.array([x, y, z, 0])
+        en = st + np.array([dx, dy, dz, 1])
+        # print('st:', st)
+        if self.full:
+            self.total_steps += super().step(st_high)
+            self.total_steps += super().step(st)
+            self.total_steps += super().step(en)
+            en[3] = 0  # Drop cloth
+            # Unpick all particles
+            _, particle_pos = self._get_pos()
+            new_particle_pos = particle_pos.copy()
+            for i in range(self.num_picker):
+                if self.picked_particles[i] is not None:
+                    new_particle_pos[self.picked_particles[i], 3] = self.particle_inv_mass[self.picked_particles[i]]  # Revert the mass
+                    self.picked_particles[i] = None
+            pyflex.set_positions(new_particle_pos)
+            for i in range(20):
+                pyflex.step()
+                if self.env is not None and self.env.recording:
+                    self.env.video_frames.append(self.env.render(mode='rgb_array'))
+            self.total_steps += 20
+        else:
+            raise NotImplementedError
+        return self.total_steps
+
+    def get_model_action(self, action, curr_pos, particle_pos):
+        n_particles = particle_pos.shape[0]
+        pick_point = int(round(action[0] * (n_particles - 1)))
+        x, y, z = particle_pos[pick_point]
+        y += self.picker_radius
+        dx, dy, dz = action[1:]
+
+        st_high = np.array([x, 0.2, z, 0])
+        st = np.array([x, y, z, 0])
+        en = st + np.array([dx, dy, dz, 1])
+
+        model_actions = []
+        model_action, curr_pos = super().get_model_action(st_high, curr_pos)
+        model_actions.extend(model_action)
+        model_action, curr_pos = super().get_model_action(st, curr_pos)
+        model_actions.extend(model_action)
+        model_action, curr_pos = super().get_model_action(en, curr_pos)
+        model_actions.extend(model_action)
+        action = np.zeros_like(action)
+        actions = [action] * 20
+        model_actions.extend(actions)
+        return model_actions, curr_pos

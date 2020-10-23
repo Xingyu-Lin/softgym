@@ -2,7 +2,7 @@ import numpy as np
 from gym.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
-from softgym.action_space.action_space import ParallelGripper, Picker, PickerPickPlace, PickerQPG
+from softgym.action_space.action_space import ParallelGripper, Picker, PickerPickPlace, PickerQPG, PickerRandParticle
 from softgym.action_space.robot_env import RobotBase
 from copy import deepcopy
 
@@ -15,7 +15,7 @@ class ClothEnv(FlexEnv):
         super().__init__(**kwargs)
 
         assert observation_mode in ['key_point', 'point_cloud', 'cam_rgb']
-        assert action_mode in ['sphere', 'picker', 'pickerpickplace', 'sawyer', 'franka', 'picker_qpg']
+        assert action_mode in ['sphere', 'picker', 'pickerpickplace', 'sawyer', 'franka', 'picker_qpg', 'picker_rand_particle']
         self.observation_mode = observation_mode
 
         if action_mode.startswith('key_point'):
@@ -32,7 +32,7 @@ class ClothEnv(FlexEnv):
             self.picker_radius = picker_radius
         elif action_mode == 'pickerpickplace':
             self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self,
-                                               picker_low=(-0.3, 0., -0.3), picker_high=(0.3, 0.3, 0.3))
+                                               picker_low=(-0.5, 0., -0.5), picker_high=(0.5, 0.3, 0.5))
             self.action_space = self.action_tool.action_space
             assert self.action_repeat == 1
         elif action_mode in ['sawyer', 'franka']:
@@ -45,7 +45,11 @@ class ClothEnv(FlexEnv):
                                          picker_low=(-0.3, 0., -0.3), picker_high=(0.3, 0.3, 0.3)
                                          )
             self.action_space = self.action_tool.action_space
-
+        elif action_mode == 'picker_rand_particle':
+            self.action_tool = PickerRandParticle(num_picker=num_picker, particle_radius=particle_radius, env=self,
+                                                  picker_low=(-0.3, 0., -0.3), picker_high=(0.3, 0.3, 0.3)
+                                                  )
+            self.action_space = self.action_tool.action_space
         if observation_mode in ['key_point', 'point_cloud']:
             if observation_mode == 'key_point':
                 obs_dim = len(self._get_key_point_idx()) * 3

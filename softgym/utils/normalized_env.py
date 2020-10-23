@@ -97,5 +97,9 @@ class NormalizedEnv(object):
             raise AttributeError('_wrapped_env not initialized yet!')
         return getattr(self._wrapped_env, name)
 
+    def get_model_action(self, action, curr_pos, particle_pos):
+        lb, ub = self._wrapped_env.action_space.low, self._wrapped_env.action_space.high
+        scaled_action = lb + (action + 1.) * 0.5 * (ub - lb)
+        self._wrapped_env.get_model_action(scaled_action, curr_pos, particle_pos)
 
 normalize = NormalizedEnv
