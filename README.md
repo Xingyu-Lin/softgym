@@ -17,7 +17,7 @@ Create a conda environment and activate it: `conda env create -f environment.yml
 
 3. Compile PyFleX: Go to the root folder of softgym and run `. ./prepare_1.0.sh`. After that, compile PyFleX with CMake & Pybind11 by running `. ./compile_1.0.sh` Please see the example test scripts and the bottom of `bindings/pyflex.cpp` for available APIs.
  
-### SoftGym Environments
+## SoftGym Environments
 |Image|Name|Description|
 |----------|:-------------|:-------------|
 |![Gif](./examples/ClothDrop.gif)|[DropCloth](softgym/envs/cloth_drop.py) | Lay a piece of cloth in the air flat on the floor|
