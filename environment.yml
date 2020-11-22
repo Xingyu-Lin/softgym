@@ -18,3 +18,4 @@ dependencies:
   - plotly=2.0
   - gtimer
   - sk-video
+  - shapely=1.6.4.post2
