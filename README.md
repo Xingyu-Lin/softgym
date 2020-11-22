@@ -9,7 +9,7 @@ If you are using Ubuntu 16.04 LTS and CUDA 9.2, you can follow the steps in the 
 
 The following command will install some necessary dependencies.
 ```
-sudo apt-get install build-essential libgl1-mesa-dev freeglut3-dev
+sudo apt-get install build-essential libgl1-mesa-dev freeglut3-dev libglfw3 libgles2-mesa-dev
 ```
 
 2. Create conda environment
