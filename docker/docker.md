@@ -47,7 +47,7 @@ This solution follows [this tutorial]( https://medium.com/@benjamin.botto/opengl
 - Now you are in the Docker environment. Go to the softgym directory and compile PyFlex
 
 ```
-export PATH="PATH_TO_CONDA:$PATH"
+export PATH="PATH_TO_CONDA/bin:$PATH"
 . ./prepare_1.0.sh && ./compile_1.0.sh
 ```
 
