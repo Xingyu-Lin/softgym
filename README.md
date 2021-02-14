@@ -44,7 +44,8 @@ For SoftGym-Hard:
 - PourWaterAmount: `python examples/random_env.py --env_name PourWaterAmount`
 - FoldCrumpledCloth: `python examples/random_env.py --env_name ClothFoldCrumpled`
 - DropFoldCloth: `python examples/random_env.py --env_name ClothFoldDrop`
-- RopeConfiguration: `python examples/random_env.py --env_name RopeConfiguration`  
+- RopeConfiguration: 
+First download the rope configuration file using [this link](https://drive.google.com/file/d/1f3FK_7gwnJLVm3VaSacvYS7o-19-XPrr/view?usp=sharing) then run `python examples/random_env.py --env_name RopeConfiguration`  
 
 Please refer to `softgym/registered_env.py` for the default parameters and source code files for each of these environments.
 
