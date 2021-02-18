@@ -47,7 +47,7 @@ For SoftGym-Hard:
 - RopeConfiguration: 
 First download the rope configuration file using [this link](https://drive.google.com/file/d/1f3FK_7gwnJLVm3VaSacvYS7o-19-XPrr/view?usp=sharing) then run `python examples/random_env.py --env_name RopeConfiguration`  
 
-Please refer to `softgym/registered_env.py` for the default parameters and source code files for each of these environments.
+Turn on the `--headless` option if you are running on a cluster machine that does not have a display environment. Otherwise you will get segmentation issues. Please refer to `softgym/registered_env.py` for the default parameters and source code files for each of these environments.
 
 ## Cite
 If you find this codebase useful in your research, please consider citing:
