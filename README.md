@@ -63,3 +63,4 @@ If you find this codebase useful in your research, please consider citing:
 ## References
 - NVIDIA FleX - 1.2.0: https://github.com/NVIDIAGameWorks/FleX
 - Our python interface builds on top of PyFleX: https://github.com/YunzhuLi/PyFleX
+- If you run into problems setting up SoftGym, Daniel Seita wrote a nice blog that may help you get started on SoftGym: https://danieltakeshi.github.io/2021/02/20/softgym/
