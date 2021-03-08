@@ -17,7 +17,7 @@ OBS = namedtuple('OBS', ['pixels', 'location'])
 INFO = namedtuple('INFO', ['performance', 'normalized_performance', 'total_steps'])
 
 
-class QpgWrapper(object):
+class MVPWrapper(object):
     def __init__(self, wrapped_env, act_null_value=0, force_float32=True):
         self._wrapped_env = wrapped_env
         action_dim = 3
