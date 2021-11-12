@@ -42,7 +42,7 @@ nvidia-docker run \
   -e QT_X11_NO_MITSHM=1 \
   -it xingyu/softgym:latest bash
 ```
-This solution follows [this tutorial]( https://medium.com/@benjamin.botto/opengl-and-cuda-applications-in-docker-af0eece000f1) for running GL and CUDA application inside the docker. 
+This solution follows [this tutorial]( https://medium.com/@benjamin.botto/opengl-and-cuda-applications-in-docker-af0eece000f1) for running GL and CUDA application inside the docker. It is important to mount the conda path inside the docker container to be exactly the same as in your home machine.
 
 - Now you are in the Docker environment. Go to the softgym directory and compile PyFlex
 
