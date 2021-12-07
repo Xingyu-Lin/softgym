@@ -135,3 +135,23 @@ CUDA_CALLABLE inline Quat Normalize(const Quat& q)
 	else
 		return Quat();
 }
+
+
+CUDA_CALLABLE inline Quat rpy2quat(float roll, float pitch, float yaw)
+{
+	Quat q;
+	// Abbreviations for the various angular functions
+	float cy = cos(yaw * 0.5f);
+	float sy = sin(yaw * 0.5f);
+	float cr = cos(roll * 0.5f);
+	float sr = sin(roll * 0.5f);
+	float cp = cos(pitch * 0.5f);
+	float sp = sin(pitch * 0.5f);
+
+	q.w = (float)(cy * cr * cp + sy * sr * sp);
+	q.x = (float)(cy * sr * cp - sy * cr * sp);
+	q.y = (float)(cy * cr * sp + sy * sr * cp);
+	q.z = (float)(sy * cr * cp - cy * sr * sp);
+
+	return q;
+}

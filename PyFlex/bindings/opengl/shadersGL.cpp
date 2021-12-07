@@ -244,6 +244,8 @@ static float g_spotMin = 0.5f;
 static float g_spotMax = 1.0f;
 float g_shadowBias = 0.05f;
 
+DepthRenderProfile currentDepthProfile;
+
 #ifdef __linux__
 EGLDisplay* g_eglDisplay;
 EGLConfig*  g_eglConfig;
@@ -526,9 +528,76 @@ RenderTexture* CreateRenderTexture(const char* filename)
 	}
 }
 
-RenderTexture* CreateRenderTarget(int width, int height, bool depth)
+RenderTexture* CreateRenderTargetOGL(int width, int height, bool depth, RenderTexture** res)
 {
-	return NULL;
+	*res = new RenderTexture();
+	// color rgba16f
+	glVerify(glGenTextures(1, &(*res)->colorTex));
+	glVerify(glBindTexture(GL_TEXTURE_2D, (*res)->colorTex));
+
+	glVerify(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)); 
+	glVerify(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)); 	 
+    glVerify(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    glVerify(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	glVerify(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL));
+
+	glVerify(glGenFramebuffers(1, &(*res)->colorFrameBuffer));
+	glVerify(glBindFramebuffer(GL_FRAMEBUFFER, (*res)->colorFrameBuffer));
+	glVerify(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (*res)->colorTex, 0));
+
+	// depth buffer
+	glVerify(glGenRenderbuffers(1, &(*res)->depthFrameBuffer));
+	glVerify(glBindRenderbuffer(GL_RENDERBUFFER, (*res)->depthFrameBuffer));
+	glVerify(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height));
+	glVerify(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, (*res)->depthFrameBuffer));
+
+	// check success
+	glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+	// reset read/write buffers
+	glVerify(glDrawBuffer(GL_COLOR_ATTACHMENT0));
+	glVerify(glReadBuffer(GL_COLOR_ATTACHMENT0));
+
+	// reset to default buffer
+	glVerify(glBindFramebuffer(GL_FRAMEBUFFER, g_msaaFbo));
+
+	return (*res);
+}
+
+void SetRenderTarget(RenderTexture* target, int x, int y, int width, int height)
+{
+	if (target)
+	{
+		glVerify(glBindFramebuffer(GL_FRAMEBUFFER, target->colorFrameBuffer));
+		glVerify(glViewport(x, y, width, height));
+
+		glVerify(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+	}
+	else
+	{
+		glVerify(glDrawBuffer(GL_COLOR_ATTACHMENT0));
+		glVerify(glReadBuffer(GL_COLOR_ATTACHMENT0));
+
+		glVerify(glBindFramebuffer(GL_FRAMEBUFFER, g_msaaFbo));
+		glVerify(glViewport(0, 0, g_screenWidth, g_screenHeight));
+	}
+}
+
+void ReadRenderTarget(const RenderTexture* target, float* rgbd, int x, int y, int width, int height)
+{
+	if (target)
+	{
+		// bind target
+		glVerify(glBindFramebuffer(GL_FRAMEBUFFER, target->colorFrameBuffer));
+		glVerify(glReadBuffer(GL_COLOR_ATTACHMENT0));
+
+		// read back, todo: slow, use PBO?
+		glVerify(glReadPixels(x, y, width, height, GL_RGBA, GL_FLOAT, rgbd));
+
+		// reset read buffer to back buffer
+		glVerify(glBindFramebuffer(GL_FRAMEBUFFER, g_msaaFbo));
+		glVerify(glViewport(0, 0, g_screenWidth, g_screenHeight));
+	}
 }
 
 void DestroyRenderTexture(RenderTexture* t)
@@ -553,6 +622,10 @@ void DestroyRenderTexture(RenderTexture* t)
 	}
 }
 
+void SetDepthRenderProfile(DepthRenderProfile profile) {
+	currentDepthProfile.minRange = profile.minRange;
+	currentDepthProfile.maxRange = profile.maxRange;
+}
 
 // fixes some banding artifacts with repeated blending during thickness and diffuse rendering
 #define USE_HDR_DIFFUSE_BLEND 0
@@ -3052,6 +3125,31 @@ void DemoContextOGL::presentFrame(bool fullsync)
 void DemoContextOGL::readFrame(int* buffer, int width, int height)
 {
 	OGL_Renderer::ReadFrame(buffer, width, height);
+}
+
+void DemoContextOGL::createRenderTarget(int width, int height, bool depth, RenderTexture** res)
+{
+	OGL_Renderer::CreateRenderTargetOGL(width, height, depth, res);
+}
+
+void DemoContextOGL::destroyRenderTexture(RenderTexture* tex) 
+{
+	OGL_Renderer::DestroyRenderTexture(tex);
+}
+
+void DemoContextOGL::setRenderTarget(RenderTexture* target, int x, int y, int width, int height)
+{
+	return OGL_Renderer::SetRenderTarget(target, x, y, width, height);
+}
+
+void DemoContextOGL::readRenderTarget(const RenderTexture* target, float* rgbd, int x, int y, int width, int height)
+{
+	return OGL_Renderer::ReadRenderTarget(target, rgbd, x, y, width, height);
+}
+
+void DemoContextOGL::setDepthRenderProfile(DepthRenderProfile profile)
+{
+	return OGL_Renderer::SetDepthRenderProfile(profile);
 }
 
 void DemoContextOGL::getViewRay(int x, int y, Vec3& origin, Vec3& dir)

@@ -16,6 +16,11 @@ struct DemoContextOGL : public DemoContext
 public:
 
 	// DemoContext Impl
+	virtual void setRenderTarget(RenderTexture* target, int x, int y, int width, int height);
+	virtual void readRenderTarget(const RenderTexture* target, float* rgba, int x, int y, int width, int height);
+	virtual void createRenderTarget(int width, int height, bool depth, RenderTexture** res);
+	virtual void destroyRenderTexture(RenderTexture* tex);
+	virtual void setDepthRenderProfile(DepthRenderProfile profile);
 	virtual bool initialize(const RenderInitOptions& options);
 	virtual void startFrame(Vec4 colorIn);
 	virtual void endFrame();

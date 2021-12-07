@@ -26,6 +26,11 @@ class DemoContext
 	virtual void presentFrame(bool fullsync) = 0;
 	
 	virtual void readFrame(int* backBuffer, int width, int height) {}
+	virtual void createRenderTarget(int width, int height, bool depth, RenderTexture** res) = 0;
+	virtual void destroyRenderTexture(RenderTexture* tex) = 0;
+	virtual void setRenderTarget(RenderTexture* target, int x, int y, int width, int height) = 0;
+	virtual void readRenderTarget(const RenderTexture* target, float* rgba, int x, int y, int width, int height) = 0;
+	virtual void setDepthRenderProfile(DepthRenderProfile profile) = 0;
 
 	virtual void getViewRay(int x, int y, Vec3& origin, Vec3& dir) = 0;
 	virtual void setView(Matrix44 view, Matrix44 projection) = 0;

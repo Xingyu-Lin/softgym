@@ -11,6 +11,16 @@ char *make_path(char *full_path, std::string path) {
     return full_path;
 }
 
+py::array_t<float> pyflex_render_sensor(int sensor_id) {
+    RenderSensor s = g_renderSensors[sensor_id];
+    auto rendered_img = py::array_t<float>((int) s.width * s.height * 4);
+    auto rendered_img_ptr = (float *) rendered_img.request().ptr;
+    float* rgbd = ReadSensor(sensor_id);
+    for (int i=0; i< s.width * s.height *4; ++i)
+        rendered_img_ptr[i] = rgbd[i];
+    return rendered_img;
+}
+
 void pyflex_init(bool headless=false, bool render=true, int camera_width=720, int camera_height=720) {
     g_screenWidth = camera_width;
     g_screenHeight = camera_height;
@@ -1111,6 +1121,7 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("path") = nullptr    
         );
 
+    m.def("render_sensor", &pyflex_render_sensor, py::arg("sensor_id")= 0);
     m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
     m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
 

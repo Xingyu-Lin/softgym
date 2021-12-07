@@ -68,6 +68,11 @@ void PresentFrame(bool fullSync) { s_context->presentFrame(fullSync); }
 void FlushGraphicsAndWait() { s_context->flushGraphicsAndWait(); }
 
 void ReadFrame(int* backbuffer, int width, int height) { s_context->readFrame(backbuffer, width, height); }
+void SetDepthRenderProfile(DepthRenderProfile profile) { s_context->setDepthRenderProfile(profile); }
+void SetRenderTarget(RenderTexture* target, int x, int y, int width, int height) { s_context->setRenderTarget(target, x, y, width, height); }
+void ReadRenderTarget(const RenderTexture* target, float* rgba, int x, int y, int width, int height) { s_context->readRenderTarget(target, rgba, x, y, width, height); }
+void CreateRenderTarget(int width, int height, bool depth, RenderTexture** res) { s_context->createRenderTarget(width, height, depth, res); }
+void DestroyRenderTexture(RenderTexture* tex) { s_context->destroyRenderTexture(tex); }
 
 void GetViewRay(int x, int y, Vec3& origin, Vec3& dir) { return s_context->getViewRay(x, y, origin, dir); }
 
