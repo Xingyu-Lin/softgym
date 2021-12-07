@@ -3,7 +3,7 @@
 
 ## Latest updates
 
-- [12/06/2021] Support depth rendering. Example: `rgbd = pyflex.render_sensor().reshape(720, 720, 4)[::-1, :, :4]`
+- [12/06/2021] Support depth rendering. Example: `rgbd = pyflex.render_sensor().reshape(720, 720, 4)[::-1, :, :4]` run `python examples/random_env.py --test_depth 1` to visualize the depth image.
 
 ## Using Docker
 If you are using Ubuntu 16.04 LTS and CUDA 9.2, you can follow the steps in the next section on this page for compilation. For other versions of Ubuntu or CUDA, we provide the pre-built Docker image and Dockerfile for running SoftGym. Please refer to our [Docker](docker/docker.md) page.
