@@ -8,7 +8,7 @@ from copy import deepcopy
 
 
 class ClothEnv(FlexEnv):
-    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.05, particle_radius=0.00625, **kwargs):
+    def __init__(self, observation_mode, action_mode, num_picker=2, render_mode='particle', picker_radius=0.05, picker_threshold=0.005, particle_radius=0.00625, **kwargs):
         self.render_mode = render_mode
         self.action_mode = action_mode
         self.cloth_particle_radius = particle_radius
@@ -19,12 +19,12 @@ class ClothEnv(FlexEnv):
         self.observation_mode = observation_mode
 
         if action_mode == 'picker':
-            self.action_tool = Picker(num_picker, picker_radius=picker_radius, particle_radius=particle_radius,
+            self.action_tool = Picker(num_picker, picker_radius=picker_radius, particle_radius=particle_radius, picker_threshold=picker_threshold,
                                       picker_low=(-0.4, 0., -0.4), picker_high=(1.0, 0.5, 0.4))
             self.action_space = self.action_tool.action_space
             self.picker_radius = picker_radius
         elif action_mode == 'pickerpickplace':
-            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self,
+            self.action_tool = PickerPickPlace(num_picker=num_picker, particle_radius=particle_radius, env=self, picker_threshold=picker_threshold,
                                                picker_low=(-0.5, 0., -0.5), picker_high=(0.5, 0.3, 0.5))
             self.action_space = self.action_tool.action_space
             assert self.action_repeat == 1
@@ -33,7 +33,7 @@ class ClothEnv(FlexEnv):
             self.action_space = self.action_tool.action_space
         elif action_mode == 'picker_qpg':
             cam_pos, cam_angle = self.get_camera_params()
-            self.action_tool = PickerQPG((self.camera_height, self.camera_height), cam_pos, cam_angle,
+            self.action_tool = PickerQPG((self.camera_height, self.camera_height), cam_pos, cam_angle, picker_threshold=picker_threshold,
                                          num_picker=num_picker, particle_radius=particle_radius, env=self,
                                          picker_low=(-0.3, 0., -0.3), picker_high=(0.3, 0.3, 0.3)
                                          )
