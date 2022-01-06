@@ -333,10 +333,8 @@ void EndFrame()
 		glVerify(glBlitFramebuffer(0, 0, g_screenWidth, g_screenHeight, 0, 0, g_screenWidth, g_screenHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR));
 	}
 
-		// render help to back buffer
+	// render help to back buffer
 	glVerify(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-	glVerify(glClear(GL_DEPTH_BUFFER_BIT));
-
 }
 
 void SetView(Matrix44 view, Matrix44 proj)

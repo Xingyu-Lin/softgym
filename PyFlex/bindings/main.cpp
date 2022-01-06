@@ -118,7 +118,7 @@ using namespace std;
 
 int g_screenWidth = 720;
 int g_screenHeight = 720;
-int g_msaaSamples = 8;
+int g_msaaSamples = 0;
 
 int g_numSubsteps;
 

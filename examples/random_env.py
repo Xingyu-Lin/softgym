@@ -6,13 +6,22 @@ from softgym.registered_env import env_arg_dict, SOFTGYM_ENVS
 from softgym.utils.normalized_env import normalize
 from softgym.utils.visualization import save_numpy_as_gif
 import pyflex
-import cv2
+from matplotlib import pyplot as plt
 
 def show_depth():
-    img = pyflex.render_sensor().reshape(720, 720, 4)[::-1, :, :4]
-    cv2.imshow("rgb", img[:, :, :3])
-    cv2.imshow("depth", img[:, :, 3])
-    cv2.waitKey()
+    # render rgb and depth
+    img, depth = pyflex.render()
+    img = img.reshape((720, 720, 4))[::-1, :, :3]
+    depth = depth.reshape((720, 720))[::-1]
+    # get foreground mask
+    mask = pyflex.render_sensor().reshape(720, 720, 4)[::-1, :, :4]
+    mask = mask[:, :, 3]
+    depth[mask == 0] = 0
+    # show rgb and depth(masked)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    axes[0].imshow(img)
+    axes[1].imshow(depth)
+    plt.show()
 
 
 def main():

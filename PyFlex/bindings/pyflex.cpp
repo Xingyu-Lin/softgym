@@ -1,4 +1,5 @@
 #include <bindings/main.cpp>
+#include "opengl/shader.h"
 
 
 char rope_path[100];
@@ -261,19 +262,10 @@ void pyflex_step(py::array_t<float> update_params, int capture, char *path, int 
     int temp_render = g_render;
     g_render = render;
 
-    if (capture == 1) {
-        g_capture = true;
-        g_ffmpeg = fopen(path, "wb");
-    }
 
     UpdateFrame(update_params);
     SDL_EventFunc();
 
-    if (capture == 1) {
-        g_capture = false;
-        fclose(g_ffmpeg);
-        g_ffmpeg = nullptr;
-    }
     g_render = temp_render;
 }
 
@@ -876,7 +868,7 @@ void pyflex_set_camera_params(py::array_t<float> update_camera_param) {
         g_screenHeight = camera_param_ptr[7];}
 }
 
-py::array_t<int> pyflex_render(int capture, char *path) {
+std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render(int capture, char *path) {
     // TODO: Turn off the GUI menu for rendering
     static double lastTime;
 
@@ -885,11 +877,6 @@ py::array_t<int> pyflex_render(int capture, char *path) {
 
     g_realdt = float(frameBeginTime - lastTime);
     lastTime = frameBeginTime;
-
-    if (capture == 1) {
-        g_capture = true;
-        g_ffmpeg = fopen(path, "wb");
-    }
 
     //-------------------------------------------------------------------
     // Scene Update
@@ -988,27 +975,24 @@ py::array_t<int> pyflex_render(int capture, char *path) {
         NvFlexGetDiffuseParticles(g_solver, nullptr, nullptr, g_buffers->diffuseCount.buffer);
     }
 
-    // Original function for rendering and saving to disk
-    if (g_capture) {
-        TgaImage img;
-        img.m_width = g_screenWidth;
-        img.m_height = g_screenHeight;
-        img.m_data = new uint32_t[g_screenWidth*g_screenHeight];
-
-        ReadFrame((int*)img.m_data, g_screenWidth, g_screenHeight);
-        TgaSave(g_ffmpeg, img, false);
-
-        // fwrite(img.m_data, sizeof(uint32_t)*g_screenWidth*g_screenHeight, 1, g_ffmpeg);
-
-        delete[] img.m_data;
-    }
-
     // auto rendered_img = py::array_t<uint32_t>((uint32_t) g_screenWidth*g_screenHeight);
     auto rendered_img = py::array_t<uint8_t>((int) g_screenWidth * g_screenHeight * 4);
     auto rendered_img_ptr = (uint8_t *) rendered_img.request().ptr;
 
     int rendered_img_int32_ptr[g_screenWidth * g_screenHeight];
     ReadFrame(rendered_img_int32_ptr, g_screenWidth, g_screenHeight);
+    /*
+    * This depth rendering functionality in PyFLex was provided by 
+    * Zhenjia Xu
+    * email: xuzhenjia [at] cs (dot) columbia (dot) edu
+    * website: https://www.zhenjiaxu.com/
+    */
+    auto rendered_depth = py::array_t<float>((float)g_screenWidth * g_screenHeight);
+    auto rendered_depth_ptr = (float *)rendered_depth.request().ptr;
+
+    float rendered_depth_float_ptr[g_screenWidth * g_screenHeight];
+    glVerify(glReadBuffer(GL_BACK));
+    glReadPixels(0, 0, g_screenWidth, g_screenHeight, GL_DEPTH_COMPONENT, GL_FLOAT, rendered_depth_float_ptr);
 
     for (int i = 0; i < g_screenWidth * g_screenHeight; ++i) {
         int32_abgr_to_int8_rgba((uint32_t) rendered_img_int32_ptr[i],
@@ -1016,6 +1000,7 @@ py::array_t<int> pyflex_render(int capture, char *path) {
                                 rendered_img_ptr[4 * i + 1],
                                 rendered_img_ptr[4 * i + 2],
                                 rendered_img_ptr[4 * i + 3]);
+        rendered_depth_ptr[i] = 2 * g_camFar * g_camNear / (g_camFar + g_camNear - (2 * rendered_depth_float_ptr[i] - 1) * (g_camFar - g_camNear));
     }
     // Should be able to return the image here, instead of at the end
 
@@ -1095,13 +1080,7 @@ py::array_t<int> pyflex_render(int capture, char *path) {
 
     SDL_EventFunc();
 
-    if (capture == 1) {
-        g_capture = false;
-        fclose(g_ffmpeg);
-        g_ffmpeg = nullptr;
-    }
-
-    return rendered_img;
+    return std::make_tuple(rendered_img, rendered_depth);
 }
 
 
