@@ -157,6 +157,7 @@ int g_maxNeighborsPerParticle;
 int g_numExtraParticles;
 int g_numExtraMultiplier = 1;
 int g_maxContactsPerParticle;
+int g_clothOnly = 0;
 
 // mesh used for deformable object rendering
 Mesh *g_mesh;
@@ -445,87 +446,6 @@ void DestroyBuffers(SimBuffers *buffers) {
     delete buffers;
 }
 
-struct RenderSensor
-{
-	int parent;			// index of the parent body (-1 if free)
-	Transform origin;	// local transform of the camera to parent body
-
-	float fov;			// vertical field of view (in radians)
-
-	int width;
-	int height;
-
-	float* rgbd;		// rgba32 pixel data
-	RenderTexture* target;
-
-	int fluidRendererId = -1;
-
-	DepthRenderProfile depthProfile;
-};
-
-DepthRenderProfile defaultDepthProfile = {
-	0.f, // minRange
-	5.f, // maxRange
-};
-
-std::vector<RenderSensor> g_renderSensors;
-int g_visSensorId = 0; // id of the one sensor to be visualized
-
-					   // uses the convention from URDF that z-forward, x-right and y-down (opposite to OpenGL which has -z forward)
-size_t AddSensor(int width, int height, int parent, Transform origin, float fov, bool renderFluids = false, DepthRenderProfile depthProfile = defaultDepthProfile)
-{
-    // NOTE yufei: fov is only used for drawing the fluids. For others the default fov value pi/4 is used, and this fov parameters seems useless.
-	RenderSensor s;
-	s.parent = parent;
-	s.width = width;
-	s.height = height;
-	s.origin = origin;
-	s.fov = fov;
-
-	// allocate images
-	s.rgbd = new float[width*height * 4];
-
-	s.depthProfile = depthProfile;
-	CreateRenderTarget(width, height, true, &s.target);
-
-	// adding fluid renderers
-	// if (renderFluids) 
-	// {
-	// 	uint32_t numParticles = g_buffers->positions.size();
-	// 	uint32_t maxParticles = numParticles + g_numExtraParticles * g_numExtraMultiplier;
-
-	// 	FluidRenderer* fluidRenderer = CreateFluidRenderer(width, height);
-	// 	s.fluidRendererId = (int)g_sensorFluidRenderers.size();
-	// 	g_sensorFluidRenderers.push_back(fluidRenderer);
-	// }
-
-	g_renderSensors.push_back(s);
-
-	// returns id of added sensor
-	return g_renderSensors.size() - 1;
-}
-
-float* ReadSensor(int sensorId)
-{
-	// TODO(jaliang): Need different modes
-	return g_renderSensors[sensorId].rgbd;
-}
-
-void SetSensorOrigin(int sensorId, Transform origin)
-{
-    g_renderSensors[sensorId].origin = origin;
-}
-
-Transform GetSensorOrigin(int sensorId)
-{
-    return g_renderSensors[sensorId].origin;
-}
-
-void SetVisSensor(int sensorId)
-{
-	g_visSensorId = sensorId;
-}
-
 Vec3 g_camPos(6.0f, 8.0f, 18.0f);
 Vec3 g_camAngle(0.0f, -DegToRad(20.0f), 0.0f);
 Vec3 g_camVel(0.0f);
@@ -641,7 +561,6 @@ void DrawShapes();
 class Scene;
 
 vector<Scene *> g_scenes;
-void DrawSensors(const int numParticles, const int numDiffuse, float radius, Matrix44 lightTransform);
 
 struct Emitter {
     Emitter() : mSpeed(0.0f), mEnabled(false), mLeftOver(0.0f), mWidth(8) {}
@@ -671,15 +590,6 @@ inline float sqr(float x) { return x * x; }
 
 #include <iostream>
 using namespace std;
-
-inline Matrix44 GetCameraRotationMatrix(bool getInversed = false)
-{
-	const float multiplier = (getInversed ? -1.f : 1.f);
-	const float camAngleX = multiplier * g_camAngle.x;
-	const float camAngleY = multiplier * g_camAngle.y;
-
-	return RotationMatrix(camAngleX, Vec3(0.0f, 1.0f, 0.0f)) * RotationMatrix(camAngleY, Vec3(cosf(camAngleX), 0.0f, sinf(camAngleX)));
-}
 
 void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, int thread_idx = 0) {
     RandInit();
@@ -715,22 +625,6 @@ void Init(int scene, py::array_t<float> scene_params, bool centerCamera = true, 
 
         NvFlexDestroySolver(g_solver);
         g_solver = nullptr;
-    }
-
-    if (g_render == true)
-	{
-        // destroy old sensors
-        for (int i = 0; (unsigned int)i < g_renderSensors.size(); i++)
-        {
-            RenderSensor sensor = g_renderSensors[i];
-            delete[] sensor.rgbd;
-            DestroyRenderTexture(sensor.target);
-
-            // if (sensor.fluidRendererId != -1)
-            //     DestroyFluidRenderer(g_sensorFluidRenderers[sensor.fluidRendererId]);
-        }
-
-        g_renderSensors.clear();
     }
 
     // alloc buffers
@@ -1495,12 +1389,12 @@ void RenderScene() {
     // give scene a chance to do custom drawing
     g_scenes[g_scene]->Draw(1);
 
-    if (g_drawMesh)
+    if (g_drawMesh && !g_clothOnly)
         DrawMesh(g_mesh, g_meshColor);
-    
-    // printf("pass DrawMesh\n");
 
-    DrawShapes();
+    // printf("pass DrawMesh\n");
+    if (!g_clothOnly)
+        DrawShapes();
     // printf("pass DrawShapes\n");
 
     if (g_drawCloth && g_buffers->triangles.size()) {
@@ -1509,7 +1403,7 @@ void RenderScene() {
                   g_expandCloth);
     }
 
-    if (g_drawRopes) {
+    if (g_drawRopes && !g_clothOnly) {
         for (size_t i = 0; i < g_ropes.size(); ++i)
             DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
                      radius * g_ropeScale, i);
@@ -1553,25 +1447,32 @@ void RenderScene() {
     int passes = g_increaseGfxLoadForAsyncComputeTesting ? 50 : 1;
 
     for (int i = 0; i != passes; i++) {
-        DrawPlanes((Vec4 *) g_params.planes, g_params.numPlanes, g_drawPlaneBias);
+        if (g_clothOnly){
+            if (g_drawCloth && g_buffers->triangles.size())
+                            DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0],
+                                      g_buffers->uvs.size() ? &g_buffers->uvs[0].x : nullptr, &g_buffers->triangles[0],
+                                      g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
+        } else
+        {
+            DrawPlanes((Vec4 *) g_params.planes, g_params.numPlanes, g_drawPlaneBias);
 
-        if (g_drawMesh)
-            DrawMesh(g_mesh, g_meshColor);
+            if (g_drawMesh)
+                DrawMesh(g_mesh, g_meshColor);
 
 
-        DrawShapes();
+            DrawShapes();
 
-        if (g_drawCloth && g_buffers->triangles.size())
-            DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0],
-                      g_buffers->uvs.size() ? &g_buffers->uvs[0].x : nullptr, &g_buffers->triangles[0],
-                      g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
+            if (g_drawCloth && g_buffers->triangles.size())
+                DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0],
+                          g_buffers->uvs.size() ? &g_buffers->uvs[0].x : nullptr, &g_buffers->triangles[0],
+                          g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
 
-        if (g_drawRopes) {
-            for (size_t i = 0; i < g_ropes.size(); ++i)
-                DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
-                         g_params.radius * 0.5f * g_ropeScale, i);
+            if (g_drawRopes) {
+                for (size_t i = 0; i < g_ropes.size(); ++i)
+                    DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
+                             g_params.radius * 0.5f * g_ropeScale, i);
+            }
         }
-
         // give scene a chance to do custom drawing
         g_scenes[g_scene]->Draw(0);
     }
@@ -1606,7 +1507,7 @@ void RenderScene() {
                           g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow,
                           true);
         // printf("pass RenderDiffuse\n");
-        
+
     } else {
         // draw all particles as spheres
         if (g_drawPoints) {
@@ -1619,168 +1520,8 @@ void RenderScene() {
         // printf("pass DrawPoints\n");
     }
 
-    //------------------------------
-	// sensors pass
-	DrawSensors(numParticles, numDiffuse, radius, lightTransform);
-	for (auto& sensor : g_renderSensors)
-	{
-		// read back sensor data from previous frame to avoid stall, todo: multi-view / tiled sensor rendering / etc
-		// XY: Move this such that the data is the current frame
-		ReadRenderTarget(sensor.target, sensor.rgbd, 0, 0, sensor.width, sensor.height);
-	}
-
-	// need to reset the view for picking
-    SetView(view, proj);
-
     GraphicsTimerEnd();
     // printf("pass GraphicsTimerEnd\n");
-}
-
-void DrawSensors(const int numParticles, const int numDiffuse, float radius, Matrix44 lightTransform)
-{
-	for (int i = 0; i < g_renderSensors.size(); i++)
-	{
-		RenderSensor sensor = g_renderSensors[i];
-
-		// Depth settings
-		SetDepthRenderProfile(sensor.depthProfile);
-
-		BindSolidShader(g_lightPos, g_lightTarget, lightTransform, g_shadowMap, 0.f, Vec4(g_clearColor, g_fogDistance));
-
-		SetCullMode(true);
-		SetFillMode(false);
-
-		Transform cameraToWorld;
-
-		// if (sensor.parent)
-		// {
-		// 	Transform bodyToWorld;
-		// 	NvFlexGetRigidPose(&g_buffers->rigidBodies[sensor.parent], (NvFlexRigidPose*)&bodyToWorld);
-
-		// 	cameraToWorld = bodyToWorld * sensor.origin;
-		// }
-		// else
-		{
-			cameraToWorld = sensor.origin;
-		}
-
-        Matrix44 conversion, view, proj;
-        if (false) // For now, do not use the
-        {
-            // convert from URDF (positive z-forward) to OpenGL (negative z-forward)
-            conversion = RotationMatrix(kPi, Vec3(1.0f, 0.0f, 0.0f));
-
-            view = AffineInverse(TransformMatrix(cameraToWorld) * conversion);
-            proj = ProjectionMatrix(RadToDeg(sensor.fov), 1.0f, g_camNear, g_camFar);
-        }
-        else
-        {
-            float fov = kPi / 4.0f;
-            float aspect = float(sensor.width) / sensor.height;
-
-            view = GetCameraRotationMatrix(true) * TranslationMatrix(-Point3(g_camPos));
-            proj = ProjectionMatrix(RadToDeg(fov), aspect, g_camNear, g_camFar);
-        }
-
-		SetRenderTarget(sensor.target, 0, 0, sensor.width, sensor.height);	
-		SetView(view, proj);	
-
-        // DrawRigidShapes();
-        // DrawStaticShapes();
-        DrawShapes();
-
-        // if (!g_sensor_segment)
-        // {
-        //     // draw all rigid attachments, todo: call into the main scene render or just render what we need selectively?
-        //     DrawRigidAttachments();
-        //     DrawPlanes((Vec4*)g_params.planes, g_params.numPlanes, g_drawPlaneBias);
-        // }
-
-
-		if (g_drawMesh)
-		{
-			DrawMesh(g_mesh, g_meshColor);
-		}
-
-		if (g_drawCloth && g_buffers->triangles.size())
-		{
-			DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0], g_buffers->uvs.size() ? &g_buffers->uvs[0].x : NULL, 
-					&g_buffers->triangles[0], g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, 
-					g_expandCloth);
-		}
-
-		if (g_drawRopes)
-		{
-			for (size_t i = 0; i < g_ropes.size(); ++i)
-			{
-				DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(), 
-					g_params.radius * 0.5f * g_ropeScale, i);
-			}
-		}
-
-		// give scene a chance to do custom drawing
-		// g_scene->Draw(0);
-
-		// draw fluids
-        // NOTE yf: do not use fluid render now
-		// if (sensor.fluidRendererId != -1) {
-		// if (false) {
-		// 	float fov = sensor.fov;
-		// 	float aspect = float(sensor.width) / sensor.height;
-		// 	FluidRenderer* fluidRenderer = g_sensorFluidRenderers[sensor.fluidRendererId];
-
-		// 	// TODO(jaliang): this might not be working
-		// 	if (g_drawDiffuse)
-		// 	{
-		// 		RenderDiffuse(fluidRenderer, g_diffuseRenderBuffers, numDiffuse, radius * g_diffuseScale, float(sensor.width), aspect, fov,
-		// 			g_diffuseColor, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter,
-		// 			g_diffuseOutscatter, g_diffuseShadow, false);
-		// 	}
-
-		// 	if (g_drawEllipsoids)
-		// 	{
-		// 		// draw solid particles separately
-		// 		if (g_numSolidParticles && g_drawPoints)
-		// 		{
-		// 			DrawPoints(g_fluidRenderBuffers, g_numSolidParticles, 0, radius, float(sensor.width), aspect, fov,
-		// 				g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
-		// 		}
-
-		// 		// render fluid surface
-		// 		RenderEllipsoids(fluidRenderer, g_fluidRenderBuffers, numParticles - g_numSolidParticles, g_numSolidParticles, radius,
-		// 			float(sensor.width), aspect, fov, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_fluidColor,
-		// 			g_blur, g_ior, g_drawOpaque, sensor.target);
-
-		// 		// second pass of diffuse particles for particles in front of fluid surface
-		// 		if (g_drawDiffuse)
-		// 		{
-		// 			RenderDiffuse(fluidRenderer, g_diffuseRenderBuffers, numDiffuse, radius * g_diffuseScale, float(sensor.width), aspect, fov,
-		// 				g_diffuseColor, g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter,
-		// 				g_diffuseOutscatter, g_diffuseShadow, true);
-		// 		}
-		// 	}
-		// 	else
-		// 	{
-		// 		// draw all particles as spheres
-		// 		if (g_drawPoints)
-		// 		{
-		// 			int offset = g_drawMesh ? g_numSolidParticles : 0;
-
-		// 			if (g_buffers->activeIndices.size())
-		// 			{
-		// 				DrawPoints(g_fluidRenderBuffers, numParticles - offset, offset, radius, float(sensor.width), aspect, fov,
-		// 					g_lightPos, g_lightTarget, lightTransform, g_shadowMap, g_drawDensity);
-		// 			}
-		// 		}
-		// 	}
-		// }
-
-		SetDepthRenderProfile(defaultDepthProfile);
-
-		UnbindSolidShader();
-	}
-
-	SetRenderTarget(0, 0, 0, 0, 0);
 }
 
 void RenderDebug() {

@@ -663,12 +663,6 @@ public:
 
 	Transform() {};
 	Transform(const Point3& p, const Rotation& r) : position(p), rotation(r) {}
-	CUDA_CALLABLE Transform(const Vec3& v, const Quat& q=Quat()) : p(v), q(q) {}
-
-	Vec3 p;
-    Quat q;
-
-
 
 	Mat44 ToMatrix() const
 	{
@@ -716,11 +710,6 @@ public:
 	Point3 position;
 	Rotation rotation;
 };
-
-inline Mat44 TransformMatrix(const Transform& t)
-{
-	return TranslationMatrix(Point3(t.p))*RotationMatrix(t.q);
-}
 
 // aligns the z axis along the vector
 inline Rotation AlignToVector(const Vec3& vector)

@@ -1,7 +1,6 @@
 #include <bindings/main.cpp>
 #include "opengl/shader.h"
 
-
 char rope_path[100];
 char box_high_path[100];
 char sphere_path[100];
@@ -10,16 +9,6 @@ char *make_path(char *full_path, std::string path) {
     strcpy(full_path, getenv("PYFLEXROOT"));
     strcat(full_path, path.c_str());
     return full_path;
-}
-
-py::array_t<float> pyflex_render_sensor(int sensor_id) {
-    RenderSensor s = g_renderSensors[sensor_id];
-    auto rendered_img = py::array_t<float>((int) s.width * s.height * 4);
-    auto rendered_img_ptr = (float *) rendered_img.request().ptr;
-    float* rgbd = ReadSensor(sensor_id);
-    for (int i=0; i< s.width * s.height *4; ++i)
-        rendered_img_ptr[i] = rgbd[i];
-    return rendered_img;
 }
 
 void pyflex_init(bool headless=false, bool render=true, int camera_width=720, int camera_height=720) {
@@ -130,7 +119,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
         //     SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
         ReshapeWindow(g_screenWidth, g_screenHeight);
-    } 
+    }
     else if (g_render == true)
 	{
 		RenderInitOptions options;
@@ -262,10 +251,19 @@ void pyflex_step(py::array_t<float> update_params, int capture, char *path, int 
     int temp_render = g_render;
     g_render = render;
 
+    if (capture == 1) {
+        g_capture = true;
+        g_ffmpeg = fopen(path, "wb");
+    }
 
     UpdateFrame(update_params);
     SDL_EventFunc();
 
+    if (capture == 1) {
+        g_capture = false;
+        fclose(g_ffmpeg);
+        g_ffmpeg = nullptr;
+    }
     g_render = temp_render;
 }
 
@@ -477,7 +475,7 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
 
     auto bufl = lower.request();
     auto lower_ptr = (float *) bufl.ptr;
-   
+
     MapBuffers(g_buffers);
 
     // if (g_buffers->rigidIndices.empty())
@@ -525,7 +523,7 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
 
     UnmapBuffers(g_buffers);
 
-    // reset pyflex solvers 
+    // reset pyflex solvers
     // NvFlexSetParams(g_solver, &g_params);
     // NvFlexSetParticles(g_solver, g_buffers->positions.buffer, nullptr);
     // NvFlexSetVelocities(g_solver, g_buffers->velocities.buffer, nullptr);
@@ -536,10 +534,10 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
     NvFlexSetActive(g_solver, g_buffers->activeIndices.buffer, nullptr);
     // printf("ok till here\n");
     NvFlexSetActiveCount(g_solver, numParticles);
-    // NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer, 
-    //     g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer, 
-    //     g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer, 
-    //     g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer, 
+    // NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer,
+    //     g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer,
+    //     g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer,
+    //     g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer,
     //     g_buffers->rigidTranslations.buffer, g_buffers->rigidOffsets.size() - 1, g_buffers->rigidIndices.size());
     // printf("also ok here\n");
 }
@@ -878,6 +876,11 @@ std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render(int cap
     g_realdt = float(frameBeginTime - lastTime);
     lastTime = frameBeginTime;
 
+    if (capture == 1) {
+        g_capture = true;
+        g_ffmpeg = fopen(path, "wb");
+    }
+
     //-------------------------------------------------------------------
     // Scene Update
 
@@ -975,14 +978,30 @@ std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render(int cap
         NvFlexGetDiffuseParticles(g_solver, nullptr, nullptr, g_buffers->diffuseCount.buffer);
     }
 
+    // Original function for rendering and saving to disk
+    if (g_capture) {
+        TgaImage img;
+        img.m_width = g_screenWidth;
+        img.m_height = g_screenHeight;
+        img.m_data = new uint32_t[g_screenWidth*g_screenHeight];
+
+        ReadFrame((int*)img.m_data, g_screenWidth, g_screenHeight);
+        TgaSave(g_ffmpeg, img, false);
+
+        // fwrite(img.m_data, sizeof(uint32_t)*g_screenWidth*g_screenHeight, 1, g_ffmpeg);
+
+        delete[] img.m_data;
+    }
+
     // auto rendered_img = py::array_t<uint32_t>((uint32_t) g_screenWidth*g_screenHeight);
     auto rendered_img = py::array_t<uint8_t>((int) g_screenWidth * g_screenHeight * 4);
     auto rendered_img_ptr = (uint8_t *) rendered_img.request().ptr;
 
     int rendered_img_int32_ptr[g_screenWidth * g_screenHeight];
     ReadFrame(rendered_img_int32_ptr, g_screenWidth, g_screenHeight);
+
     /*
-    * This depth rendering functionality in PyFLex was provided by 
+    * This depth rendering functionality in PyFLex was provided by
     * Zhenjia Xu
     * email: xuzhenjia [at] cs (dot) columbia (dot) edu
     * website: https://www.zhenjiaxu.com/
@@ -1080,9 +1099,22 @@ std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render(int cap
 
     SDL_EventFunc();
 
+    if (capture == 1) {
+        g_capture = false;
+        fclose(g_ffmpeg);
+        g_ffmpeg = nullptr;
+    }
+
     return std::make_tuple(rendered_img, rendered_depth);
 }
 
+std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render_cloth(int capture, char *path) {
+    int g_clothOnly_bak = g_clothOnly;
+    g_clothOnly = 1;
+    auto ret = pyflex_render(capture, path);
+    g_clothOnly = g_clothOnly_bak;
+    return ret;
+}
 
 PYBIND11_MODULE(pyflex, m) {
     m.def("main", &main);
@@ -1095,12 +1127,14 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("capture") = 0,
           py::arg("path") = nullptr,
           py::arg("render") = 0);
-    m.def("render", &pyflex_render, 
+    m.def("render", &pyflex_render,
           py::arg("capture") = 0,
-          py::arg("path") = nullptr    
+          py::arg("path") = nullptr
         );
-
-    m.def("render_sensor", &pyflex_render_sensor, py::arg("sensor_id")= 0);
+    m.def("render_cloth", &pyflex_render_cloth,
+          py::arg("capture") = 0,
+          py::arg("path") = nullptr
+        );
     m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
     m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
 

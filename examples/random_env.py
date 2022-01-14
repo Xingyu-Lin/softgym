@@ -8,16 +8,19 @@ from softgym.utils.visualization import save_numpy_as_gif
 import pyflex
 from matplotlib import pyplot as plt
 
+
 def show_depth():
     # render rgb and depth
     img, depth = pyflex.render()
     img = img.reshape((720, 720, 4))[::-1, :, :3]
     depth = depth.reshape((720, 720))[::-1]
     # get foreground mask
-    mask = pyflex.render_sensor().reshape(720, 720, 4)[::-1, :, :4]
-    mask = mask[:, :, 3]
-    depth[mask == 0] = 0
+    rgb, depth = pyflex.render_cloth()
+    depth = depth.reshape(720, 720)[::-1]
+    # mask = mask[:, :, 3]
+    # depth[mask == 0] = 0
     # show rgb and depth(masked)
+    depth[depth > 5] = 0
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     axes[0].imshow(img)
     axes[1].imshow(depth)

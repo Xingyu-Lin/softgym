@@ -104,18 +104,6 @@ public:
         g_drawCloth = (render_type & 2) >>1;
         g_drawSprings = false;
 
-        bool hasFluids = false;
-        DepthRenderProfile p = {
-			0.f, // minRange
-			5.f // maxRange
-		};
-        if (g_render) // ptr[19] is whether to use a depth sensor
-        {
-            printf("adding a sensor in softgym_cloth!\n");
-            AddSensor(cam_width, cam_height,  0,  Transform(Vec3(cam_x, cam_y, cam_z), 
-                rpy2quat(cam_angle_x, cam_angle_y, cam_angle_z)),  
-                DegToRad(60.f), hasFluids, p);
-        }
 
         // table
 //        NvFlexRigidShape table;
