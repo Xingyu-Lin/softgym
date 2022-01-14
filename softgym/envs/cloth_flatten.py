@@ -196,13 +196,14 @@ class ClothFlattenEnv(ClothEnv):
         info = {
             'performance': curr_covered_area,
             'normalized_performance': (curr_covered_area - init_covered_area) / (max_covered_area - init_covered_area),
+            'normalized_performance_2': (curr_covered_area) / (max_covered_area)
         }
         if 'qpg' in self.action_mode:
             info['total_steps'] = self.action_tool.total_steps
         return info
 
     def get_picked_particle(self):
-        pps = np.ones(shape=self.action_tool.num_picker)  * -1 # -1 means no particles picked
+        pps = np.ones(shape=self.action_tool.num_picker, dtype=np.int32)  * -1 # -1 means no particles picked
         for i, pp in enumerate(self.action_tool.picked_particles):
             if pp is not None:
                 pps[i] = pp

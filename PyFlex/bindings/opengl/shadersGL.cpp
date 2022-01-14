@@ -333,7 +333,7 @@ void EndFrame()
 
 		// render help to back buffer
 	glVerify(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-	glVerify(glClear(GL_DEPTH_BUFFER_BIT));
+//	glVerify(glClear(GL_DEPTH_BUFFER_BIT));
 
 }
 

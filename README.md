@@ -1,10 +1,14 @@
 # SoftGym
 <a href="https://sites.google.com/view/softgym/home">SoftGym</a> is a set of benchmark environments for deformable object manipulation including tasks involving fluid, cloth and rope. It is built on top of the Nvidia FleX simulator and has standard Gym API for interaction with RL agents. A number of RL algorithms benchmarked on SoftGym can be found in <a href="https://github.com/Xingyu-Lin/softagent">SoftAgent</a>
 
+## Latest updates
+
+- [12/06/2021] Support depth rendering. Example:`python examples/random_env.py --test_depth 1` to visualize the depth image.
+
 ## Using Docker
 If you are using Ubuntu 16.04 LTS and CUDA 9.2, you can follow the steps in the next section on this page for compilation. For other versions of Ubuntu or CUDA, we provide the pre-built Docker image and Dockerfile for running SoftGym. Please refer to our [Docker](docker/docker.md) page.
 
-## Instructions for Installation 
+## Instructions for Installation
 1. This codebase is tested with Ubuntu 16.04 LTS, CUDA 9.2 and Nvidia driver version 440.64. Other versions might work but are not guaranteed, especially with a different driver version. Please use our docker for other versions.
 
 The following command will install some necessary dependencies.
@@ -13,10 +17,10 @@ sudo apt-get install build-essential libgl1-mesa-dev freeglut3-dev libglfw3 libg
 ```
 
 2. Create conda environment
-Create a conda environment and activate it: `conda env create -f environment.yml`
+   Create a conda environment and activate it: `conda env create -f environment.yml`
 
 3. Compile PyFleX: Go to the root folder of softgym and run `. ./prepare_1.0.sh`. After that, compile PyFleX with CMake & Pybind11 by running `. ./compile_1.0.sh` Please see the example test scripts and the bottom of `bindings/pyflex.cpp` for available APIs.
- 
+
 ## SoftGym Environments
 |Image|Name|Description|
 |----------|:-------------|:-------------|
@@ -30,22 +34,22 @@ Create a conda environment and activate it: `conda env create -f environment.yml
 |![Gif](./examples/ClothFoldCrumpled.gif)|[FoldCrumpledCloth](softgym/envs/cloth_fold_crumpled.py)| This task is similar to FoldCloth but the cloth is initially crumpled| 
 |![Gif](./examples/ClothFoldDrop.gif)|[DropFoldCloth](softgym/envs/cloth_fold_drop.py)| This task has the same initial state as DropCloth but requires the agent to fold the cloth instead of just laying it on the ground|
 |![Gif](./examples/RopeConfiguration.gif)|[RopeConfiguration](softgym/envs/rope_configuration.py)| This task is similar to StraightenCloth but the agent needs to manipulate the rope into a specific configuration from different starting locations.|
-   
+
 To have a quick view of different tasks listed in the paper (with random actions), run the following commands:
-For SoftGym-Medium:  
+For SoftGym-Medium:
 - TransportWater: `python examples/random_env.py --env_name PassWater`
 - PourWater: `python examples/random_env.py --env_name PourWater`
 - StraightenRope: `python examples/random_env.py --env_name RopeFlatten`
 - SpreadCloth: `python examples/random_env.py --env_name ClothFlatten`
 - FoldCloth: `python examples/random_env.py --env_name ClothFold`
-- DropCloth: `python examples/random_env.py --env_name ClothDrop`  
+- DropCloth: `python examples/random_env.py --env_name ClothDrop`
 
-For SoftGym-Hard:  
+For SoftGym-Hard:
 - PourWaterAmount: `python examples/random_env.py --env_name PourWaterAmount`
 - FoldCrumpledCloth: `python examples/random_env.py --env_name ClothFoldCrumpled`
 - DropFoldCloth: `python examples/random_env.py --env_name ClothFoldDrop`
-- RopeConfiguration: 
-First download the rope configuration file using [this link](https://drive.google.com/file/d/1f3FK_7gwnJLVm3VaSacvYS7o-19-XPrr/view?usp=sharing) then run `python examples/random_env.py --env_name RopeConfiguration`  
+- RopeConfiguration:
+  First download the rope configuration file using [this link](https://drive.google.com/file/d/1f3FK_7gwnJLVm3VaSacvYS7o-19-XPrr/view?usp=sharing) then run `python examples/random_env.py --env_name RopeConfiguration`
 
 Turn on the `--headless` option if you are running on a cluster machine that does not have a display environment. Otherwise you will get segmentation issues. Please refer to `softgym/registered_env.py` for the default parameters and source code files for each of these environments.
 

@@ -1,5 +1,5 @@
 #include <bindings/main.cpp>
-
+#include "opengl/shader.h"
 
 char rope_path[100];
 char box_high_path[100];
@@ -866,7 +866,7 @@ void pyflex_set_camera_params(py::array_t<float> update_camera_param) {
         g_screenHeight = camera_param_ptr[7];}
 }
 
-py::array_t<int> pyflex_render(int capture, char *path) {
+std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render(int capture, char *path) {
     // TODO: Turn off the GUI menu for rendering
     static double lastTime;
 
@@ -1000,12 +1000,26 @@ py::array_t<int> pyflex_render(int capture, char *path) {
     int rendered_img_int32_ptr[g_screenWidth * g_screenHeight];
     ReadFrame(rendered_img_int32_ptr, g_screenWidth, g_screenHeight);
 
+    /*
+    * This depth rendering functionality in PyFLex was provided by
+    * Zhenjia Xu
+    * email: xuzhenjia [at] cs (dot) columbia (dot) edu
+    * website: https://www.zhenjiaxu.com/
+    */
+    auto rendered_depth = py::array_t<float>((float)g_screenWidth * g_screenHeight);
+    auto rendered_depth_ptr = (float *)rendered_depth.request().ptr;
+
+    float rendered_depth_float_ptr[g_screenWidth * g_screenHeight];
+    glVerify(glReadBuffer(GL_BACK));
+    glReadPixels(0, 0, g_screenWidth, g_screenHeight, GL_DEPTH_COMPONENT, GL_FLOAT, rendered_depth_float_ptr);
+
     for (int i = 0; i < g_screenWidth * g_screenHeight; ++i) {
         int32_abgr_to_int8_rgba((uint32_t) rendered_img_int32_ptr[i],
                                 rendered_img_ptr[4 * i],
                                 rendered_img_ptr[4 * i + 1],
                                 rendered_img_ptr[4 * i + 2],
                                 rendered_img_ptr[4 * i + 3]);
+        rendered_depth_ptr[i] = 2 * g_camFar * g_camNear / (g_camFar + g_camNear - (2 * rendered_depth_float_ptr[i] - 1) * (g_camFar - g_camNear));
     }
     // Should be able to return the image here, instead of at the end
 
@@ -1091,9 +1105,16 @@ py::array_t<int> pyflex_render(int capture, char *path) {
         g_ffmpeg = nullptr;
     }
 
-    return rendered_img;
+    return std::make_tuple(rendered_img, rendered_depth);
 }
 
+std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render_cloth(int capture, char *path) {
+    int g_clothOnly_bak = g_clothOnly;
+    g_clothOnly = 1;
+    auto ret = pyflex_render(capture, path);
+    g_clothOnly = g_clothOnly_bak;
+    return ret;
+}
 
 PYBIND11_MODULE(pyflex, m) {
     m.def("main", &main);
@@ -1110,7 +1131,10 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("capture") = 0,
           py::arg("path") = nullptr    
         );
-
+    m.def("render_cloth", &pyflex_render_cloth,
+          py::arg("capture") = 0,
+          py::arg("path") = nullptr
+        );
     m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
     m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
 
