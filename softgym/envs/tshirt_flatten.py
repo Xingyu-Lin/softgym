@@ -269,7 +269,7 @@ class TshirtFlattenEnv(ClothEnv):
         elif self.render_mode == 'both':
             render_mode = 3
         camera_params = config['camera_params'][config['camera_name']]
-        env_idx = 7
+        env_idx = 3
         if self.cloth_type == 'tshirt':
             cloth_type = 0
         elif self.cloth_type == 'shorts':
@@ -279,12 +279,14 @@ class TshirtFlattenEnv(ClothEnv):
         scene_params = np.concatenate(
             [config['pos'][:], [config['scale'], config['rot']], config['vel'][:], [config['stiff'], config['mass'], config['radius']],
              camera_params['pos'][:], camera_params['angle'][:], [camera_params['width'], camera_params['height']], [render_mode], [cloth_type]])
-        # if self.version == 2:
-        robot_params = []
-        self.params = (scene_params, robot_params)
-        pyflex.set_scene(env_idx, scene_params, 0, robot_params)
-        # elif self.version == 1:
-        #     pyflex.set_scene(env_idx, scene_params, 0)
+        if self.version == 2:
+            robot_params = []
+            self.params = (scene_params, robot_params)
+            pyflex.set_scene(env_idx, scene_params, 0, robot_params)
+        elif self.version == 1:
+            print("set scene")
+            pyflex.set_scene(env_idx, scene_params, 0)
+            print("after set scene")
 
         self.rotate_particles([0, 0, -90])
         self.move_to_pos([0, 0.05, 0])
@@ -396,20 +398,23 @@ if __name__ == '__main__':
     env_args['camera_height'] = 720
     env_args['camera_width'] = 720
     env_args['camera_name'] = 'default_camera'
-    env_args['headless'] = True
+    env_args['headless'] = False
     env_args['action_repeat'] = 1
     env_args['picker_radius'] = 0.01
     env_args['picker_threshold'] = 0.00625
-    # env_args['cached_states_path'] = 'tshirt_flatten_init_states_1.pkl'
-    env_args['num_variations'] = 1
-    env_args['use_cached_states'] = False
+    env_args['cached_states_path'] = 'tshirt_flatten_init_states_small_2021_05_28_01_16.pkl'
+    env_args['num_variations'] = 20
+    env_args['use_cached_states'] = True
     env_args['save_cached_states'] = False
     env_args['cloth_type'] = 'tshirt-small'
     # pkl_path = './softgym/cached_initial_states/shorts_flatten.pkl'
 
     env = SOFTGYM_ENVS[env_name](**env_args)
-    env.reset(config_id=0)
+    print("before reset")
+    env.reset()
+    print("after reset")
     env._set_to_flat()
+    print("after reset")
     # env.move_to_pos([0, 0.1, 0])
     # pyflex.step()
     # i = 0

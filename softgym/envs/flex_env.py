@@ -81,6 +81,17 @@ class FlexEnv(gym.Env):
             with open(cached_states_path, "rb") as handle:
                 self.cached_configs, self.cached_init_states = pickle.load(handle)
             print('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
+            all_camera_params = self.get_default_config()['camera_params']
+            self.camera_params = all_camera_params
+            for i in range(len(self.cached_configs)):
+                self.cached_configs[i]['camera_params'] = all_camera_params
+                self.cached_configs[i]['camera_params'][self.camera_name]['width'] = self.camera_width
+                self.cached_configs[i]['camera_params'][self.camera_name]['height'] = self.camera_height
+                if self.camera_name not in self.cached_init_states[i]['camera_params']:
+                    self.cached_init_states[i]['camera_params'][self.camera_name] = all_camera_params[self.camera_name]
+
+                self.cached_init_states[i]['camera_params'][self.camera_name]['width'] = self.camera_width
+                self.cached_init_states[i]['camera_params'][self.camera_name]['height'] = self.camera_height
             if len(self.cached_configs) == num_variations:
                 return self.cached_configs, self.cached_init_states
 
@@ -122,7 +133,6 @@ class FlexEnv(gym.Env):
         pyflex.set_velocities(state_dict['particle_vel'])
         pyflex.set_shape_states(state_dict['shape_pos'])
         pyflex.set_phases(state_dict['phase'])
-        self.camera_params = copy.deepcopy(state_dict['camera_params'])
         self.update_camera(self.camera_name)
 
     def close(self):

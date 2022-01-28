@@ -21,7 +21,7 @@ class ClothEnv(FlexEnv):
 
         if action_mode == 'picker':
             self.action_tool = Picker(num_picker, picker_radius=picker_radius, particle_radius=particle_radius, picker_threshold=picker_threshold,
-                                      picker_low=(-0.4, 0., -0.4), picker_high=(1.0, 0.5, 0.4))
+                                      picker_low=(-1, 0., -1), picker_high=(1.0, 0.5, 1))
             self.action_space = self.action_tool.action_space
             self.picker_radius = picker_radius
         elif action_mode == 'pickerpickplace':
@@ -83,7 +83,7 @@ class ClothEnv(FlexEnv):
 
     def get_camera_params(self):
         config = self.get_current_config()
-        camera_name = config['camera_name']
+        camera_name = self.camera_name
         cam_pos = config['camera_params'][camera_name]['pos']
         cam_angle = config['camera_params'][camera_name]['angle']
         return cam_pos, cam_angle
@@ -99,7 +99,7 @@ class ClothEnv(FlexEnv):
             'ClothPos': [-1.6, 2.0, -0.8],
             'ClothSize': [int(0.6 / particle_radius), int(0.368 / particle_radius)],
             'ClothStiff': [0.8, 1, 0.9],  # Stretch, Bend and Shear
-            'camera_name': 'default_camera',
+            'camera_name': self.camera_name,
             'camera_params': {'default_camera':
                                   {'pos': cam_pos,
                                    'angle': cam_angle,
@@ -162,11 +162,11 @@ class ClothEnv(FlexEnv):
             render_mode = 2
         elif self.render_mode == 'both':
             render_mode = 3
-        camera_params = config['camera_params'][config['camera_name']]
+        camera_params = config['camera_params'][self.camera_name]
         env_idx = 0 if 'env_idx' not in config else config['env_idx']
         mass = config['mass'] if 'mass' in config else 0.5
         scene_params = np.array([*config['ClothPos'], *config['ClothSize'], *config['ClothStiff'], render_mode,
-                                 *camera_params['pos'][:], *camera_params['angle'][:], camera_params['width'], camera_params['height'], mass,
+                                 *camera_params['pos'][:], *camera_params['angle'][:], self.camera_width, self.camera_height, mass,
                                  config['flip_mesh']])
         if self.version == 2:
             robot_params = [1.] if self.action_mode in ['sawyer', 'franka'] else []

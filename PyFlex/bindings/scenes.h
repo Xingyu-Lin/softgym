@@ -27,6 +27,7 @@ public:
 	const char* mName;
 };
 
+#include "softgym_scenes/softgym_tshirt.h"
 #include "softgym_scenes/softgym_cloth.h"
 #include "softgym_scenes/softgym_fluid.h"
 #include "softgym_scenes/softgym_softbody.h"
