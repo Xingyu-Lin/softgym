@@ -174,14 +174,17 @@ class BimanualEnv(FlexEnv):
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         return mask
 
-    def get_rgbd(self):
-        # rgbd = pyflex.render_sensor()
-        rgb, depth = pyflex.render()
+    def get_rgbd(self, cloth_only=False):
+        if cloth_only:
+            rgb, depth = pyflex.render_cloth()
+        else:
+            rgb, depth = pyflex.render()
         rgb = np.array(rgb).reshape(self.camera_params['default_camera']['height'], self.camera_params['default_camera']['width'], 4)
-        rgb = rgb[::-1, :, :]
+        rgb = rgb[::-1, :, :] # reverse the height dimension
         rgb = rgb[:, :, :3]
         depth = np.array(depth).reshape(self.camera_params['default_camera']['height'], self.camera_params['default_camera']['width'])
-        # depth = rgbd[:, :, 3]
+        depth = depth[::-1, :] # reverse the height dimension
+        depth[depth >= 999] = 0 # use 0 instead of 999 for null
         return rgb, depth
 
     def _get_obs(self):
@@ -275,12 +278,6 @@ class BimanualEnv(FlexEnv):
 
     def _step(self, action, pickplace=False, on_table=True):
         rgb, depth = self.get_rgbd()
-        # camera_params = self.camera_params
-        # rgb, depth = pyflex.render()
-        # rgb = np.array(rgb).reshape(camera_params['default_camera']['height'], camera_params['default_camera']['width'], 3)
-        # rgb = rgb[::-1, :, :]
-        # rgb = rgb[:, :, :3]
-        # depth = rgbd[:, :, 3]
         if pickplace:
             pick_u1, pick_v1 = action[0]
             pick_u1 = int(np.rint(pick_u1/199 * 719))
@@ -303,7 +300,7 @@ class BimanualEnv(FlexEnv):
             place_pos_2 = uv_to_world_pos(self.camera_params, depth, place_u2, place_v2, particle_radius=self.cloth_particle_radius, on_table=on_table)[:3]
             # mid = (pick_pos + place_pos)/2 
 
-            mid_1 = 0.075 # 0.075
+            mid_1 = 0.075 
             mid_2 = 0.075
         else: 
             u1, v1 = action[3], action[4]
@@ -359,7 +356,6 @@ class BimanualEnv(FlexEnv):
             pyflex.step()
 
         # go to neutral position
-        #self.action_tool.step(sub)
         self.set_picker_pos(self.reset_pos)
         for _ in range(20):
             self.action_tool.step(self.reset_act)
