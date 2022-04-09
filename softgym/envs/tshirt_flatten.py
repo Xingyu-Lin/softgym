@@ -12,7 +12,7 @@ import os
 
 
 class TshirtFlattenEnv(ClothEnv):
-    def __init__(self, cached_states_path='tshirt_flatten_init_states.pkl', cloth_type='tshirt', **kwargs):
+    def __init__(self, cached_states_path='tshirt_flatten_init_states.pkl', cloth_type='tshirt-small', **kwargs):
         """
         :param cached_states_path:
         :param num_picker: Number of pickers if the aciton_mode is picker
