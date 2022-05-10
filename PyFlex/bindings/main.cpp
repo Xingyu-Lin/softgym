@@ -1391,7 +1391,7 @@ void RenderScene() {
 
     if (g_drawMesh && !g_clothOnly)
         DrawMesh(g_mesh, g_meshColor);
-    
+
     // printf("pass DrawMesh\n");
     if (!g_clothOnly)
         DrawShapes();
@@ -1507,7 +1507,7 @@ void RenderScene() {
                           g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow,
                           true);
         // printf("pass RenderDiffuse\n");
-        
+
     } else {
         // draw all particles as spheres
         if (g_drawPoints) {

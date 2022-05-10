@@ -120,7 +120,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
         //     SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
         ReshapeWindow(g_screenWidth, g_screenHeight);
-    } 
+    }
     else if (g_render == true)
 	{
 		RenderInitOptions options;
@@ -476,7 +476,7 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
 
     auto bufl = lower.request();
     auto lower_ptr = (float *) bufl.ptr;
-   
+
     MapBuffers(g_buffers);
 
     // if (g_buffers->rigidIndices.empty())
@@ -524,7 +524,7 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
 
     UnmapBuffers(g_buffers);
 
-    // reset pyflex solvers 
+    // reset pyflex solvers
     // NvFlexSetParams(g_solver, &g_params);
     // NvFlexSetParticles(g_solver, g_buffers->positions.buffer, nullptr);
     // NvFlexSetVelocities(g_solver, g_buffers->velocities.buffer, nullptr);
@@ -535,10 +535,10 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
     NvFlexSetActive(g_solver, g_buffers->activeIndices.buffer, nullptr);
     // printf("ok till here\n");
     NvFlexSetActiveCount(g_solver, numParticles);
-    // NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer, 
-    //     g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer, 
-    //     g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer, 
-    //     g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer, 
+    // NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer,
+    //     g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer,
+    //     g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer,
+    //     g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer,
     //     g_buffers->rigidTranslations.buffer, g_buffers->rigidOffsets.size() - 1, g_buffers->rigidIndices.size());
     // printf("also ok here\n");
 }
@@ -1128,9 +1128,9 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("capture") = 0,
           py::arg("path") = nullptr,
           py::arg("render") = 0);
-    m.def("render", &pyflex_render, 
+    m.def("render", &pyflex_render,
           py::arg("capture") = 0,
-          py::arg("path") = nullptr    
+          py::arg("path") = nullptr
         );
     m.def("render_cloth", &pyflex_render_cloth,
           py::arg("capture") = 0,

@@ -1,4 +1,4 @@
-import os.path as osp
+import os
 import argparse
 import numpy as np
 
@@ -64,7 +64,9 @@ def main():
             show_depth()
 
     if args.save_video_dir is not None:
-        save_name = osp.join(args.save_video_dir, args.env_name + '.gif')
+        if not os.path.isdir(args.save_video_dir):
+            os.mkdir(args.save_video_dir)
+        save_name = os.path.join(args.save_video_dir, args.env_name + '.gif')
         save_numpy_as_gif(np.array(frames), save_name)
         print('Video generated and save to {}'.format(save_name))
 
