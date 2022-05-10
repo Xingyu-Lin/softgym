@@ -1,6 +1,6 @@
 # Running SoftGym inside a docker
 
-We provide both Dockerfile and pre-built Docker container for compiling SoftGym. Part of the docker solutions are borrowed from [PyFlex](https://github.com/YunzhuLi/PyFleX/blob/master/bindings/docs/docker.md) 
+We provide both Dockerfile and pre-built Docker container for compiling SoftGym. Part of the docker solutions are borrowed from [PyFlex](https://github.com/YunzhuLi/PyFleX/blob/master/bindings/docs/docker.md)
 
 ## Prerequisite
 
@@ -17,9 +17,9 @@ We provide both Dockerfile and pre-built Docker container for compiling SoftGym.
 sudo docker pull xingyu/softgym
 ```
 
-- Assuming you are using conda, using the following command to run docker, 
-which will mount the python environment and SoftGym into the docker container. 
-Make sure you have replaced `PATH_TO_SoftGym` and `PATH_TO_CONDA` with the corresponding paths (make sure to use absolute path!).
+- Assuming you are using conda, using the following command to run docker,
+  which will mount the python environment and SoftGym into the docker container.
+  Make sure you have replaced `PATH_TO_SoftGym` and `PATH_TO_CONDA` with the corresponding paths (make sure to use absolute path!).
 
 ```
 nvidia-docker run \

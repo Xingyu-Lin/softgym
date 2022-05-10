@@ -7,16 +7,17 @@ dependencies:
   - glob2=0.7
   - cmake=3.14.0
   - pybind11=2.4.3
+  - moviepy
   - click
   - matplotlib
   - joblib
   - Pillow=6.1
   - plotly=2.0
   - pip:
-    - gtimer
-    - gym==0.14.0
-    - moviepy
-    - opencv-python==4.1.1.26
-    - Shapely==1.6.4.post2
-    - pyquaternion==0.9.5 
-    - sk-video==1.1.10
+      - gtimer
+      - gym==0.14.0
+      - moviepy
+      - opencv-python==4.1.1.26
+      - Shapely==1.6.4.post2
+      - pyquaternion==0.9.5
+      - sk-video==1.1.10
