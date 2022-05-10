@@ -86,6 +86,8 @@ class FlexEnv(gym.Env):
 
         self.cached_configs, self.cached_init_states = self.generate_env_variation(num_variations)
         if self.save_cached_states:
+            if not osp.isdir(osp.dirname(cached_states_path)):
+                os.makedirs(osp.dirname(cached_states_path))
             with open(cached_states_path, 'wb') as handle:
                 pickle.dump((self.cached_configs, self.cached_init_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
             print('{} config and state pairs generated and saved to {}'.format(len(self.cached_init_states), cached_states_path))
@@ -216,11 +218,17 @@ class FlexEnv(gym.Env):
 
     def render(self, mode='rgb_array'):
         if mode == 'rgb_array':
-            img, depth = pyflex.render()
+            img, _ = pyflex.render()
             width, height = self.camera_params['default_camera']['width'], self.camera_params['default_camera']['height']
             img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
             return img
-        elif mode == 'human':
+        elif mode == 'rgb_d_arrays':
+            img, depth = pyflex.render()
+            width, height = self.camera_params['default_camera']['width'], self.camera_params['default_camera']['height']
+            img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
+            depth = depth.reshape(height, width)[::-1]
+            return img, depth
+        else:
             raise NotImplementedError
 
     def get_image(self, width=720, height=720):
@@ -230,6 +238,15 @@ class FlexEnv(gym.Env):
         if width != img.shape[0] or height != img.shape[1]:
             img = cv2.resize(img, (width, height))
         return img
+
+    def get_image_depth(self, width=720, height=720):
+        """ use pyflex.render to get a rendered image. """
+        img, depth = self.render(mode='rgb_d_arrays')
+        img = img.astype(np.uint8)
+        depth = depth.astype(np.float32)
+        if width != img.shape[0] or height != img.shape[1]:
+            img = cv2.resize(img, (width, height))
+        return img, depth
 
     def set_scene(self, config, state=None):
         """ Set up the flex scene """
