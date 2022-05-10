@@ -39,10 +39,11 @@ class Picker(ActionToolBase):
         self.particle_radius = particle_radius
         self.init_particle_pos = init_particle_pos
         self.spring_coef = spring_coef  # Prevent picker to drag two particles too far away
-
+        self.is_hide = False
+        self.prev_shape_states = None
         space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.1  # [dx, dy, dz, [0, 1]]
         space_high = np.array([0.1, 0.1, 0.1, 10] * self.num_picker) * 0.1
-        self.action_space = Box(space_low, space_high, dtype=np.float32)
+        self.action_space = Box(space_low, space_high, dtype=np.float64)
 
     def update_picker_boundary(self, picker_low, picker_high):
         self.picker_low, self.picker_high = np.array(picker_low).copy(), np.array(picker_high).copy()
@@ -91,6 +92,10 @@ class Picker(ActionToolBase):
         self.particle_inv_mass = pyflex.get_positions().reshape(-1, 4)[:, 3]
         # print('inv_mass_shape after reset:', self.particle_inv_mass.shape)
 
+    def get_picker_pos(self):
+        picker_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)
+        return picker_pos[:, :3]
+
     @staticmethod
     def _get_pos():
         """ Get the current pos of the pickers and the particles, along with the inverse mass of each particle """
@@ -99,12 +104,32 @@ class Picker(ActionToolBase):
         return picker_pos[:, :3], particle_pos
 
     @staticmethod
-    def _set_pos(picker_pos, particle_pos):
+    def _set_pos(picker_pos, particle_pos=None):
         shape_states = np.array(pyflex.get_shape_states()).reshape(-1, 14)
         shape_states[:, 3:6] = shape_states[:, :3]
         shape_states[:, :3] = picker_pos
         pyflex.set_shape_states(shape_states)
-        pyflex.set_positions(particle_pos)
+        if particle_pos is not None:
+            pyflex.set_positions(particle_pos)
+
+    def hide(self):
+        if self.is_hide:
+            return
+        shape_states = np.array(pyflex.get_shape_states()).reshape(-1, 14)
+        self.prev_shape_states = shape_states.copy()
+        for shape_state in shape_states:
+            shape_state[1] = 1e5
+            shape_state[4] = 1e5
+        pyflex.set_shape_states(shape_states)
+        self.is_hide = True
+
+    def show(self):
+        if not self.is_hide:
+            return
+        assert self.prev_shape_states is not None
+        pyflex.set_shape_states(self.prev_shape_states)
+        self.prev_shape_states = None
+        self.is_hide = False
 
     @staticmethod
     def set_picker_pos(picker_pos):
@@ -183,7 +208,7 @@ class Picker(ActionToolBase):
 
 
 class PickerPickPlace(Picker):
-    def __init__(self, num_picker, env=None, picker_low=None, picker_high=None, **kwargs):
+    def __init__(self, num_picker, env=None, picker_low=None, picker_high=None, delta_move=0.01, **kwargs):
         super().__init__(num_picker=num_picker,
                          picker_low=picker_low,
                          picker_high=picker_high,
@@ -191,7 +216,7 @@ class PickerPickPlace(Picker):
         picker_low, picker_high = list(picker_low), list(picker_high)
         self.action_space = Box(np.array([*picker_low, 0.] * self.num_picker),
                                 np.array([*picker_high, 1.] * self.num_picker), dtype=np.float32)
-        self.delta_move = 0.01
+        self.delta_move = delta_move  # By default this is 0.01
         self.env = env
 
     def step(self, action):
