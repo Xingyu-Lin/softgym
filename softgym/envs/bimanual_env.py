@@ -188,16 +188,18 @@ class BimanualEnv(FlexEnv):
         return rgb, depth
 
     def _get_obs(self):
-        img = Image.fromarray(self.get_image(720, 720))
+        rgb, depth = self.get_rgbd(cloth_only=True)
+        img = Image.fromarray(rgb)
         resized = img.resize(size=(200,200))
         resized = np.array(resized)
-        mask = self.get_hsv_mask(resized) != 0
-        resized[mask == False, :] = 0
-
+        # mask = self.get_hsv_mask(resized) != 0
+        # resized[mask == False, :] = 0
+        
+        # obs = {'color': rgb, 'goal': self.goal, 'depth': depth}
         obs = {'color': resized, 'goal': self.goal}
 
         if self.use_depth:
-            rgb, depth = self.get_rgbd()
+        #     rgb, depth = self.get_rgbd()
             depth = depth*255
             depth = depth.astype(np.uint8)
             depth_st = np.dstack([depth, depth, depth])
@@ -256,7 +258,6 @@ class BimanualEnv(FlexEnv):
         """ If record_continuous_video is set to True, will record an image for each sub-step"""
         frames = []
         obs = self._get_obs()
-        start_pos = pyflex.get_positions().reshape(-1, 4)[:,:3]
         for i in range(self.action_repeat):
             self._step(action, pickplace, on_table=on_table)
             if record_continuous_video and i % 2 == 0:  # No need to record each step

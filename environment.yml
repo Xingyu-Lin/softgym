@@ -1,4 +1,4 @@
-name: softgym
+name: softgym_ffn_release
 channels:
   - defaults
 dependencies:
