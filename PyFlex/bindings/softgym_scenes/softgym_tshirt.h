@@ -290,7 +290,7 @@ public:
         g_drawSprings = false;
         g_drawDiffuse = false;
 
-        cout << "tris: " << g_buffers->triangles.size() << endl;
+        // cout << "tris: " << g_buffers->triangles.size() << endl;
     }
 
     virtual void CenterCamera(void)

@@ -1,6 +1,6 @@
 softgym/cached_initial_states/*
 softgym/envs/corl_cached_state_backup
-data
+./data
 __pycache__/
 .idea
 PyFlex/demo/compiler/makelinux64/.deps

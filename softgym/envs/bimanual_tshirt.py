@@ -22,7 +22,7 @@ class BimanualTshirtEnv(BimanualEnv):
         cam_pos, cam_angle = np.array([0.0, 0.65, 0.00]), np.array([0, -np.pi/2., 0.])
         config = {
             'pos': [0.01, 0.15, 0.01],
-            'scale': 0.36, #0.36
+            'scale': 0.36,
             'rot': 0.0,
             'vel': [0., 0., 0.],
             'stiff': 0.9,
