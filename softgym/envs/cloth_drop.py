@@ -132,7 +132,7 @@ class ClothDropEnv(ClothEnv):
                 pyflex.step()
                 curr_pos = pyflex.get_positions().reshape((-1, 4))
                 curr_vel = pyflex.get_velocities().reshape((-1, 3))
-                if np.alltrue(curr_vel < stable_vel_threshold) and j > 300:
+                if np.all(curr_vel < stable_vel_threshold) and j > 300:
                     break
                 curr_pos[pickpoints, :3] = pickpoint_pos
                 pyflex.set_positions(curr_pos)

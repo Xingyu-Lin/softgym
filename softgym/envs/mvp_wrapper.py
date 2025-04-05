@@ -1,8 +1,8 @@
 import numpy as np
 import gym
-from gym import Wrapper
+from gymnasium import Wrapper
 from collections import namedtuple
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from rlpyt.spaces.box import Box
 from rlpyt.spaces.composite import Composite
 from rlpyt.spaces.gym_wrapper import GymSpaceWrapper

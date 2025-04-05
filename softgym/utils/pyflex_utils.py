@@ -29,12 +29,12 @@ def random_pick_and_place(pick_num=10, pick_scale=0.01):
         for _ in range(100):
             pyflex.step()
             curr_vel = pyflex.get_velocities()
-            if np.alltrue(curr_vel < 0.01):
+            if np.all(curr_vel < 0.01):
                 break
     for _ in range(500):
         pyflex.step()
         curr_vel = pyflex.get_velocities()
-        if np.alltrue(curr_vel < 0.01):
+        if np.all(curr_vel < 0.01):
             break
 
 

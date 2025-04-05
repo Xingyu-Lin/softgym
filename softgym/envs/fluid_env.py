@@ -1,5 +1,5 @@
 import numpy as np
-import gym
+import gymnasium as gym
 import pyflex
 from softgym.envs.flex_env import FlexEnv
 

@@ -4,7 +4,7 @@ import numpy as np
 import imageio
 import glob
 from PIL import Image
-from moviepy.editor import ImageSequenceClip
+from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 
 
 def make_grid(array, nrow=1, padding=0, pad_value=120):

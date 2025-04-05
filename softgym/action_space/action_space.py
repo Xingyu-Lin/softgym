@@ -1,6 +1,6 @@
 import abc
 import numpy as np
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from softgym.utils.misc import rotation_2d_around_center, extend_along_center
 import pyflex
 import scipy.spatial
@@ -212,14 +212,14 @@ class PickerPickPlace(Picker):
         for i in range(int(min(num_step, 300))):  # The maximum number of steps allowed for one pick and place
             curr_pos = np.array(pyflex.get_shape_states()).reshape(-1, 14)[:, :3]
             dist = np.linalg.norm(end_pos - curr_pos, axis=1)
-            if np.alltrue(dist < norm_delta):
+            if np.all(dist < norm_delta):
                 delta = end_pos - curr_pos
             super().step(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
             pyflex.step()
             total_steps += 1
             if self.env is not None and self.env.recording:
                 self.env.video_frames.append(self.env.render(mode='rgb_array'))
-            if np.alltrue(dist < self.delta_move):
+            if np.all(dist < self.delta_move):
                 break
         return total_steps
 
@@ -237,12 +237,12 @@ class PickerPickPlace(Picker):
         model_actions = []
         for i in range(int(min(num_step, 300))):  # The maximum number of steps allowed for one pick and place
             dist = np.linalg.norm(end_pos - curr_pos, axis=1)
-            if np.alltrue(dist < norm_delta):
+            if np.all(dist < norm_delta):
                 delta = end_pos - curr_pos
             super().step(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
             model_actions.append(np.hstack([delta, action[:, 3].reshape(-1, 1)]))
             curr_pos += delta
-            if np.alltrue(dist < self.delta_move):
+            if np.all(dist < self.delta_move):
                 break
         return model_actions, curr_pos
 

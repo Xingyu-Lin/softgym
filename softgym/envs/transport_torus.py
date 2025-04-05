@@ -1,5 +1,5 @@
 import numpy as np
-from gym.spaces import Box
+from gymnasium.spaces import Box
 
 import pyflex
 from softgym.envs.fluid_rigid_env import FluidTorusEnv
@@ -277,10 +277,10 @@ class TransportTorus1D(FluidTorusEnv):
         elif self.observation_mode in ['point_cloud', 'key_point']:
             if self.observation_mode == 'point_cloud':
                 particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
-                pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+                pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float32)
                 pos[:len(particle_pos)] = particle_pos
             else:
-                pos = np.empty(0, dtype=np.float)
+                pos = np.empty(0, dtype=np.float32)
 
             particle_state = pyflex.get_positions().reshape((-1, self.dim_position))
             torus_center_y = np.mean(particle_state[:, 1])

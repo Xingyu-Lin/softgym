@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import warnings
 from PIL import Image
-from gym.spaces import Box, Dict
+from gymnasium.spaces import Box, Dict
 
 from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.core.wrapper_env import ProxyEnv

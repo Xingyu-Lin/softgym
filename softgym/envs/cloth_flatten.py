@@ -64,7 +64,7 @@ class ClothFlattenEnv(ClothEnv):
                 pyflex.set_positions(curr_pos)
                 pyflex.set_velocities(curr_vel)
                 pyflex.step()
-                if np.alltrue(np.abs(curr_vel) < stable_vel_threshold) and j > 5:
+                if np.all(np.abs(curr_vel) < stable_vel_threshold) and j > 5:
                     break
 
             # Drop the cloth and wait to stablize
@@ -74,7 +74,7 @@ class ClothFlattenEnv(ClothEnv):
             for _ in range(max_wait_step):
                 pyflex.step()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < stable_vel_threshold):
+                if np.all(curr_vel < stable_vel_threshold):
                     break
 
             center_object()
@@ -98,7 +98,7 @@ class ClothFlattenEnv(ClothEnv):
         px = np.linspace(0, cloth_dimx * self.cloth_particle_radius, cloth_dimx)
         py = np.linspace(0, cloth_dimz * self.cloth_particle_radius, cloth_dimz)
         xx, yy = np.meshgrid(px, py)
-        new_pos = np.empty(shape=(N, 4), dtype=np.float)
+        new_pos = np.empty(shape=(N, 4), dtype=np.float32)
         new_pos[:, 0] = xx.flatten()
         new_pos[:, 1] = self.cloth_particle_radius
         new_pos[:, 2] = yy.flatten()

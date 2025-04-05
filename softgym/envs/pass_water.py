@@ -1,5 +1,5 @@
 import numpy as np
-from gym.spaces import Box
+from gymnasium.spaces import Box
 
 import pyflex
 from softgym.envs.fluid_env import FluidEnv
@@ -37,7 +37,7 @@ class PassWater1DEnv(FluidEnv):
         self.reward_range = self.reward_max - self.reward_min
 
         super().__init__(**kwargs)
-
+        
         self.get_cached_configs_and_states(cached_states_path, self.num_variations)
 
         if observation_mode in ['point_cloud', 'key_point']:

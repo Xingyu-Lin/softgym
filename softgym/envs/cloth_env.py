@@ -1,5 +1,5 @@
 import numpy as np
-from gym.spaces import Box
+from gymnasium.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
 from softgym.action_space.action_space import  Picker, PickerPickPlace, PickerQPG

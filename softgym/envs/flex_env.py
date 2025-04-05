@@ -1,8 +1,8 @@
 import os
 import copy
-from gym import error
+from gymnasium import error
 import numpy as np
-import gym
+import gymnasium as gym
 from softgym.utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp

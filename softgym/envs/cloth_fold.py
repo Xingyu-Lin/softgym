@@ -56,7 +56,7 @@ class ClothFoldEnv(ClothEnv):
             for wait_i in range(max_wait_step):
                 pyflex.step()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(np.abs(curr_vel) < stable_vel_threshold):
+                if np.all(np.abs(curr_vel) < stable_vel_threshold):
                     break
 
             center_object()

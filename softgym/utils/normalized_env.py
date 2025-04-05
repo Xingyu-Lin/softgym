@@ -1,6 +1,6 @@
 import numpy as np
-import gym.spaces
-from gym.spaces.box import Box
+import gymnasium.spaces
+from gymnasium.spaces.box import Box
 from softgym.utils.overrides import overrides
 
 
@@ -61,7 +61,7 @@ class NormalizedEnv(object):
     def action_space(self):
         if isinstance(self._wrapped_env.action_space, Box):
             ub = np.ones(self._wrapped_env.action_space.shape)
-            return gym.spaces.Box(-1 * ub, ub)
+            return gymnasium.spaces.Box(-1 * ub, ub)
         return self._wrapped_env.action_space
 
     def denormalize(self, action):

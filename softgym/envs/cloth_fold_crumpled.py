@@ -45,7 +45,7 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
                 pyflex.step()
                 curr_pos = pyflex.get_positions()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < stable_vel_threshold):
+                if np.all(curr_vel < stable_vel_threshold):
                     break
                 curr_pos[pickpoint * 4: pickpoint * 4 + 3] = pickpoint_pos
                 curr_vel[pickpoint * 3: pickpoint * 3 + 3] = [0, 0, 0]
@@ -59,7 +59,7 @@ class ClothFoldCrumpledEnv(ClothFoldEnv):
             for _ in range(max_wait_step):
                 pyflex.step()
                 curr_vel = pyflex.get_velocities()
-                if np.alltrue(curr_vel < stable_vel_threshold):
+                if np.all(curr_vel < stable_vel_threshold):
                     break
 
             center_object()
